@@ -131,7 +131,7 @@ module CFUPipelined #(
 	always_comb begin
 		resp_valid = pipeline[N_STAGES-1].valid;
 		resp_id = pipeline[N_STAGES-1].id;
-		outputs[0] = pipeline[N_STAGES-1].data;
+		resp_data[0] = pipeline[N_STAGES-1].data;
 		resp_ok = 1;
 		error_id = '0;
 	end
