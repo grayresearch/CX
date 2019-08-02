@@ -133,14 +133,14 @@ module CFUPipelined #(
         resp_id = pipeline[N_STAGES-1].id;
         resp_data[0] = pipeline[N_STAGES-1].data;
         resp_ok = 1;
-        error_id = '0;
+        resp_error_id = '0;
     end
 endmodule
 
 
-// Simple combinatorial CFU
+// Simple combinational CFU
 // No version!
-// No clock, reset, interface_id, reorder_id, ready/valid flow control, transaction control.
+// No clock, reset, clock_en, interface_id, reorder_id, ready/valid flow control, transaction control.
 // No resp_ok, error_id.
 //
 // Metadata
