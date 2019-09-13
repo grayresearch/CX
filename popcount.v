@@ -20,15 +20,12 @@ module Popcount32CFUComb #(
     `CFU_L0_PARAMETERS(1,32)
 ) (
     input `CFU_FUNCTION_ID req_function_id,
-    input [0:CFU_REQ_INPUTS-1]`CFU_REQ_DATA req_data,
-    output [0:CFU_RESP_OUTPUTS-1]`CFU_RESP_DATA resp_data
+    input [0:0]`CFU_REQ_DATA req_data,
+    output [0:0]`CFU_RESP_DATA resp_data
 );
     wire [5:0] popcount;
     Popcount32 popcount_(.i(req_data[0]), .popcount);
-
-    `vloff_width
-    assign resp_data[0] = popcount;
-    `vlon_width
+    assign resp_data[0] = {26'b0,popcount};
 
     // assert(req_function_id == IID_Popcount32.Popcount32)
     wire _unused_ok = &{1'b0,req_function_id,1'b0};
