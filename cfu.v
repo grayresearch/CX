@@ -40,24 +40,24 @@ module CFU #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W
 ) (
-    input wire clock,
-    input wire reset,
-    input wire clock_en,
+    input clock,
+    input reset,
+    input clock_en,
 
-    output wire req_ready,
-    input wire req_valid,
-    input wire `CFU_INTERFACE_ID req_interface_id,
-    input wire `CFU_FUNCTION_ID req_function_id,
-    input wire `CFU_REORDER_ID req_reorder_id,
-    input wire `CFU_REQ_RESP_ID req_id,
-    input wire `CFU_REQ_DATA[0:REQ_INPUTS-1] req_data,
+    output req_ready,
+    input req_valid,
+    input `CFU_INTERFACE_ID req_interface_id,
+    input `CFU_FUNCTION_ID req_function_id,
+    input `CFU_REORDER_ID req_reorder_id,
+    input `CFU_REQ_RESP_ID req_id,
+    input `CFU_REQ_DATA[0:REQ_INPUTS-1] req_data,
 
-    input wire resp_ready,
-    output wire resp_valid,
-    output wire `CFU_REQ_RESP_ID resp_id,
-    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
-    output wire resp_ok,
-    output wire `CFU_ERROR_ID resp_error_id
+    input resp_ready,
+    output resp_valid,
+    output `CFU_REQ_RESP_ID resp_id,
+    output `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output resp_ok,
+    output `CFU_ERROR_ID resp_error_id
 );
     initial $finish;
     // TODO: discuss interaction with clock_en and handshakes.
@@ -88,20 +88,20 @@ module CFUPipelined #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_REQ_DATA_W
 ) (
-    input wire clock,
-    input wire reset,
-    input wire clock_en,
+    input clock,
+    input reset,
+    input clock_en,
 
-    input wire req_valid,
-    input wire `CFU_FUNCTION_ID req_function_id,
-    input wire `CFU_REQ_RESP_ID req_id,
-    input wire `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
+    input req_valid,
+    input `CFU_FUNCTION_ID req_function_id,
+    input `CFU_REQ_RESP_ID req_id,
+    input `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
 
-    output wire resp_valid,
-    output wire `CFU_REQ_RESP_ID resp_id,
-    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
-    output wire resp_ok,
-    output wire `CFU_ERROR_ID resp_error_id
+    output resp_valid,
+    output `CFU_REQ_RESP_ID resp_id,
+    output `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output resp_ok,
+    output `CFU_ERROR_ID resp_error_id
 );
     // assert(VERSION == 0 && CFU_REQ_INPUTS == 2 && CFU_RESP_OUTPUTS == 1);
     function `CFU_RESP_DATA Fn(input `CFU_FUNCTION_ID id, input `CFU_REQ_DATA i0, input `CFU_REQ_DATA i1); begin
@@ -156,9 +156,9 @@ module CFUComb #(
     parameter CFU_RESP_OUTPUTS = 1,
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W
 ) (
-    input wire `CFU_FUNCTION_ID req_function_id,
-    input wire `CFU_REQ_DATA[0:C_REQ_INPUTS-1] req_data,
-    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data
+    input `CFU_FUNCTION_ID req_function_id,
+    input `CFU_REQ_DATA[0:C_REQ_INPUTS-1] req_data,
+    output `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data
 );
     function `CFU_RESP_DATA Fn(input `CFU_FUNCTION_ID id, input `CFU_REQ_DATA i0, input `CFU_REQ_DATA i1); begin
         Fn = i0 * i1;
@@ -186,24 +186,24 @@ module CFU_CFUComb_Adapter #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W
 ) (
-    input wire clock,
-    input wire reset,
-    input wire clock_en,
+    input clock,
+    input reset,
+    input clock_en,
 
-    output wire req_ready,
-    input wire req_valid,
-    input wire `CFU_INTERFACE_ID req_interface_id,
-    input wire `CFU_FUNCTION_ID req_function_id,
-    input wire `CFU_REORDER_ID req_reorder_id,
-    input wire `CFU_REQ_RESP_ID req_id,
-    input wire `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
+    output req_ready,
+    input req_valid,
+    input `CFU_INTERFACE_ID req_interface_id,
+    input `CFU_FUNCTION_ID req_function_id,
+    input `CFU_REORDER_ID req_reorder_id,
+    input `CFU_REQ_RESP_ID req_id,
+    input `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
 
-    input wire resp_ready,
-    output wire resp_valid,
-    output wire `CFU_REQ_RESP_ID resp_id,
-    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
-    output wire resp_ok,
-    output wire `CFU_ERROR_ID resp_error_id
+    input resp_ready,
+    output resp_valid,
+    output `CFU_REQ_RESP_ID resp_id,
+    output `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output resp_ok,
+    output `CFU_ERROR_ID resp_error_id
 );
     CFUComb #(
         .CFU_FUNCTION_ID_W(CFU_FUNCTION_ID_W),
@@ -231,24 +231,24 @@ module CFU_CFUPipelined_Adapter #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W
 ) (
-    input wire clock,
-    input wire reset,
-    input wire clock_en,
+    input clock,
+    input reset,
+    input clock_en,
 
-    output wire req_ready,
-    input wire req_valid,
-    input wire `CFU_INTERFACE_ID req_interface_id,
-    input wire `CFU_FUNCTION_ID req_function_id,
-    input wire `CFU_REORDER_ID req_reorder_id,
-    input wire `CFU_REQ_RESP_ID req_id,
-    input wire `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
+    output req_ready,
+    input req_valid,
+    input `CFU_INTERFACE_ID req_interface_id,
+    input `CFU_FUNCTION_ID req_function_id,
+    input `CFU_REORDER_ID req_reorder_id,
+    input `CFU_REQ_RESP_ID req_id,
+    input `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
 
-    input wire resp_ready,
-    output wire resp_valid,
-    output wire `CFU_REQ_RESP_ID resp_id,
-    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
-    output wire resp_ok,
-    output wire `CFU_ERROR_ID resp_error_id
+    input resp_ready,
+    output resp_valid,
+    output `CFU_REQ_RESP_ID resp_id,
+    output `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output resp_ok,
+    output `CFU_ERROR_ID resp_error_id
 );
     wire pipe_ce = clock_en && req_ready;
 
@@ -279,20 +279,20 @@ module CFUPipelined_CFUComb_Adapter #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_REQ_DATA_W
 ) (
-    input wire clock,
-    input wire reset,
-    input wire clock_en,
+    input clock,
+    input reset,
+    input clock_en,
 
-    input wire req_valid,
-    input wire `CFU_FUNCTION_ID req_function_id,
-    input wire `CFU_REQ_RESP_ID req_id,
-    input wire `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
+    input req_valid,
+    input `CFU_FUNCTION_ID req_function_id,
+    input `CFU_REQ_RESP_ID req_id,
+    input `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
 
-    output wire resp_valid,
-    output wire `CFU_REQ_RESP_ID resp_id,
-    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
-    output wire resp_ok,
-    output wire `CFU_ERROR_ID resp_error_id
+    output resp_valid,
+    output `CFU_REQ_RESP_ID resp_id,
+    output `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output resp_ok,
+    output `CFU_ERROR_ID resp_error_id
 );
     CFUComb #(
         .CFU_FUNCTION_ID_W(CFU_FUNCTION_ID_W),
