@@ -2,6 +2,8 @@
 
 /* verilator lint_off DECLFILENAME */
 
+`include "cfu.h"
+
 module top();
     initial $finish;
 endmodule
@@ -38,24 +40,24 @@ module CFU #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W
 ) (
-    input logic clock,
-    input logic reset,
-    input logic clock_en,
+    input wire clock,
+    input wire reset,
+    input wire clock_en,
 
-    output logic req_ready,
-    input logic req_valid,
-    input logic [CFU_INTERFACE_ID_W-1:0] req_interface_id,
-    input logic [CFU_FUNCTION_ID_W-1:0] req_function_id,
-    input logic [CFU_REORDER_ID_W-1:0] req_reorder_id,
-    input logic [CFU_REQ_RESP_ID_W-1:0] req_id,
-    input logic [CFU_REQ_INPUTS*CFU_REQ_DATA_W-1:0] req_data,
+    output wire req_ready,
+    input wire req_valid,
+    input wire `CFU_INTERFACE_ID req_interface_id,
+    input wire `CFU_FUNCTION_ID req_function_id,
+    input wire `CFU_REORDER_ID req_reorder_id,
+    input wire `CFU_REQ_RESP_ID req_id,
+    input wire `CFU_REQ_DATA[0:REQ_INPUTS-1] req_data,
 
-    input logic resp_ready,
-    output logic resp_valid,
-    output logic [CFU_REQ_RESP_ID_W-1:0] resp_id,
-    output logic [CFU_RESP_OUTPUTS*CFU_RESP_DATA_W-1:0] resp_data,
-    output logic resp_ok,
-    output logic [CFU_ERROR_ID_W-1:0] resp_error_id
+    input wire resp_ready,
+    output wire resp_valid,
+    output wire `CFU_REQ_RESP_ID resp_id,
+    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output wire resp_ok,
+    output wire `CFU_ERROR_ID resp_error_id
 );
     initial $finish;
     // TODO: discuss interaction with clock_en and handshakes.
@@ -86,55 +88,53 @@ module CFUPipelined #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_REQ_DATA_W
 ) (
-    input logic clock,
-    input logic reset,
-    input logic clock_en,
+    input wire clock,
+    input wire reset,
+    input wire clock_en,
 
-    input logic req_valid,
-    input logic [CFU_FUNCTION_ID_W-1:0] req_function_id,
-    input logic [CFU_REQ_RESP_ID_W-1:0] req_id,
-    input logic [CFU_REQ_INPUTS*CFU_REQ_DATA_W-1:0] req_data,
+    input wire req_valid,
+    input wire `CFU_FUNCTION_ID req_function_id,
+    input wire `CFU_REQ_RESP_ID req_id,
+    input wire `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
 
-    output logic resp_valid,
-    output logic [CFU_REQ_RESP_ID_W-1:0] resp_id,
-    output logic [CFU_RESP_OUTPUTS*CFU_RESP_DATA_W-1:0] resp_data,
-    output logic resp_ok,
-    output logic [CFU_ERROR_ID_W-1:0] resp_error_id
+    output wire resp_valid,
+    output wire `CFU_REQ_RESP_ID resp_id,
+    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output wire resp_ok,
+    output wire `CFU_ERROR_ID resp_error_id
 );
-    localparam N_STAGES = 3;
-    typedef logic [CFU_FUNCTION_ID_W-1:0] FnID;
-    typedef logic [CFU_REQ_DATA_W-1:0] In;
-    typedef logic [CFU_RESP_DATA_W-1:0] Out;
-    typedef logic [CFU_REQ_RESP_ID_W-1:0] RespID;
-    typedef struct packed {
-        logic valid;
-        RespID id;
-        Out data;
-    } PipeStage;
-
     // assert(VERSION == 0 && CFU_REQ_INPUTS == 2 && CFU_RESP_OUTPUTS == 1);
+    function `CFU_RESP_DATA Fn(input `CFU_FUNCTION_ID id, input `CFU_REQ_DATA i0, input `CFU_REQ_DATA i1); begin
+        Fn = i0 * i1;
+    end endfunction
 
-    function Out Fn(input FnID id, input In i0, input In i1); begin Fn = i0 * i1; end endfunction
+    // response pipeline state
+    localparam N_STAGES = 3;
+    reg [0:N_STAGES-1] valids;
+    reg `CFU_REQ_RESP_ID[0:N_STAGES-1] ids;
+    reg `CFU_RESP_DATA[0:N_STAGES-1] data;
 
-    PipeStage [0:N_STAGES-1] pipeline;
-
-    always_ff @(posedge clock) begin
+    // response pipeline
+    always @(posedge clock) begin
         if (reset) begin
-            pipeline <= '0;
+            {valids,ids,data} <= 0;
         end
         else if (clock_en) begin
-            pipeline[0] <= '{ valid: req_valid, id: req_id, data: Fn(req_function_id, req_data[0], req_data[1]) };
-            for (i = 1; i < N_STAGES; ++i)
-                pipeline[i] <= pipeline[i-1];
+            valids[0] <= req_valid;
+            ids[0] <= req_id;
+            data[0] <= Fn(req_function_id, req_data[0], req_data[1]);
+            for (i = 1; i < N_STAGES; ++i) begin
+                {valids[i],ids[i],data[i]} <= {valids[i-1],ids[i-1],data[i-1]};
+            end
         end
     end
-    always_comb begin
-        resp_valid = pipeline[N_STAGES-1].valid;
-        resp_id = pipeline[N_STAGES-1].id;
-        resp_data[0] = pipeline[N_STAGES-1].data;
-        resp_ok = 1;
-        resp_error_id = '0;
-    end
+
+    // response
+    assign resp_valid = valids[N_STAGES-1];
+    assign resp_id = ids[N_STAGES-1];
+    assign resp_data = data[N_STAGES-1];
+    assign resp_ok = 1;
+    assign resp_error_id = 0;
 endmodule
 
 
@@ -156,17 +156,15 @@ module CFUComb #(
     parameter CFU_RESP_OUTPUTS = 1,
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W
 ) (
-    input logic [CFU_FUNCTION_ID_W-1:0] req_function_id,
-    input logic [CFU_REQ_INPUTS*CFU_REQ_DATA_W-1:0] req_data,
-    output logic [CFU_RESP_OUTPUTS*CFU_RESP_DATA_W-1:0] resp_data
+    input wire `CFU_FUNCTION_ID req_function_id,
+    input wire `CFU_REQ_DATA[0:C_REQ_INPUTS-1] req_data,
+    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data
 );
-    typedef logic [CFU_FUNCTION_ID_W-1:0] FnID;
-    typedef logic [CFU_REQ_DATA_W-1:0] In;
-    typedef logic [CFU_RESP_DATA_W-1:0] Out;
+    function `CFU_RESP_DATA Fn(input `CFU_FUNCTION_ID id, input `CFU_REQ_DATA i0, input `CFU_REQ_DATA i1); begin
+        Fn = i0 * i1;
+    end endfunction
 
-    function Out Fn(input FnID id, input In i0, input In i1); begin Fn = i0 * i1; end endfunction
-
-    always_comb resp_data[0] = Fn(req_function_id, req_data[0], req_data[1]);
+    assign resp_data[0] = Fn(req_function_id, req_data[0], req_data[1]);
 endmodule
 
 
@@ -188,24 +186,24 @@ module CFU_CFUComb_Adapter #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W
 ) (
-    input logic clock,
-    input logic reset,
-    input logic clock_en,
+    input wire clock,
+    input wire reset,
+    input wire clock_en,
 
-    output logic req_ready,
-    input logic req_valid,
-    input logic [CFU_INTERFACE_ID_W-1:0] req_interface_id,
-    input logic [CFU_FUNCTION_ID_W-1:0] req_function_id,
-    input logic [CFU_REORDER_ID_W-1:0] req_reorder_id,
-    input logic [CFU_REQ_RESP_ID_W-1:0] req_id,
-    input logic [CFU_REQ_INPUTS*CFU_REQ_DATA_W-1:0] req_data,
+    output wire req_ready,
+    input wire req_valid,
+    input wire `CFU_INTERFACE_ID req_interface_id,
+    input wire `CFU_FUNCTION_ID req_function_id,
+    input wire `CFU_REORDER_ID req_reorder_id,
+    input wire `CFU_REQ_RESP_ID req_id,
+    input wire `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
 
-    input logic resp_ready,
-    output logic resp_valid,
-    output logic [CFU_REQ_RESP_ID_W-1:0] resp_id,
-    output logic [CFU_RESP_OUTPUTS*CFU_RESP_DATA_W-1:0] resp_data,
-    output logic resp_ok,
-    output logic [CFU_ERROR_ID_W-1:0] resp_error_id
+    input wire resp_ready,
+    output wire resp_valid,
+    output wire `CFU_REQ_RESP_ID resp_id,
+    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output wire resp_ok,
+    output wire `CFU_ERROR_ID resp_error_id
 );
     CFUComb #(
         .CFU_FUNCTION_ID_W(CFU_FUNCTION_ID_W),
@@ -213,13 +211,11 @@ module CFU_CFUComb_Adapter #(
         .CFU_RESP_OUTPUTS(CFU_RESP_OUTPUTS), .CFU_RESP_DATA_W(CFU_RESP_DATA_W))
     comb(.req_function_id, .req_data, .resp_data);
 
-    always_comb begin
-        req_ready = resp_ready;
-        resp_valid = req_valid;
-        resp_id = req_id;
-        resp_ok = 1;
-        resp_error_id = '0;
-    end
+    assign req_ready = resp_ready;
+    assign resp_valid = req_valid;
+    assign resp_id = req_id;
+    assign resp_ok = 1;
+    assign resp_error_id = 0;
 endmodule
 
 
@@ -235,26 +231,26 @@ module CFU_CFUPipelined_Adapter #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W
 ) (
-    input logic clock,
-    input logic reset,
-    input logic clock_en,
+    input wire clock,
+    input wire reset,
+    input wire clock_en,
 
-    output logic req_ready,
-    input logic req_valid,
-    input logic [CFU_INTERFACE_ID_W-1:0] req_interface_id,
-    input logic [CFU_FUNCTION_ID_W-1:0] req_function_id,
-    input logic [CFU_REORDER_ID_W-1:0] req_reorder_id,
-    input logic [CFU_REQ_RESP_ID_W-1:0] req_id,
-    input logic [CFU_REQ_INPUTS*CFU_REQ_DATA_W-1:0] req_data,
+    output wire req_ready,
+    input wire req_valid,
+    input wire `CFU_INTERFACE_ID req_interface_id,
+    input wire `CFU_FUNCTION_ID req_function_id,
+    input wire `CFU_REORDER_ID req_reorder_id,
+    input wire `CFU_REQ_RESP_ID req_id,
+    input wire `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
 
-    input logic resp_ready,
-    output logic resp_valid,
-    output logic [CFU_REQ_RESP_ID_W-1:0] resp_id,
-    output logic [CFU_RESP_OUTPUTS*CFU_RESP_DATA_W-1:0] resp_data,
-    output logic resp_ok,
-    output logic [CFU_ERROR_ID_W-1:0] resp_error_id
+    input wire resp_ready,
+    output wire resp_valid,
+    output wire `CFU_REQ_RESP_ID resp_id,
+    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output wire resp_ok,
+    output wire `CFU_ERROR_ID resp_error_id
 );
-    logic pipe_ce;
+    wire pipe_ce = clock_en && req_ready;
 
     CFUPipelined #(
         .CFU_VERSION(CFU_VERSION),
@@ -269,8 +265,7 @@ module CFU_CFUPipelined_Adapter #(
 
     // Advance pipeline unless a valid response is awaiting and is not
     // accepted this cycle.
-    always_comb req_ready = !(resp_valid && !resp_ready);
-    always_comb pipe_ce = clock_en && req_ready;
+    assign req_ready = !(resp_valid && !resp_ready);
 endmodule
 
 
@@ -284,20 +279,20 @@ module CFUPipelined_CFUComb_Adapter #(
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
     parameter CFU_ERROR_ID_W = CFU_REQ_DATA_W
 ) (
-    input logic clock,
-    input logic reset,
-    input logic clock_en,
+    input wire clock,
+    input wire reset,
+    input wire clock_en,
 
-    input logic req_valid,
-    input logic [CFU_FUNCTION_ID_W-1:0] req_function_id,
-    input logic [CFU_REQ_RESP_ID_W-1:0] req_id,
-    input logic [CFU_REQ_INPUTS*CFU_REQ_DATA_W-1:0] req_data,
+    input wire req_valid,
+    input wire `CFU_FUNCTION_ID req_function_id,
+    input wire `CFU_REQ_RESP_ID req_id,
+    input wire `CFU_REQ_DATA[0:CFU_REQ_INPUTS-1] req_data,
 
-    output logic resp_valid,
-    output logic [CFU_REQ_RESP_ID_W-1:0] resp_id,
-    output logic [CFU_RESP_OUTPUTS*CFU_RESP_DATA_W-1:0] resp_data,
-    output logic resp_ok,
-    output logic [CFU_ERROR_ID_W-1:0] resp_error_id
+    output wire resp_valid,
+    output wire `CFU_REQ_RESP_ID resp_id,
+    output wire `CFU_RESP_DATA[0:CFU_RESP_OUTPUTS-1] resp_data,
+    output wire resp_ok,
+    output wire `CFU_ERROR_ID resp_error_id
 );
     CFUComb #(
         .CFU_FUNCTION_ID_W(CFU_FUNCTION_ID_W),
@@ -305,10 +300,8 @@ module CFUPipelined_CFUComb_Adapter #(
         .CFU_RESP_OUTPUTS(CFU_RESP_OUTPUTS), .CFU_RESP_DATA_W(CFU_RESP_DATA_W))
     comb(.req_function_id, .req_data, .resp_data);
 
-    always_comb begin
-        resp_valid = req_valid;
-        resp_id = req_id;
-        resp_ok = 1;
-        resp_error_id = '0;
-    end
+    assign resp_valid = req_valid;
+    assign resp_id = req_id;
+    assign resp_ok = 1;
+    assign resp_error_id = 0;
 endmodule
