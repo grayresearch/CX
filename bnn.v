@@ -51,7 +51,7 @@ endmodule
 // Level-0 (Combinational) 1b binary neural net dot product combinational CFU
 //
 // A binary neural net has 1b weights and activations, each encoded { 0=>+1, 1=>-1 }.
-// The dot product of W: w*1b weights and A: w*1b activations is popcount(W~^A).
+// The (biased) dot product of W: w*1b weights and A: w*1b activations is popcount(W~^A).
 //
 // Metadata
 //  Supports: REQ_WIDTH==32 or REQ_WIDTH==64
