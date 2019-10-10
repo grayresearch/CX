@@ -17,23 +17,23 @@ module TB #(
     parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W,
     parameter IID_IMULACC = 1000
 ) (
-	input clock,
-	input reset);
+    input clock,
+    input reset);
 
-//	reg clock_en = 1;
-	reg [15:0] cycle = 0;
-	reg [15:0] lfsr = 0;
+//  reg clock_en = 1;
+    reg [15:0] cycle = 0;
+    reg [15:0] lfsr = 0;
 
-	always @(posedge clock) begin
-		if (&cycle) $finish;
-		cycle <= reset ? 0 : (cycle + 1'b1);
-		// XAPP 052 RIP Peter Aflke
-		lfsr <= reset ? 0 : {lfsr[14:0],~(lfsr[15]^lfsr[14]^lfsr[12]^lfsr[3])};
-	end
+    always @(posedge clock) begin
+        if (&cycle) $finish;
+        cycle <= reset ? 0 : (cycle + 1'b1);
+        // XAPP 052 RIP Peter Aflke
+        lfsr <= reset ? 0 : {lfsr[14:0],~(lfsr[15]^lfsr[14]^lfsr[12]^lfsr[3])};
+    end
 
-	PopcountTB ptb(.clock, .cycle);
+    PopcountTB ptb(.clock, .cycle);
 
-	BNNDotProd32TB btb(.clock, .cycle, .lfsr);
+    BNNDotProd32TB btb(.clock, .cycle, .lfsr);
 
-	MulAccTB mactb(.clock, .reset, .cycle, .lfsr);
+    MulAccTB mactb(.clock, .reset, .cycle, .lfsr);
 endmodule

@@ -12,52 +12,52 @@ module PopcountTB #(
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W
 ) (
-	input clock,
-	input [15:0] cycle);
+    input clock,
+    input [15:0] cycle);
 
     reg [0:0] `CFU_REQ_DATA req_data `vp = 0;
     reg [0:0] `CFU_RESP_DATA resp_data `vp = 0;
 
-	int i;
+    int i;
     reg `CFU_RESP_DATA answer `vp = 0;
-	always @* begin
-		case (cycle)
-		default: req_data[0] = 0;
-		 1: req_data[0] = 32'h1;
-		 2: req_data[0] = 32'h3;
-		 3: req_data[0] = 32'h7;
-		 4: req_data[0] = 32'hF;
-		 5: req_data[0] = 32'h1F;
-		 6: req_data[0] = 32'h3F;
-		 7: req_data[0] = 32'h7F;
-		 8: req_data[0] = 32'hFF;
+    always @* begin
+        case (cycle)
+        default: req_data[0] = 0;
+         1: req_data[0] = 32'h1;
+         2: req_data[0] = 32'h3;
+         3: req_data[0] = 32'h7;
+         4: req_data[0] = 32'hF;
+         5: req_data[0] = 32'h1F;
+         6: req_data[0] = 32'h3F;
+         7: req_data[0] = 32'h7F;
+         8: req_data[0] = 32'hFF;
 
-		 9: req_data[0] = 32'h10000000;
-		10: req_data[0] = 32'h30000000;
-		11: req_data[0] = 32'h70000000;
-		12: req_data[0] = 32'hF0000000;
-		13: req_data[0] = 32'h1F000000;
-		14: req_data[0] = 32'h3F000000;
-		15: req_data[0] = 32'h7F000000;
-		16: req_data[0] = 32'hFF000000;
+         9: req_data[0] = 32'h10000000;
+        10: req_data[0] = 32'h30000000;
+        11: req_data[0] = 32'h70000000;
+        12: req_data[0] = 32'hF0000000;
+        13: req_data[0] = 32'h1F000000;
+        14: req_data[0] = 32'h3F000000;
+        15: req_data[0] = 32'h7F000000;
+        16: req_data[0] = 32'hFF000000;
 
-		17: req_data[0] = 32'hFFF;
-		18: req_data[0] = 32'hFFFF;
-		19: req_data[0] = 32'hFFFFF;
-		20: req_data[0] = 32'hFFFFFF;
-		21: req_data[0] = 32'hFFFFFFF;
-		22: req_data[0] = 32'hFFFFFFFF;
-		23: req_data[0] = 32'hF0F0F0F0;
-		24: req_data[0] = 32'hC0C0C0C0;
-		25: req_data[0] = 32'h80808080;
-		endcase
+        17: req_data[0] = 32'hFFF;
+        18: req_data[0] = 32'hFFFF;
+        19: req_data[0] = 32'hFFFFF;
+        20: req_data[0] = 32'hFFFFFF;
+        21: req_data[0] = 32'hFFFFFFF;
+        22: req_data[0] = 32'hFFFFFFFF;
+        23: req_data[0] = 32'hF0F0F0F0;
+        24: req_data[0] = 32'hC0C0C0C0;
+        25: req_data[0] = 32'h80808080;
+        endcase
 
-		answer = 0;
-		for (i = 0; i < CFU_REQ_DATA_W; i = i + 1) begin
-			if (req_data[0][i])
-				answer = answer + 1;
-		end
-	end
+        answer = 0;
+        for (i = 0; i < CFU_REQ_DATA_W; i = i + 1) begin
+            if (req_data[0][i])
+                answer = answer + 1;
+        end
+    end
 
     Popcount32_CombCFU #(
         .CFU_FUNCTION_ID_W(1),
@@ -65,10 +65,10 @@ module PopcountTB #(
         .CFU_RESP_OUTPUTS(1), .CFU_RESP_DATA_W(CFU_RESP_DATA_W))
       pc(.req_function_id(1'b0), .req_data(req_data), .resp_data(resp_data));
 
-	always @(posedge clock) begin
-		if (resp_data[0] != answer)
-			$display("fail: popcount(%08x): resp_data[0]=%1d != %1d", req_data[0], resp_data[0], answer);
-	end
+    always @(posedge clock) begin
+        if (resp_data[0] != answer)
+            $display("fail: popcount(%08x): resp_data[0]=%1d != %1d", req_data[0], resp_data[0], answer);
+    end
 endmodule
 
 
