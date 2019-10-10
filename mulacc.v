@@ -40,7 +40,7 @@ module MulAccTB #(
             req_function_id = 0; // reset
         end
         else if (cycle[15:8] == 0) begin
-            // Sum 1..100 in honor of young Gauss
+            // First off, sum 1..100 in honor of young Gauss.
             if (cycle[7:0] <= 100) begin
                 req_data[0] = 1;
                 req_data[1] = {16'b0,cycle};
@@ -50,8 +50,9 @@ module MulAccTB #(
             end
         end
         else begin
+			// Later iterations, MAC of random input pairs
             req_data[0] = {16'b0,cycle};
-            req_data[1] = {16'b0,lfsr};
+            req_data[1] = {cycle,lfsr};
         end
     end
 
