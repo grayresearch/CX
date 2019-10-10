@@ -12,9 +12,11 @@
 `define CFU_RESP_DATA       [CFU_RESP_DATA_W-1:0]
 `define CFU_ERROR_ID        [CFU_ERROR_ID_W-1:0]
 
-`define CFU_L0_PARAMETERS(INPUTS,WIDTH) \
+`define CFU_DATA            [CFU_RESP_DATA_W-1:0]
+
+`define CFU_L0_PARAMETERS(INPUTS,DEF_WIDTH) \
     parameter CFU_FUNCTION_ID_W = 16, \
     parameter CFU_REQ_INPUTS = INPUTS, \
-    parameter CFU_REQ_DATA_W = WIDTH, \
+    parameter CFU_REQ_DATA_W = DEF_WIDTH, \
     parameter CFU_RESP_OUTPUTS = 1, \
-    parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W
+    parameter CFU_RESP_DATA_W = DEF_WIDTH

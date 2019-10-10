@@ -4,32 +4,6 @@
 
 `include "cfu.h"
 
-module top #(
-    parameter CFU_VERSION = 0,
-    parameter CFU_INTERFACE_ID_W = 16,
-    parameter CFU_FUNCTION_ID_W = 1,
-    parameter CFU_REORDER_ID_W = 8,
-    parameter CFU_REQ_RESP_ID_W = 6,
-    parameter CFU_REQ_INPUTS = 1,
-    parameter CFU_REQ_DATA_W = 32,
-    parameter CFU_RESP_OUTPUTS = 1,
-    parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
-    parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W)
-    ();
-
-    initial $finish;
-
-    reg [0:0]`CFU_REQ_DATA pc_req_data `vp = 0;
-    reg [0:0]`CFU_RESP_DATA pc_resp_data `vp = 0;
-
-    Popcount32CFUComb #(
-        .CFU_FUNCTION_ID_W(1),
-        .CFU_REQ_INPUTS(1), .CFU_REQ_DATA_W(CFU_REQ_DATA_W),
-        .CFU_RESP_OUTPUTS(1), .CFU_RESP_DATA_W(CFU_REQ_DATA_W))
-        pc(.req_function_id(1'b0), .req_data(pc_req_data), .resp_data(pc_resp_data));
-endmodule
-
-
 // General CFU interface
 //
 // Handshake
