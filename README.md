@@ -81,15 +81,17 @@ functions 0 and 2 of CI-123 (with its CFs 0-4), and the second library
 uses functions 1,3 of CI-456 (with its CFs 0-3) the tool might establish
 the mapping
 
-| GCFID  | CIID    | CFID |
-| 0      | CI-123  | 0 |
-| 1      | CI-123  | 1 |
-| 2      | CI-123  | 2 |
-| 3      | CI-123  | 3 |
-| 4      | CI-123  | 4 |
-| 5      | CI-456  | 0 |
-| 6      | CI-456  | 1 |
-| 7      | CI-456  | 2 |
+`
+GCFID  CIID    CFID
+0      CI-123  0
+1      CI-123  1
+2      CI-123  2
+3      CI-123  3
+4      CI-123  4
+5      CI-456  0
+6      CI-456  1
+7      CI-456  2
+`
 
 The tool maps custom function invocations (for example to CI-456 function 1)
 to GCFID invocations (here GCFID 6).
