@@ -91,6 +91,7 @@ GCFID  CIID    CFID
 5      CI-456  0
 6      CI-456  1
 7      CI-456  2
+8      CI-456  3
 ```
 
 The tool maps custom function invocations (for example to CI-456 function 1)
