@@ -27,7 +27,7 @@ or more response data.
 
 A CFU may have state. A CF need not be a pure function. For example,
 invoking the same CF multiple times, with the same request data, may
-produce different respose data.
+produce different response data.
 
 CFs are bundled into Custom Interfaces (CIs). Custom Interfaces are
 inspired by the Interface concept of the Microsoft Component Object
@@ -60,10 +60,6 @@ thousands of organizations, over thousands of applications,
 it may not be possible to carve up the finite opcode space of
 a target ISA into fixed opcode assignments.
 
-(IDEA: Rather than do this, supply CIID and CFID values as additional
-request data. That is, there is one "invoke custom instruction" opcode
-and the rest are 16b or 32b CIIDs and 16b CFIDs)
-
 A Custom Function Unit Package comprises a CFU Core that implements the
 CFU-LI, packaged with CFU Metadata and its CFU Software (source code or
 binary library archive).
@@ -85,15 +81,15 @@ functions 0 and 2 of CI-123 (with its CFs 0-4), and the second library
 uses functions 1,3 of CI-456 (with its CFs 0-3) the tool might establish
 the mapping
 
-GCFID	CIID	CFID
-0		CI-123	0	
-1		CI-123	1
-2		CI-123	2
-3		CI-123	3
-4		CI-123	4
-5		CI-456	0
-6		CI-456	1
-7		CI-456	2
+| GCFID  | CIID    | CFID
+| 0      | CI-123  | 0   
+| 1      | CI-123  | 1
+| 2      | CI-123  | 2
+| 3      | CI-123  | 3
+| 4      | CI-123  | 4
+| 5      | CI-456  | 0
+| 6      | CI-456  | 1
+| 7      | CI-456  | 2
 
 The tool maps custom function invocations (for example to CI-456 function 1)
 to GCFID invocations (here GCFID 6).
@@ -106,3 +102,7 @@ invocation of GCFID 6.  Then at execution time, a hardware CPU-CFU shim
 will map GCFID 6 into an invocation of the CFU that implements CI-456
 with CFID=1.
 
+
+(IDEA: Rather than do this, supply CIID and CFID values as additional
+request data. That is, there is one "invoke custom instruction" opcode
+and the rest are 16b or 32b CIIDs and 16b CFIDs)
