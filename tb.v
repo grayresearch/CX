@@ -36,4 +36,6 @@ module TB #(
     BNNDotProd32TB btb(.clock, .cycle, .lfsr);
 
     MulAccTB mactb(.clock, .reset, .cycle, .lfsr);
+
+    MulAccSIMDTB macsimdtb(.clock, .reset, .cycle, .lfsr);
 endmodule
