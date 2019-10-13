@@ -290,11 +290,12 @@ endmodule
 // No dynamic interface_id, reorder_id, req_ready, resp_ready
 //
 // Metadata
-//  Supports: REQ_WIDTH==32 or REQ_WIDTH==64
+//  Supports: REQ_DATA_W==32 or REQ_DATA_W==64
+//  Supports: REQ_ELT_W = 1, 2, 4, ..., REQ_DATA_W/2
 //  stateful interface /*IID_IMulAcc*/ IMulAcc {
 //      int acc;
 //      /*0*/ reset(a,b) { return acc = 0; }
-//      /*1*/ mulacc(a,b) { return acc += a*b; }
+//      /*1*/ mulacc(a,b) { return acc += {a[j]*b[j] for each REQ_ELT_W-bit subword j in REQ_DATA_W}; }
 //  }
 //  II=1
 //  Latency=3
