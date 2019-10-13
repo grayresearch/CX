@@ -6,7 +6,7 @@
 
 /* verilator lint_off DECLFILENAME */
 
-`include "cfu.h"
+`include "cfu.vh"
 
 module PopcountTB #(
     parameter CFU_REQ_DATA_W = 32,

@@ -2,7 +2,7 @@
 
 /* verilator lint_off DECLFILENAME */
 
-`include "cfu.h"
+`include "cfu.vh"
 
 module TB #(
     parameter CFU_VERSION = 0,

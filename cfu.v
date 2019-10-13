@@ -2,7 +2,7 @@
 
 /* verilator lint_off DECLFILENAME */
 
-`include "cfu.h"
+`include "cfu.vh"
 
 // General CFU interface
 //

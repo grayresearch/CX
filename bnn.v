@@ -6,7 +6,7 @@
 
 /* verilator lint_off DECLFILENAME */
 
-`include "cfu.h"
+`include "cfu.vh"
 
 // Test bench
 module BNNDotProd32TB #(
