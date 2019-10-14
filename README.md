@@ -197,6 +197,7 @@ response.
 
 To recap, each feature level introduces new parameters and ports
 to the CFU-LI, in particular:
+
 0) LI0: adds request (CFID, request data) and response (err/OK, response data).
 1) LI1: adds request ID/response ID correlation.
 2) LI2: adds valid/ready request and response handshakes.
