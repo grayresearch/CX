@@ -178,9 +178,10 @@ request/response handshakes: a CFU which accepts a request (CFID, request
 data, request ID) and produces a corresponding response (err/OK, response
 data, response ID) in zero or more cycles. The request signaling has
 valid/ready handshake so that a CFU may signal it is unable to accept a
-request this cycle, and the response signaling also has a valid/ready
-handshake to that a CPU may signal it is unable to accept a response
-this cycle. Example: non-pipelined, multicycle divide unit with early-out.
+request this cycle, and response signaling has a valid/ready handshake
+to that a CPU may signal it is unable to accept a response this
+cycle. Example: one request-at-a-time, multi-cycle divide unit with early-out
+and response handshaking.
 
 3) LI3: arbitrary-latency, possibly pipelined, possibly out-of-order
 function unit, with request/response handshakes: a CFU which accepts a
@@ -233,3 +234,8 @@ The use of request ID/response ID correlation also enables CFU sharing
 among multiple CPU masters. A CFU multiplexer shim may add additional
 source/destination routing state to a request ID so that response IDs
 it receives may be routed back to the right CPU master.
+
+TODO: discuss/decide if the above stratification is sufficient. For example,
+is it acceptable to bundle request handshake + response handshake into
+one strata, or do we need a lattice "no handshake -> req handshake |
+resp handshake -> req + resp handshake"?
