@@ -236,7 +236,7 @@ among multiple CPU masters. A CFU multiplexer shim may add additional
 source/destination routing data to a request ID so that subsequent
 response IDs directly indicate the specific CPU master destination.
 
-** TODO: discuss/decide if the above stratification is sufficient. For example,
+TODO: discuss/decide if the above stratification is sufficient. For example,
 is it acceptable to bundle request handshake + response handshake into
-one strata, or do we need a lattice "no handshake -> req handshake |
-resp handshake -> req + resp handshake"? **
+one feature level, or do we need a **lattice** "no handshake -> req handshake |
+resp handshake -> req + resp handshake"?
