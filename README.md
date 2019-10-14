@@ -145,7 +145,7 @@ invocations in the compiled object code.
 At execution time, a hardware CPU-CFU shim will map the GCFID invocation
 into an invocation of some CFU with some CI-scoped CFID.
 
-For example, here if CFU Software uses CI-456.1, the tool maps this into
+For example, here if CFU Software uses CI-456.CF-1, the tool maps this into
 invocation of GCFID 6 in the compiled object code. Then at execution time,
 a hardware CPU-CFU shim maps GCFID 6 into an invocation of the CFU that
 implements CI-456, with CFID=1.
