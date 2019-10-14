@@ -84,6 +84,8 @@ a new CI. Implementers and clients of the original CI are not impacted.
 
 Multiple CFUs may implement the same CI.
 
+A CFU may implement multiple CIs.
+
 Compiling a Custom System
 -------------------------
 
@@ -237,3 +239,10 @@ TODO: discuss/decide if the above stratification is sufficient. For example,
 is it acceptable to bundle request handshake + response handshake into
 one feature level, or do we need a **lattice** "no handshake -> req handshake |
 resp handshake -> req + resp handshake"?
+
+TODO: Is CIID always a ** metadata parameter **, or in higher CFU-LI
+feature levels may it be provided dynamically on a port as part of the
+request port signal bundle?  For example, suppose an LI[>=2] CFU core
+may implement >1 CI, but when the core is composed into a given SW + HW
+system by the system composition tool, it may be (must be?) configured
+and specialized to implement one fixed CI.
