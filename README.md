@@ -166,7 +166,7 @@ a request (CFID, request data) and produces a corresponding response
 (err/OK, response data) in the same cycle. Example: combinational bitcount
 (population count) unit.
 
-1) L1I: fixed-latency, pipelined, in-order function unit: a CFU
+1) LI1: fixed-latency, pipelined, in-order function unit: a CFU
 which accepts a request (CFID, request data, request ID) and produces a
 corresponding response (err/OK, response data, response ID) in a fixed
 number of cycles (may be zero).  The request ID from the CPU is returned
