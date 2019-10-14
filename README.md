@@ -111,7 +111,8 @@ the target ISA.
 For example, if the app comprises two libraries, the first library uses
 functions 0 and 2 of CI-123 (with its CFs 0-4), and the second library
 uses functions 1,3 of CI-456 (with its CFs 0-3) the tool might establish
-the mapping ```
+the mapping
+```
 GCFID  CIID    CFID
 0      CI-123  0
 1      CI-123  1
@@ -122,7 +123,9 @@ GCFID  CIID    CFID
 6      CI-456  1
 7      CI-456  2
 8      CI-456  3
-```(or some another mapping such as: ```
+```
+(or some another mapping such as:
+```
 GCFID  CIID    CFID
  0     CI-123  0
  1     CI-123  1
@@ -133,7 +136,8 @@ GCFID  CIID    CFID
  9     CI-456  1
 10     CI-456  2
 11     CI-456  3
-```).
+```
+).
 
 The tool maps custom function invocations in the software to GCFID
 invocations in the compiled object code.
