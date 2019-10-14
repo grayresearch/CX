@@ -7,40 +7,43 @@ Introduction
 ------------
 
 In the coming winter of Moore's Law, computer system designers will
-introduce various kinds of application-specific custom hardware
-accelerators into their systems to boost performance / energy.
+introduce various types of application-specific custom hardware
+accelerators into their systems to boost performance / reduce energy.
 
 A custom function unit (CFU) core is a type of accelerator hardware that
 may be tightly coupled into the pipeline of a CPU core, to add new custom
-function instructions that complement the CPU's standard functions such
-as arithmetic/logic operations and memory loads/stores.
+function instructions that complement the CPU's standard functions (such
+as arithmetic/logic operations).
 
 The present Custom Function Unit (CFU) Specification is designed to
 enable robust composition of independently authored, independently
-versioned CPU cores and CFU cores.
+versioned CPU cores and CFU cores.  This will enable a rich ecosystem
+of interoperable, app-optimized CFU cores and their software libraries,
+and straightforward development of app-optimized SoCs.
 
-This will enable a rich ecosystem of interoperable, app-optimized CFU
-cores and their software libraries, and straightforward development of
-app-optimized SoCs.
-
-The CFU Logic Interface (CFU-LI) spec defines the logic interface between
-a CPU core and a CFU core.
+The present CFU Logic Interface (CFU-LI) spec defines the logic interface
+between a CPU core and a CFU core.
 
 Scope
 -----
 
-The initial CFU Spec focuses upon, and restricts its scope to,
-those Custom Function Units that plug into the integer pipeline of
-a conventional microprocessor CPU, just like a standard two-operand,
-one-result arithmetic/logic unit (ALU).
+The initial CFU Spec focuses upon, and restricts its scope to, those
+function units that plug into the integer pipeline of a conventional
+microprocessor CPU, just like the traditional two-operand, one-result
+arithmetic/logic unit (ALU).
 
 For the purposes and scope of this Spec, a Custom Function Unit is
 defined as a hardware core that
 * accepts requests and produces responses, wherein:
 * requests may comprise a custom function ID and 0-3 request data words;
-* responses may comprise a success/error code and 0-2 response data words or an error ID;
-* may be stateless, such that all function invocations are pure functions and are side-effect free, or
-* may be stateful, with private internal state only, such that all custom function invocations are side-effect free, except possibly changing the CFU's private internal state (only).
+* responses may comprise a success/error code and 0-2 response data
+words or an error ID;
+* may be stateless, such that all function invocations are pure functions
+and are side-effect free, or
+* may be stateful, with private internal state only, such that all
+function invocations are side-effect free, except for possibly changing
+the CFU's private internal state (only).
+
 Therefore function units that directly access or update system memory,
 or architectural state of the CPU, including the CPU's command/status
 registers (CSRs), are out of the scope of this specification.
