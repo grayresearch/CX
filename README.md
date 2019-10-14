@@ -137,7 +137,7 @@ GCFID  CIID    CFID
 10     CI-456  2
 11     CI-456  3
 ```
-).
+or even other, one-hot encodings, that might be decoded in fewer gate delays).
 
 The tool maps custom function invocations in the software to GCFID
 invocations in the compiled object code.
@@ -155,6 +155,81 @@ request data. That is, there is one "invoke custom instruction" opcode
 and the rest are 16b or 32b CIIDs and 16b CFIDs)
 
 
-CFU Logic Interface Service Levels
-----
+CFU Logic Interface (CFU-LI) Feature Levels
+-------------------------------------------
 
+The CFU-LI is stratified into four nested, increasingly general,
+increasingly complex feature levels.
+
+0) LI0: zero-latency combinational function unit: a CFU which accepts
+a request (CFID, request data) and produces a corresponding response
+(err/OK, response data) in the same cycle. Example: combinational bitcount
+(population count) unit.
+
+1) L1I: fixed-latency, pipelined, in-order function unit: a CFU
+which accepts a request (CFID, request data, request ID) and produces a
+corresponding response (err/OK, response data, response ID) in a fixed
+number of cycles (may be zero).  The request ID from the CPU is returned
+as the response ID from the CFU, and is used by the CPU to correlate the
+response to some prior request. Example: pipelined multiplier unit.
+
+2) LI2: arbitrary-latency, possibly pipelined, in-order function unit, with
+request/response handshakes: a CFU which accepts a request (CFID, request
+data, request ID) and produces a corresponding response (err/OK, response
+data, response ID) in zero or more cycles. The request signaling has
+valid/ready handshake so that a CFU may signal it is unable to accept a
+request this cycle, and the response signaling also has a valid/ready
+handshake to that a CPU may signal it is unable to accept a response
+this cycle. Example: non-pipelined, multicycle divide unit with early-out.
+
+3) LI3: arbitrary-latency, possibly pipelined, possibly out-of-order
+function unit, with request/response handshakes: a CFU which accepts a
+request (CFID, request data, request ID, reorder ID) and produces a corresponding
+response (err/OK, response data, response ID) in zero or more cycles.
+The CFU may return responses to requests in a different order than the
+requests themselves were received. Example: a combination pipelined
+multiply+divide unit, wherein a multiply request may require three
+cycles and a divide request 33 cycles, such that after accepting a divide
+request and a multiply request, it provides the multiply response before
+the divide response.
+
+To recap, each feature level introduces new parameters and ports
+to the CFU-LI:
+
+0) LI0: adds request (CFID, request data) and response (err/OK, response data).
+
+1) LI1: adds request ID/response ID correlation.
+
+2) LI2: adds valid/ready request and response handshakes.
+
+3) LI3: adds request reorder ID constraint, affording in-/out-of-order response control.
+
+This feature stratification keeps simple things simple and makes
+complex things possible. It anticipates and accomodates a diversity
+of CPUs that may be composed with CFUs. For example:
+* a simple, one instruction at a time, CPU;
+* a pipelined CPU;
+* a non-speculating, in-order issue, concurrent execution pipelines,
+out-of-order completion CPU;
+* a speculating, out-of-order issue CPU
+* a speculating, superscalar, out-of-order CPU
+* a hardware multithreaded CPU (may issue requests / receive responses
+for various interleaved threads)
+* a CPU cluster, of a multiple of the above types of CPU, that share a
+common CFU.
+
+In general, a CPU that implements LI[k] can directly use CFUs that
+support LI[k], and can use CFUs for LI[i], i<k, by means of a CFU
+shim. For example,
+
+* an LI1(LI0) shim implements LI[1] and encapsulates a LI[0] CFU by
+forwarding the CF request ID as the response ID.
+
+* an LI2(LI1) shim implements LI[2] and encapsulates an LI[1] CFU by
+using pipeline clock enables and/or FIFOs to implement request and
+response handshaking.  the response ID.
+
+The use of request ID/response ID correlation also enables CFU sharing
+among multiple CPU masters. A CFU multiplexer shim may add additional
+source/destination routing state to a request ID so that response IDs
+it receives may be routed back to the right CPU master.
