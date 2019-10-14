@@ -184,18 +184,19 @@ cycle. Example: one request-at-a-time, multi-cycle divide unit with early-out
 and response handshaking.
 
 3) LI3: arbitrary-latency, possibly pipelined, possibly out-of-order
-function unit, with request/response handshakes: a CFU which accepts a
-request (CFID, request data, request ID, reorder ID) and produces a corresponding
-response (err/OK, response data, response ID) in zero or more cycles.
-The CFU may return responses to requests in a different order than the
-requests themselves were received. Example: a combination pipelined
-multiply+divide unit, wherein a multiply request may require three
-cycles and a divide request 33 cycles, such that after accepting a divide
-request and a multiply request, it provides the multiply response before
-the divide response.
+function unit, with request/response handshakes: a CFU which accepts
+a request (CFID, request data, request ID, reorder ID) and produces a
+corresponding response (err/OK, response data, response ID) in zero or
+more cycles.  The CFU may return responses to requests in a different
+order than the requests themselves were received. Example: a combined
+pipelined multiply and divide unit, wherein multiply requests are
+pipelined and require three cycles and divide requests are one-at-a-time
+and require 33 cycles, such that after accepting a divide request and
+a multiply request, it provides the multiply response before the divide
+response.
 
 To recap, each feature level introduces new parameters and ports
-to the CFU-LI:
+to the CFU-LI, in particular:
 
 0) LI0: adds request (CFID, request data) and response (err/OK, response data).
 
@@ -212,10 +213,10 @@ of CPUs that may be composed with CFUs. For example:
 * a pipelined CPU;
 * a non-speculating, in-order issue, concurrent execution pipelines,
 out-of-order completion CPU;
-* a speculating, out-of-order issue CPU
-* a speculating, superscalar, out-of-order CPU
+* a speculating, out-of-order issue CPU;
+* a speculating, superscalar, out-of-order CPU;
 * a hardware multithreaded CPU (may issue requests / receive responses
-for various interleaved threads)
+for various interleaved threads); and
 * a CPU cluster, of a multiple of the above types of CPU, that share a
 common CFU.
 
@@ -230,12 +231,12 @@ forwarding the CF request ID as the response ID.
 using pipeline clock enables and/or FIFOs to implement request and
 response handshaking.  the response ID.
 
-The use of request ID/response ID correlation also enables CFU sharing
+The use of request ID/response ID correlation also simplifies CFU sharing
 among multiple CPU masters. A CFU multiplexer shim may add additional
-source/destination routing state to a request ID so that response IDs
-it receives may be routed back to the right CPU master.
+source/destination routing data to a request ID so that subsequent
+response IDs directly indicate the specific CPU master destination.
 
-TODO: discuss/decide if the above stratification is sufficient. For example,
+** TODO: discuss/decide if the above stratification is sufficient. For example,
 is it acceptable to bundle request handshake + response handshake into
 one strata, or do we need a lattice "no handshake -> req handshake |
-resp handshake -> req + resp handshake"?
+resp handshake -> req + resp handshake"? **
