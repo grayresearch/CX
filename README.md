@@ -107,7 +107,7 @@ to determine the (app-specific) custom target instruction set mapping
 required for the application to invoke the CFs.
 
 Each CI specifies some number of CFs: CI.NCF.  The tool maps each CI's
-continuous range of CFs into a global CF index (GCFID) appropriate for
+continuous range of CFs into a System CF index (SCFID) appropriate for
 the target ISA.
 
 For example, if the app comprises two libraries, the first library uses
@@ -115,7 +115,7 @@ functions 0 and 2 of CI-123 (with its CFs 0-4), and the second library
 uses functions 1,3 of CI-456 (with its CFs 0-3) the tool might establish
 the mapping
 ```
-GCFID  CIID    CFID
+SCFID  CIID    CFID
 0      CI-123  0
 1      CI-123  1
 2      CI-123  2
@@ -128,7 +128,7 @@ GCFID  CIID    CFID
 ```
 (or some another mapping such as:
 ```
-GCFID  CIID    CFID
+SCFID  CIID    CFID
  0     CI-123  0
  1     CI-123  1
  2     CI-123  2
@@ -141,15 +141,22 @@ GCFID  CIID    CFID
 ```
 or even other, one-hot encodings, that might be decoded in fewer gate delays).
 
-The tool maps custom function invocations in the software to GCFID
+The tool maps custom function invocations in the software to SCFID
 invocations in the compiled object code.
 
-At execution time, a hardware CPU-CFU shim will map the GCFID invocation
+In one model, the CI-aware software is distributed in source and recompiled
+after the CFID to SCFID mapping is determined.
+
+In another model, the CI-aware software may also be a compiled binary with
+relocations (fixups) to CI.CFID symbols. At link time the CI.CFID relocations
+are resolved to SCFIDs written to the correct fields of the CIs.
+
+At execution time, a hardware CPU-CFU shim will map the SCFID invocation
 into an invocation of some CFU with some CI-scoped CFID.
 
 For example, here if CFU Software uses CI-456.CF-1, the tool maps this into
-invocation of GCFID 6 in the compiled object code. Then at execution time,
-a hardware CPU-CFU shim maps GCFID 6 into an invocation of the CFU that
+invocation of SCFID 6 in the compiled object code. Then at execution time,
+a hardware CPU-CFU shim maps SCFID 6 into an invocation of the CFU that
 implements CI-456, with CFID=1.
 
 (IDEA: Rather than do this, supply CIID and CFID values as additional
@@ -163,10 +170,13 @@ CFU Logic Interface (CFU-LI) Feature Levels
 The CFU-LI is stratified into four nested, increasingly general,
 increasingly complex feature levels.
 
+In every case, a CPU submits a CFU request and eventually receives a
+CFU respose.  For each request there is exactly one response.
+
 0) LI0: zero-latency combinational function unit: a CFU which accepts
 a request (CFID, request data) and produces a corresponding response
-(err/OK, response data) in the same cycle. Example: combinational bitcount
-(population count) unit.
+(err/OK, response data) in the same cycle.  Example: combinational
+bitcount (population count) unit.
 
 1) LI1: fixed-latency, pipelined, in-order function unit: a CFU
 which accepts a request (CFID, request data, request ID) and produces a
@@ -175,15 +185,15 @@ number of cycles (may be zero).  The request ID from the CPU is returned
 as the response ID from the CFU, and is used by the CPU to correlate the
 response to some prior request. Example: pipelined multiplier unit.
 
-2) LI2: arbitrary-latency, possibly pipelined, in-order function unit, with
-request/response handshakes: a CFU which accepts a request (CFID, request
-data, request ID) and produces a corresponding response (err/OK, response
-data, response ID) in zero or more cycles. The request signaling has
-valid/ready handshake so that a CFU may signal it is unable to accept a
-request this cycle, and response signaling has a valid/ready handshake
-to that a CPU may signal it is unable to accept a response this
-cycle. Example: one request-at-a-time, multi-cycle divide unit with early-out
-and response handshaking.
+2) LI2: arbitrary-latency, possibly pipelined, in-order function unit,
+with request/response handshakes: a CFU which accepts a request (CFID,
+request data, request ID) and produces a corresponding response (err/OK,
+response data, response ID) in zero or more cycles.  The request
+signaling has valid/ready handshake so that a CFU may signal it is
+unable to accept a request this cycle, and response signaling has a
+valid/ready handshake to that a CPU may signal it is unable to accept a
+response this cycle. Example: one request-at-a-time, multi-cycle divide
+unit with early-out and response handshaking.
 
 3) LI3: arbitrary-latency, possibly pipelined, possibly out-of-order
 function unit, with request/response handshakes: a CFU which accepts
@@ -230,6 +240,7 @@ forwarding the CF request ID as the response ID.
 using pipeline clock enables and/or FIFOs to implement request and
 response handshaking.  the response ID.
 
+
 The use of request ID/response ID correlation also simplifies CFU sharing
 among multiple CPU masters. A CFU multiplexer shim may add additional
 source/destination routing data to a request ID so that subsequent
@@ -246,3 +257,15 @@ request port signal bundle?  For example, suppose an LI[>=2] CFU core
 may implement >1 CI, but when the core is composed into a given SW + HW
 system by the system composition tool, it may be (must be?) configured
 and specialized to implement one fixed CI.
+
+TODO: For CFUs with internal state (extra arguments, extra results,
+accumulators, etc.)  define a standard name and behavior for state reset,
+state save/restore, interrogate state elements.
+
+TODO: Decide how to name Custom Interfaces: VLNV, UUID, ...?
+
+TODO: How much of the CFU-LI specification may be specified in IP XACT?
+
+TODO: for LI>=2, is latency bounded? If so is max latency of the CFU
+(or individual CFID) provided to the CFU client at system composition
+time? Perhaps CFU metadata?
