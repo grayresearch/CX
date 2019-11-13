@@ -66,7 +66,7 @@ to the CFU-LI, in particular:
 * LI3: adds request reorder ID constraint, affording in-/out-of-order response control.
 
 Rationale and use cases
------------------------
+=======================
 
 This feature stratification keeps simple things simple and makes
 complex things possible. It anticipates and accomodates a diversity
@@ -106,7 +106,7 @@ source/destination routing data to a request ID so that subsequent
 response IDs directly indicate the specific CPU master destination.
 
 TODO
-----
+====
 
 TODO: discuss/decide if the above stratification is sufficient. For example,
 is it acceptable to bundle request handshake + response handshake into
