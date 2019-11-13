@@ -3,9 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-*********************************
-CFU Logic Interface Specification
-*********************************
+******************************************
+CFU Logic Interface (CFU-LI) Specification
+******************************************
+
+The CFU-LI defines a set of common hardware logic interfaces enabling
+robust (straightfoward, correct, stable, efficient) composition of
+separately authored CPUs and Custom Function Units.
 
 
 CFU Logic Interface (CFU-LI) Feature Levels
