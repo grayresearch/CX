@@ -12,7 +12,7 @@ robust (straightfoward, correct, stable, efficient) composition of
 separately authored CPUs and Custom Function Units.
 
 
-CFU Logic Interface (CFU-LI) Feature Levels
+CFU Logic Interface (CFU-LI) feature levels
 ===========================================
 
 The CFU-LI is stratified into four nested, increasingly flexible,
