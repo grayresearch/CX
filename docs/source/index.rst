@@ -55,15 +55,15 @@ microprocessor CPU, much like a two-operand, one-result fixed point
 arithmetic/logic unit (ALU).
 
 For the purposes and scope of this Spec, a Custom Function Unit is
-defined as a hardware core that
+defined as a hardware core that:
 
 * accepts requests and produces responses, wherein:
 
-* requests may comprise a custom function ID and 0-3 integer request
-  data words;
+  * requests may comprise a custom function ID and 0-3 integer request
+    data words;
 
-* responses may comprise a success/error code and 0-2 integer response
-  data words or an error ID;
+  * responses may comprise a success/error code and 0-2 integer response
+    data words or an error ID;
 
 * may be stateless, such that all function invocations are pure functions
   and are side-effect free, or may be stateful, with private internal
