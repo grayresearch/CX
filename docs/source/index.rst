@@ -31,11 +31,14 @@ and straightforward development of app-optimized SoCs.
 The specification comprises the software and hardware interfaces and
 formats needed for automatic composition of components into systems.
 From bottom up, these comprise:
+
 * The CFU Logic Interface (CFU-LI) that defines the logic
-interface between a CPU core and a CFU core.
+  interface between a CPU core and a CFU core.
+
 * The CFU Metadata Format (CFU-MD) that identifies the fixed
-and configurable properties and behaviors of CFUs and CPUs,
-enabling automated hardware and software composition tooling.
+  and configurable properties and behaviors of CFUs and CPUs,
+  enabling automated hardware and software composition tooling.
+
 * The miscellaneous CFU Tools changes necessary for composition tooling.
 
 
@@ -53,14 +56,18 @@ arithmetic/logic unit (ALU).
 
 For the purposes and scope of this Spec, a Custom Function Unit is
 defined as a hardware core that
+
 * accepts requests and produces responses, wherein:
+
 * requests may comprise a custom function ID and 0-3 integer request
-data words;
+  data words;
+
 * responses may comprise a success/error code and 0-2 integer response
-data words or an error ID;
+  data words or an error ID;
+
 * may be stateless, such that all function invocations are pure functions
-and are side-effect free, or may be stateful, with private internal
-state only. (See below.)
+  and are side-effect free, or may be stateful, with private internal
+  state only. (See below.)
 
   Function units that directly access or update system memory, or
   architectural state of the CPU, including the CPU's command/status
