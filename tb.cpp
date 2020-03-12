@@ -6,14 +6,14 @@
 int main(int argc, char **argv) {
     Verilated::commandArgs(argc, argv);
     VTB* tb = new VTB;
-    tb->reset = 1;
+    tb->rst = 1;
     while (!Verilated::gotFinish()) {
-        tb->clock = 1;
+        tb->clk = 1;
         tb->eval();
-        tb->clock = 0;
+        tb->clk = 0;
         tb->eval();
 
-        tb->reset = 0;
+        tb->rst = 0;
     }
     delete tb;
     return 0;

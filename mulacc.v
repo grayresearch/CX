@@ -7,43 +7,41 @@
 
 // Test bench
 module MulAccTB #(
-    parameter CFU_VERSION = 0,
-    parameter CFU_FUNCTION_ID_W = 1,
-    parameter CFU_REQ_RESP_ID_W = 6,
+    parameter CFU_FUNC_ID_W = 5,
     parameter CFU_REQ_DATA_W = 32,
-    parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
-    parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W
+    parameter CFU_RESP_DATA_W = 32,
+    parameter CFU_ERR_ID_W = 32,
+    parameter CFU_RESP_LATENCY = 3
 ) (
-    input clock,
-    input reset,
+    input clk,
+    input rst,
     input [15:0] cycle,
     input [15:0] lfsr);
 
     reg req_valid;
-    reg `CFU_FUNCTION_ID req_function_id;
-    reg `CFU_REQ_RESP_ID req_id;
-    reg [1:0] `CFU_REQ_DATA req_data;
+    reg `CFU_FUNC_ID req_func_id;
+    reg `CFU_REQ_DATA req_data0;
+    reg `CFU_REQ_DATA req_data1;
 
     wire resp_valid;
-    wire resp_ok;
-    wire `CFU_REQ_RESP_ID resp_id;
-    wire [0:0] `CFU_RESP_DATA resp_data;
-    wire `CFU_ERROR_ID resp_error_id;
+    wire resp_err;
+    wire `CFU_RESP_DATA resp_data;
+    wire `CFU_ERR_ID resp_err_id;
 
     always @* begin
         req_valid = 1;          // default: valid
-        req_function_id = 1;    // default: mul-acc
-        req_id = 0; 
-        req_data = 0;
+        req_func_id = 1;    // default: mul-acc
+        req_data0 = 0;
+        req_data1 = 0;
 
         if (cycle[7:0] == 0) begin
-            req_function_id = 0; // reset
+            req_func_id = 0; // rst
         end
         else if (cycle[15:8] == 0) begin
             // First off, sum 1..100 in honor of young Gauss.
             if (cycle[7:0] <= 100) begin
-                req_data[0] = 1;
-                req_data[1] = {16'b0,cycle};
+                req_data0 = 1;
+                req_data1 = {16'b0,cycle};
             end
             else begin
                 req_valid = 0;
@@ -51,8 +49,8 @@ module MulAccTB #(
         end
         else begin
             // Later iterations, MAC of random input pairs
-            req_data[0] = {16'b0,cycle};
-            req_data[1] = {cycle,lfsr};
+            req_data0 = {16'b0,cycle};
+            req_data1 = {cycle,lfsr};
         end
     end
 
@@ -60,51 +58,51 @@ module MulAccTB #(
     reg `CFU_DATA acc;
     reg `CFU_DATA acc_q;
     reg `CFU_DATA acc_qq;
-    always @(posedge clock) begin
-        if (reset) begin
+    always @(posedge clk) begin
+        if (rst) begin
             acc <= 0;
         end
         else if (req_valid) begin
-            if (req_function_id == 0) // reset?
+            if (req_func_id == 0) // rst?
                 acc <= 0;
             else 
-                acc <= acc + req_data[0] * req_data[1];
+                acc <= acc + req_data0 * req_data1;
         end
         acc_q <= acc;
         acc_qq <= acc_q;
     end
 
-    MulAcc_PipeCFU #(
-        .CFU_FUNCTION_ID_W(1),
-        .CFU_REQ_RESP_ID_W(CFU_REQ_RESP_ID_W),
-        .CFU_REQ_INPUTS(2), .CFU_REQ_DATA_W(CFU_REQ_DATA_W),
-        .CFU_RESP_OUTPUTS(1), .CFU_RESP_DATA_W(CFU_RESP_DATA_W),
-        .CFU_ERROR_ID_W(CFU_RESP_DATA_W), .CFU_LATENCY(3))
-      mulacc(.clock, .reset, .clock_en(1'b1),
-             .req_valid, .req_function_id, .req_id, .req_data,
-             .resp_valid, .resp_id, .resp_data, .resp_ok, .resp_error_id);
+    MulAcc_CFU_LI1 #(
+        .CFU_FUNC_ID_W(CFU_FUNC_ID_W),
+        .CFU_REQ_DATA_W(CFU_REQ_DATA_W),
+        .CFU_RESP_DATA_W(CFU_RESP_DATA_W),
+        .CFU_ERR_ID_W(CFU_ERR_ID_W),
+        .CFU_RESP_LATENCY(CFU_RESP_LATENCY))
+      mulacc(.clk, .rst,
+             .req_valid, .req_func_id, .req_data0, .req_data1,
+             .resp_valid, .resp_data, .resp_err, .resp_err_id);
 
-    always @(posedge clock) begin
-        if (resp_valid && !resp_ok)
-            $display("MulAccTB: FAIL: !resp_ok");
-        else if (resp_valid && resp_data[0] != acc_qq)
-            $display("MulAccTB: FAIL: resp_data[0]=%1d != %1d", resp_data[0], acc_qq);
+    always @(posedge clk) begin
+        if (resp_valid && resp_err)
+            $display("MulAccTB: FAIL: resp_err");
+        else if (resp_valid && resp_data != acc_qq)
+            $display("MulAccTB: FAIL: resp_data=%1d != %1d", resp_data, acc_qq);
     end
 
-    wire _unused_ok = &{1'b0,resp_id,resp_error_id,1'b0};
+    wire _unused_ok = &{1'b0,resp_err_id,1'b0};
 endmodule
 
 
 // Level-1 (Pipelined) multiply-accumulate (cumulative dot product)
 //
-// Pipeline advances every clock cycle unless clock_en negated.
+// Pipeline advances every clk cycle unless clk_en negated.
 // No dynamic interface_id, reorder_id, req_ready, resp_ready
 //
-// Metadata
+// (Obsolete) Metadata // REVIEW
 //  Supports: REQ_WIDTH==32 or REQ_WIDTH==64
 //  stateful interface /*IID_IMulAcc*/ IMulAcc {
 //      int acc;
-//      /*0*/ reset(a,b) { return acc = 0; }
+//      /*0*/ rst(a,b) { return acc = 0; }
 //      /*1*/ mulacc(a,b) { return acc += a*b; }
 //  }
 //  II=1
@@ -112,123 +110,117 @@ endmodule
 //  Inputs=2
 //  Outputs=1
 // 
-module MulAcc_PipeCFU #(
-    parameter CFU_VERSION = 0,
-    parameter CFU_FUNCTION_ID_W = 16,
-    parameter CFU_REQ_RESP_ID_W = 6,
-    parameter CFU_REQ_INPUTS = 2,
+/* Metadata
+CFU_LI:
+    - feature_level: 1
+    - cfu_func_id_w: [5]
+    - cfu_req_data_w: [32]
+    - cfu_resp_data_w: [32]
+    - cfu_err_id_w: [32]
+    - cfu_resp_latecy: [3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+*/
+module MulAcc_CFU_LI1 #(
+    parameter CFU_FUNC_ID_W = 5,
     parameter CFU_REQ_DATA_W = 32,
-    parameter CFU_RESP_OUTPUTS = 1,
-    parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
-    parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W,
-    parameter CFU_LATENCY = 3
+    parameter CFU_RESP_DATA_W = 32,
+    parameter CFU_ERR_ID_W = 32,
+    parameter CFU_RESP_LATENCY = 3
 ) (
-    input clock,
-    input reset,
-    input clock_en,
-
+    input clk,
+    input rst,
     input req_valid,
-    input `CFU_FUNCTION_ID req_function_id,
-    input `CFU_REQ_RESP_ID req_id,
-    input [1:0] `CFU_REQ_DATA req_data,
-
+    input [CFU_FUNC_ID_W-1:0] req_func_id,
+    input [CFU_REQ_DATA_W-1:0] req_data0,
+    input [CFU_REQ_DATA_W-1:0] req_data1,
     output resp_valid,
-    output `CFU_REQ_RESP_ID resp_id,
-    output [0:0] `CFU_RESP_DATA resp_data,
-    output resp_ok,
-    output `CFU_ERROR_ID resp_error_id
+    output [CFU_RESP_DATA_W-1:0] resp_data,
+    output resp_err,
+    output [CFU_ERR_ID_W-1:0] resp_err_id
 );
     // assert(CFU_REQ_WIDTH == CFU_RESP_WIDTH);
 
     // accumulator
-    reg `CFU_DATA acc;
+    reg [CFU_RESP_DATA_W-1:0] acc;
 
     // response pipeline state
-    reg [CFU_LATENCY-1:0] valid;
-    reg [CFU_LATENCY-1:0] `CFU_REQ_RESP_ID id;
-    reg [CFU_LATENCY-2:0] reset_acc;
-    reg [CFU_LATENCY-2:0] `CFU_DATA prod;
+    reg [CFU_RESP_LATENCY-1:0] valid;
+    reg [CFU_RESP_LATENCY-2:0] rst_acc;
+    reg [CFU_RESP_LATENCY-2:0] [CFU_RESP_DATA_W-1:0] prod;
 
     // response pipeline
     int i;
-    always @(posedge clock) begin
-        if (reset) begin
-            {valid,id,reset_acc,prod} <= 0;
+    always @(posedge clk) begin
+        if (rst) begin
+            {valid,rst_acc,prod} <= 0;
             acc <= 0;
         end
-        else if (clock_en) begin
+        else begin
             valid[0] <= req_valid;
-            id[0] <= req_id;
-            reset_acc[0] <= (req_function_id == 0);
-            prod[0] <= req_data[0] * req_data[1];
+            rst_acc[0] <= (req_func_id == 0);
+            prod[0] <= req_data0 * req_data1;
 
-            for (i = 1; i < CFU_LATENCY; i = i + 1)
+            for (i = 1; i < CFU_RESP_LATENCY; i = i + 1)
                 valid[i] <= valid[i-1];
-            for (i = 1; i < CFU_LATENCY; i = i + 1)
-                id[i] <= id[i-1];
-            for (i = 1; i < CFU_LATENCY-1; i = i + 1)
-                reset_acc[i] <= reset_acc[i-1];
-            for (i = 1; i < CFU_LATENCY-1; i = i + 1)
+            for (i = 1; i < CFU_RESP_LATENCY-1; i = i + 1)
+                rst_acc[i] <= rst_acc[i-1];
+            for (i = 1; i < CFU_RESP_LATENCY-1; i = i + 1)
                 prod[i] <= prod[i-1];
 
-            if (valid[CFU_LATENCY-2]) begin
-                if (reset_acc[CFU_LATENCY-2])
+            if (valid[CFU_RESP_LATENCY-2]) begin
+                if (rst_acc[CFU_RESP_LATENCY-2])
                     acc <= 0;
                 else
-                    acc <= acc + prod[CFU_LATENCY-2];
+                    acc <= acc + prod[CFU_RESP_LATENCY-2];
             end
         end
     end
 
     // response
-    assign resp_valid = valid[CFU_LATENCY-1];
-    assign resp_id = id[CFU_LATENCY-1];
+    assign resp_valid = valid[CFU_RESP_LATENCY-1];
     assign resp_data = acc;
-    assign resp_ok = 1;
-    assign resp_error_id = 0;
+    assign resp_err = 0;
+    assign resp_err_id = 0;
 endmodule
 
 
 // Test bench
 module MulAccSIMDTB #(
-    parameter CFU_VERSION = 0,
-    parameter CFU_FUNCTION_ID_W = 1,
-    parameter CFU_REQ_RESP_ID_W = 6,
+    parameter CFU_FUNC_ID_W = 5,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_REQ_ELT_W = 8,
-    parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
-    parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W
+    parameter CFU_RESP_DATA_W = 32,
+    parameter CFU_ERR_ID_W = 32,
+    parameter CFU_RESP_LATENCY = 3
 ) (
-    input clock,
-    input reset,
+    input clk,
+    input rst,
     input [15:0] cycle,
     input [15:0] lfsr);
 
     reg req_valid;
-    reg `CFU_FUNCTION_ID req_function_id;
-    reg `CFU_REQ_RESP_ID req_id;
-    reg [1:0] `CFU_REQ_DATA req_data;
+    reg `CFU_FUNC_ID req_func_id;
+    reg `CFU_REQ_DATA req_data0;
+    reg `CFU_REQ_DATA req_data1;
 
     wire resp_valid;
-    wire resp_ok;
-    wire `CFU_REQ_RESP_ID resp_id;
-    wire [0:0] `CFU_RESP_DATA resp_data;
-    wire `CFU_ERROR_ID resp_error_id;
+    wire resp_err;
+    wire `CFU_RESP_DATA resp_data;
+    wire `CFU_ERR_ID resp_err_id;
 
     always @* begin
         req_valid = 1;          // default: valid
-        req_function_id = 1;    // default: mul-acc
-        req_id = 0; 
-        req_data = 0;
+        req_func_id = 1;        // default: mul-acc
+        req_data0 = 0;
+        req_data1 = 0;
 
         if (cycle[7:0] == 0) begin
-            req_function_id = 0; // reset
+            req_func_id = 0; // rst
         end
         else if (cycle[15:8] == 0) begin
             // First off, sum 4 x 1..100 in honor of young Gauss.
             if (cycle[7:0] <= 100) begin
-                req_data[0] = {4{8'd1}};
-                req_data[1] = {4{cycle[7:0]}};
+                req_data0 = {4{8'd1}};
+                req_data1 = {4{cycle[7:0]}};
             end
             else begin
                 req_valid = 0;
@@ -236,8 +228,8 @@ module MulAccSIMDTB #(
         end
         else begin
             // Later iterations, MAC of random input pairs
-            req_data[0] = {4{cycle[7:0]}};
-            req_data[1] = {4{lfsr[7:0]}};
+            req_data0 = {4{cycle[7:0]}};
+            req_data1 = {4{lfsr[7:0]}};
         end
     end
 
@@ -245,48 +237,49 @@ module MulAccSIMDTB #(
     reg `CFU_DATA acc;
     reg `CFU_DATA acc_q;
     reg `CFU_DATA acc_qq;
-    always @(posedge clock) begin
-        if (reset) begin
+    always @(posedge clk) begin
+        if (rst) begin
             acc <= 0;
         end
         else if (req_valid) begin
-            if (req_function_id == 0) // reset?
+            if (req_func_id == 0) // reset?
                 acc <= 0;
             else 
                 acc <= acc
-                    + req_data[0][ 0 +: 8] * req_data[1][ 0 +: 8]
-                    + req_data[0][ 8 +: 8] * req_data[1][ 8 +: 8]
-                    + req_data[0][16 +: 8] * req_data[1][16 +: 8]
-                    + req_data[0][24 +: 8] * req_data[1][24 +: 8];
+                    + req_data0[ 0 +: 8] * req_data1[ 0 +: 8]
+                    + req_data0[ 8 +: 8] * req_data1[ 8 +: 8]
+                    + req_data0[16 +: 8] * req_data1[16 +: 8]
+                    + req_data0[24 +: 8] * req_data1[24 +: 8];
         end
         acc_q <= acc;
         acc_qq <= acc_q;
     end
 
-    MulAccSIMD_PipeCFU #(
-        .CFU_FUNCTION_ID_W(1),
-        .CFU_REQ_RESP_ID_W(CFU_REQ_RESP_ID_W), .CFU_REQ_INPUTS(2),
-        .CFU_REQ_DATA_W(CFU_REQ_DATA_W), .CFU_REQ_ELT_W(CFU_REQ_ELT_W),
-        .CFU_RESP_OUTPUTS(1), .CFU_RESP_DATA_W(CFU_RESP_DATA_W),
-        .CFU_ERROR_ID_W(CFU_RESP_DATA_W), .CFU_LATENCY(3))
-      mulacc(.clock, .reset, .clock_en(1'b1),
-             .req_valid, .req_function_id, .req_id, .req_data,
-             .resp_valid, .resp_id, .resp_data, .resp_ok, .resp_error_id);
+    MulAccSIMD_CFU_LI1 #(
+        .CFU_FUNC_ID_W(CFU_FUNC_ID_W),
+        .CFU_REQ_DATA_W(CFU_REQ_DATA_W),
+        .CFU_REQ_ELT_W(CFU_REQ_ELT_W),
+        .CFU_RESP_DATA_W(CFU_RESP_DATA_W),
+        .CFU_ERR_ID_W(CFU_ERR_ID_W),
+        .CFU_RESP_LATENCY(CFU_RESP_LATENCY))
+      mulacc(.clk, .rst,
+             .req_valid, .req_func_id, .req_data0, .req_data1,
+             .resp_valid, .resp_data, .resp_err, .resp_err_id);
 
-    always @(posedge clock) begin
-        if (resp_valid && !resp_ok)
+    always @(posedge clk) begin
+        if (resp_valid && resp_err)
             $display("MulAccSIMDTB: FAIL: !resp_ok");
-        else if (resp_valid && resp_data[0] != acc_qq)
-            $display("MulAccSIMDTB: FAIL: resp_data[0]=%1d != %1d", resp_data[0], acc_qq);
+        else if (resp_valid && resp_data != acc_qq)
+            $display("MulAccSIMDTB: FAIL: resp_data[0]=%1d != %1d", resp_data, acc_qq);
     end
 
-    wire _unused_ok = &{1'b0,lfsr[15:8],resp_id,resp_error_id,1'b0};
+    wire _unused_ok = &{1'b0,lfsr[15:8],resp_err_id,1'b0};
 endmodule
 
 
 // Level-1 (Pipelined) SIMD multiply-accumulate (cumulative dot product)
 //
-// Pipeline advances every clock cycle unless clock_en negated.
+// Pipeline advances every clk cycle unless clk_en negated.
 // No dynamic interface_id, reorder_id, req_ready, resp_ready
 //
 // Metadata
@@ -294,7 +287,7 @@ endmodule
 //  Supports: REQ_ELT_W = 1, 2, 4, ..., REQ_DATA_W/2
 //  stateful interface /*IID_IMulAcc*/ IMulAcc {
 //      int acc;
-//      /*0*/ reset(a,b) { return acc = 0; }
+//      /*0*/ rst(a,b) { return acc = 0; }
 //      /*1*/ mulacc(a,b) { return acc += {a[j]*b[j] for each REQ_ELT_W-bit subword j in REQ_DATA_W}; }
 //  }
 //  II=1
@@ -302,32 +295,24 @@ endmodule
 //  Inputs=2
 //  Outputs=1
 // 
-module MulAccSIMD_PipeCFU #(
-    parameter CFU_VERSION = 0,
-    parameter CFU_FUNCTION_ID_W = 16,
-    parameter CFU_REQ_RESP_ID_W = 6,
-    parameter CFU_REQ_INPUTS = 2,
+module MulAccSIMD_CFU_LI1 #(
+    parameter CFU_FUNC_ID_W = 5,
     parameter CFU_REQ_DATA_W = 32,
-    parameter CFU_REQ_ELT_W = 8,
-    parameter CFU_RESP_OUTPUTS = 1,
-    parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W,
-    parameter CFU_ERROR_ID_W = CFU_RESP_DATA_W,
-    parameter CFU_LATENCY = 3
+    parameter CFU_RESP_DATA_W = 32,
+    parameter CFU_ERR_ID_W = 32,
+    parameter CFU_RESP_LATENCY = 3,
+    parameter CFU_REQ_ELT_W = 8
 ) (
-    input clock,
-    input reset,
-    input clock_en,
-
+    input clk,
+    input rst,
     input req_valid,
-    input `CFU_FUNCTION_ID req_function_id,
-    input `CFU_REQ_RESP_ID req_id,
-    input [1:0] `CFU_REQ_DATA req_data,
-
+    input [CFU_FUNC_ID_W-1:0] req_func_id,
+    input [CFU_REQ_DATA_W-1:0] req_data0,
+    input [CFU_REQ_DATA_W-1:0] req_data1,
     output resp_valid,
-    output `CFU_REQ_RESP_ID resp_id,
-    output [0:0] `CFU_RESP_DATA resp_data,
-    output resp_ok,
-    output `CFU_ERROR_ID resp_error_id
+    output [CFU_RESP_DATA_W-1:0] resp_data,
+    output resp_err,
+    output [CFU_ERR_ID_W-1:0] resp_err_id
 );
     localparam N_ELTS = CFU_REQ_DATA_W / CFU_REQ_ELT_W;
     // assert(CFU_REQ_WIDTH == CFU_RESP_WIDTH);
@@ -336,10 +321,9 @@ module MulAccSIMD_PipeCFU #(
     reg `CFU_DATA acc;
 
     // response pipeline state
-    reg [CFU_LATENCY-1:0] valid;
-    reg [CFU_LATENCY-1:0] `CFU_REQ_RESP_ID id;
-    reg [CFU_LATENCY-2:0] reset_acc;
-    reg [CFU_LATENCY-2:0][N_ELTS-1:0][2*CFU_REQ_ELT_W-1:0] prod;
+    reg [CFU_RESP_LATENCY-1:0] valid;
+    reg [CFU_RESP_LATENCY-2:0] rst_acc;
+    reg [CFU_RESP_LATENCY-2:0][N_ELTS-1:0][2*CFU_REQ_ELT_W-1:0] prod;
 
     // response pipeline
     int i;
@@ -349,33 +333,30 @@ module MulAccSIMD_PipeCFU #(
     always @* begin
         prod_sum = 0;
         for (j = 0; j < N_ELTS; j = j + 1)
-            prod_sum = prod_sum + prod[CFU_LATENCY-2][j];
+            prod_sum = prod_sum + prod[CFU_RESP_LATENCY-2][j];
     end
     `vlon_width
-    always @(posedge clock) begin
-        if (reset) begin
-            {valid,id,reset_acc,prod} <= 0;
+    always @(posedge clk) begin
+        if (rst) begin
+            {valid,rst_acc,prod} <= 0;
             acc <= 0;
         end
-        else if (clock_en) begin
+        else begin
             valid[0] <= req_valid;
-            id[0] <= req_id;
-            reset_acc[0] <= (req_function_id == 0);
+            rst_acc[0] <= (req_func_id == 0);
             for (j = 0; j < N_ELTS; j = j + 1)
-                prod[0][j] <= req_data[0][j*CFU_REQ_ELT_W +: CFU_REQ_ELT_W] * req_data[1][j*CFU_REQ_ELT_W +: CFU_REQ_ELT_W];
+                prod[0][j] <= req_data0[j*CFU_REQ_ELT_W +: CFU_REQ_ELT_W] * req_data1[j*CFU_REQ_ELT_W +: CFU_REQ_ELT_W];
 
-            for (i = 1; i < CFU_LATENCY; i = i + 1)
+            for (i = 1; i < CFU_RESP_LATENCY; i = i + 1)
                 valid[i] <= valid[i-1];
-            for (i = 1; i < CFU_LATENCY; i = i + 1)
-                id[i] <= id[i-1];
-            for (i = 1; i < CFU_LATENCY-1; i = i + 1)
-                reset_acc[i] <= reset_acc[i-1];
-            for (i = 1; i < CFU_LATENCY-1; i = i + 1)
+            for (i = 1; i < CFU_RESP_LATENCY-1; i = i + 1)
+                rst_acc[i] <= rst_acc[i-1];
+            for (i = 1; i < CFU_RESP_LATENCY-1; i = i + 1)
                 for (j = 0; j < N_ELTS; j = j + 1)
                     prod[i][j] <= prod[i-1][j];
 
-            if (valid[CFU_LATENCY-2]) begin
-                if (reset_acc[CFU_LATENCY-2])
+            if (valid[CFU_RESP_LATENCY-2]) begin
+                if (rst_acc[CFU_RESP_LATENCY-2])
                     acc <= 0;
                 else
                     acc <= acc + prod_sum;
@@ -384,9 +365,8 @@ module MulAccSIMD_PipeCFU #(
     end
 
     // response
-    assign resp_valid = valid[CFU_LATENCY-1];
-    assign resp_id = id[CFU_LATENCY-1];
+    assign resp_valid = valid[CFU_RESP_LATENCY-1];
     assign resp_data = acc;
-    assign resp_ok = 1;
-    assign resp_error_id = 0;
+    assign resp_err = 0;
+    assign resp_err_id = 0;
 endmodule
