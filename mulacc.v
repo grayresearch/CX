@@ -7,7 +7,7 @@
 
 // Test bench
 module MulAccTB #(
-    parameter CFU_FUNC_ID_W = 5,
+    parameter CFU_FUNC_ID_W = 1,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_RESP_DATA_W = 32,
     parameter CFU_ERR_ID_W = 32,
@@ -29,7 +29,7 @@ module MulAccTB #(
     wire `CFU_ERR_ID resp_err_id;
 
     always @* begin
-        req_valid = 1;          // default: valid
+        req_valid = 1;      // default: valid
         req_func_id = 1;    // default: mul-acc
         req_data0 = 0;
         req_data1 = 0;
@@ -113,14 +113,14 @@ endmodule
 /* Metadata
 CFU_LI:
     - feature_level: 1
-    - cfu_func_id_w: [5]
+    - cfu_func_id_w: [1]
     - cfu_req_data_w: [32]
     - cfu_resp_data_w: [32]
     - cfu_err_id_w: [32]
     - cfu_resp_latecy: [3,4,5,6,7,8,9,10,11,12,13,14,15,16]
 */
 module MulAcc_CFU_LI1 #(
-    parameter CFU_FUNC_ID_W = 5,
+    parameter CFU_FUNC_ID_W = 1,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_RESP_DATA_W = 32,
     parameter CFU_ERR_ID_W = 32,
@@ -129,23 +129,23 @@ module MulAcc_CFU_LI1 #(
     input clk,
     input rst,
     input req_valid,
-    input [CFU_FUNC_ID_W-1:0] req_func_id,
-    input [CFU_REQ_DATA_W-1:0] req_data0,
-    input [CFU_REQ_DATA_W-1:0] req_data1,
+    input `CFU_FUNC_ID req_func_id,
+    input `CFU_REQ_DATA req_data0,
+    input `CFU_REQ_DATA req_data1,
     output resp_valid,
-    output [CFU_RESP_DATA_W-1:0] resp_data,
+    output `CFU_RESP_DATA resp_data,
     output resp_err,
-    output [CFU_ERR_ID_W-1:0] resp_err_id
+    output `CFU_ERR_ID resp_err_id
 );
     // assert(CFU_REQ_WIDTH == CFU_RESP_WIDTH);
 
     // accumulator
-    reg [CFU_RESP_DATA_W-1:0] acc;
+    reg `CFU_RESP_DATA acc;
 
     // response pipeline state
     reg [CFU_RESP_LATENCY-1:0] valid;
     reg [CFU_RESP_LATENCY-2:0] rst_acc;
-    reg [CFU_RESP_LATENCY-2:0] [CFU_RESP_DATA_W-1:0] prod;
+    reg [CFU_RESP_LATENCY-2:0] `CFU_RESP_DATA prod;
 
     // response pipeline
     int i;
@@ -185,7 +185,7 @@ endmodule
 
 // Test bench
 module MulAccSIMDTB #(
-    parameter CFU_FUNC_ID_W = 5,
+    parameter CFU_FUNC_ID_W = 1,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_REQ_ELT_W = 8,
     parameter CFU_RESP_DATA_W = 32,
@@ -296,7 +296,7 @@ endmodule
 //  Outputs=1
 // 
 module MulAccSIMD_CFU_LI1 #(
-    parameter CFU_FUNC_ID_W = 5,
+    parameter CFU_FUNC_ID_W = 1,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_RESP_DATA_W = 32,
     parameter CFU_ERR_ID_W = 32,
@@ -306,13 +306,13 @@ module MulAccSIMD_CFU_LI1 #(
     input clk,
     input rst,
     input req_valid,
-    input [CFU_FUNC_ID_W-1:0] req_func_id,
-    input [CFU_REQ_DATA_W-1:0] req_data0,
-    input [CFU_REQ_DATA_W-1:0] req_data1,
+    input `CFU_FUNC_ID req_func_id,
+    input `CFU_REQ_DATA req_data0,
+    input `CFU_REQ_DATA req_data1,
     output resp_valid,
-    output [CFU_RESP_DATA_W-1:0] resp_data,
+    output `CFU_RESP_DATA resp_data,
     output resp_err,
-    output [CFU_ERR_ID_W-1:0] resp_err_id
+    output `CFU_ERR_ID resp_err_id
 );
     localparam N_ELTS = CFU_REQ_DATA_W / CFU_REQ_ELT_W;
     // assert(CFU_REQ_WIDTH == CFU_RESP_WIDTH);

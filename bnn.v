@@ -10,7 +10,7 @@
 
 // Test bench
 module BNNDotProd32TB #(
-    parameter CFU_FUNC_ID_W = 5,
+    parameter CFU_FUNC_ID_W = 1,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_RESP_DATA_W = CFU_REQ_DATA_W
 ) (
@@ -18,13 +18,13 @@ module BNNDotProd32TB #(
     input [15:0] cycle,
     input [15:0] lfsr);
 
-    wire [CFU_FUNC_ID_W-1:0] req_func_id = 0;
-    reg [CFU_REQ_DATA_W-1:0] req_data0 `vp = 0;
-    reg [CFU_REQ_DATA_W-1:0] req_data1 `vp = 0;
-    reg [CFU_RESP_DATA_W-1:0] resp_data `vp = 0;
+    wire `CFU_FUNC_ID req_func_id = 0;
+    reg `CFU_REQ_DATA req_data0 `vp = 0;
+    reg `CFU_REQ_DATA req_data1 `vp = 0;
+    reg `CFU_RESP_DATA resp_data `vp = 0;
 
-    reg [CFU_RESP_DATA_W-1:0] xnor_ `vp = 0;
-    reg [CFU_RESP_DATA_W-1:0] answer `vp = 0;
+    reg `CFU_RESP_DATA xnor_ `vp = 0;
+    reg `CFU_RESP_DATA answer `vp = 0;
     int i;
     always @* begin
         req_data0 = {cycle-1'b1,cycle};
@@ -68,20 +68,20 @@ CFU_LI:
     - feature_level: 0
     - cfu_req_data_w: [32]
     - cfu_resp_data_w: [32]
-    - cfu_func_id_w: [5]
+    - cfu_func_id_w: [1]
 */
 module BNNDotProd32_CFU_LI0 #(
-    parameter CFU_FUNC_ID_W = 5,
+    parameter CFU_FUNC_ID_W = 1,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_RESP_DATA_W = 32
 ) (
     input req_valid, // unused
-    input [CFU_FUNC_ID_W-1:0] req_func_id,  // unused
-    input [CFU_REQ_DATA_W-1:0] req_data0,
-    input [CFU_REQ_DATA_W-1:0] req_data1,
-    output [CFU_RESP_DATA_W-1:0] resp_data
+    input `CFU_FUNC_ID req_func_id,  // unused
+    input `CFU_REQ_DATA req_data0,
+    input `CFU_REQ_DATA req_data1,
+    output `CFU_RESP_DATA resp_data
 );
-    wire [CFU_REQ_DATA_W-1:0] xnor_ = req_data0 ~^ req_data1;
+    wire `CFU_REQ_DATA xnor_ = req_data0 ~^ req_data1;
     wire [5:0] count;
     Popcount32 count_(.i(xnor_), .popcount(count));
     assign resp_data = {26'b0,count};

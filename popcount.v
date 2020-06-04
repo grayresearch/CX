@@ -9,16 +9,16 @@
 `include "cfu.vh"
 
 module PopcountTB #(
-    parameter CFU_FUNC_ID_W = 5,
+    parameter CFU_FUNC_ID_W = 1,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_RESP_DATA_W = 32
 ) (
     input clk,
     input [15:0] cycle);
 
-    wire [CFU_FUNC_ID_W-1:0] req_func_id = 0;
-    reg [CFU_REQ_DATA_W-1:0] req_data;
-    reg [CFU_RESP_DATA_W-1:0] resp_data;
+    wire `CFU_FUNC_ID req_func_id = 0;
+    reg `CFU_REQ_DATA req_data;
+    reg `CFU_RESP_DATA resp_data;
 
     int i;
     reg `CFU_RESP_DATA answer `vp = 0;
@@ -79,20 +79,20 @@ endmodule
 /* Metadata
 CFU_LI:
     - feature_level: 0
-    - cfu_func_id_w: [5]
+    - cfu_func_id_w: [1]
     - cfu_req_data_w: [32]
     - cfu_resp_data_w: [32]
 */
 module Popcount32_CFU_LI0 #(
-    parameter CFU_FUNC_ID_W = 5,
+    parameter CFU_FUNC_ID_W = 1,
     parameter CFU_REQ_DATA_W = 32,
     parameter CFU_RESP_DATA_W = 32
 ) (
     input req_valid,
-    input [CFU_FUNC_ID_W-1:0] req_func_id,  // unused
-    input [CFU_REQ_DATA_W-1:0] req_data0,
-    input [CFU_REQ_DATA_W-1:0] req_data1,   // unused
-    output [CFU_RESP_DATA_W-1:0] resp_data
+    input `CFU_FUNC_ID req_func_id,  // unused
+    input `CFU_REQ_DATA req_data0,
+    input `CFU_REQ_DATA req_data1,   // unused
+    output `CFU_RESP_DATA resp_data
 );
     wire [5:0] popcount;
     Popcount32 popcount_(.i(req_data0), .popcount);
