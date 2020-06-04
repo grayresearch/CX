@@ -39,5 +39,7 @@ module TB #(
 
     MulAccSIMDTB macsimdtb(.clk, .rst, .cycle, .lfsr);
 
-    GCDTB gcdtb(.clk, .rst, .cycle, .lfsr);
+    GCDLI2TB gcd2tb(.clk, .rst, .cycle, .lfsr);
+
+    GCDLI3TB gcd3tb(.clk, .rst, .cycle, .lfsr);
 endmodule
