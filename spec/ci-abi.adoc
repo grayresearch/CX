@@ -463,6 +463,7 @@ and `rs2` registers, which may uselessly delay issue of the CF instruction
 in an out-of-order CPU core.
 ====
 
+[[multiplexing]]
 === Custom function instruction execution via custom interface multiplexing
 
 <<execution>> illustrates how a custom function instruction and the CFU

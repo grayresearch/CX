@@ -74,14 +74,7 @@ and implementations evolve across years and decades.
 
 Such unbridled composition requires an unlimited number of independently
 developed custom interfaces to coexist within a fixed ABI and ISA. This
-is achieved with _custom interface multiplexing_, described below.
-
-//[NOTE]
-//====
-//Consider global renaming: custom interface to custom extension (CX);
-//custom interface library to CX library; and CFU to CXU. Then we would
-//have _CX libs target CXs_ and _CXUs implement CXs_.
-//====
+is achieved with <<multiplexing,_custom interface multiplexing_>>, described below.
 
 === Examples
 
@@ -393,6 +386,36 @@ RVA20S Linux profile, running secure multi-programmed, multithreaded user
 processes running various CI libraries, and with privileged hypervisors
 and operating systems securely managing access control to CFUs and
 CFU state.
+
+=== Pushing the envelope
+
+The hardware-hardware and hardware-software interfaces proposed in this
+draft specification are a foundational step, necessary but insufficient
+to fully achieve the modular, automatically interoperable extension
+ecosystem we envision.
+
+A complete solution probably entails much new work, for example in runtime
+libraries, language support, tools (binary tools, debuggers, profilers,
+instrumentation), emulators, resource managers including operating systems
+and hypervisors, and tests and test infrastructure including formal
+systems to specify and validate custom interfaces and their CFU
+implementations.
+
+Whether or not the specific abstractions and interoperation interfaces
+proposed herein are adopted, we believe this specification motivates
+custom extension composition, and illustrates _one approach_ for such
+composition scenarios using RISC-V, in sufficient detail to understand
+how the moving pieces achieve a workable composition system, and to
+spotlight some of the issues that arise.
+
+ifdef::notdef[]
+[NOTE]
+====
+Consider global renaming: custom interface to custom extension (CX);
+custom interface library to CX library; and CFU to CXU. Then we would
+have _CX libs target CXs_ and _CXUs implement CXs_.
+====
+endif::notdef[]
 
 === Future directions, TODOs
 
