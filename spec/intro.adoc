@@ -1,0 +1,422 @@
+== Introduction: A composable custom extension ecosystem
+
+[TIP]
+====
+Tip blocks signify non-normative commentary.
+This Introduction is non-normative.
+Sections titled _Example_ are non-normative.
+====
+
+[NOTE]
+====
+Note blocks signify review comments: open issues, suggested improvements.
+====
+
+SoC designs employ application-specific hardware accelerators to improve
+performance and reduce energy use -- particularly so with FPGA SoCs
+that offer both plasticity and abundant spatial parallelism. The
+RISC-V instruction set architecture (ISA) anticipates this and
+invites domain-specific custom instructions within the base ISA
+cite:[risc-v-unpriv(5)].
+
+There are many RISC-V processors with custom instruction extensions,
+and now some vendor tooling for creating them. But the software libraries
+that use these extensions and the cores that implement them are authored
+by different organizations, using different tools, and might not work
+together side-by-side in a new system. Different custom extensions
+may conflict in use of opcodes, or their implementations may require
+different CPU cores, pipeline structures, logic interfaces, models of
+computation, means of discovery, or error reporting regimes. Composition
+is difficult, impairing reuse of hardware and software, and fragmenting
+the RISC-V ecosystem.
+
+The RISC-V Composable Custom Extensions Specification introduces a set
+of hardware-hardware and hardware-software interfaces and metadata
+designed to make it easy to create, compose, reuse, version, program,
+and deploy systems with multiple custom interfaces and their libraries,
+enabling an open ecosystem, and marketplace, of custom interfaces hardware
+and software.
+
+=== Open, agile, interoperable, unfettered instruction set innovation
+
+RISC-V International uses a community process to define a new optional
+standard extension to the RISC-V instruction set architecture. Candidate
+extensions must be of broad interest and general utility to justify
+the permanent allocation of precious RISC-V opcode space, CSR space,
+and more generally to add to the enduring, essential complexity of the
+RISC-V platform. New standard extensions typically require months or
+years to reach consensus and ratification.
+
+In contrast, the interfaces defined in this specification allow anyone,
+whether individual, organization, or consortium, to rapidly define,
+develop, and use:
+
+* a _custom interface (CI):_ a composable custom extension consisting of a set of _custom function (CF) instructions;_
+* a _custom function unit (CFU):_ a composable hardware core that implements a custom interface;
+* an accelerated _custom interface library_ that issues custom functions of custom interfaces;
+* a processor that can use any CFU;
+* tools to create or consume these elements; and
+* to compose these arbitrarily into a system of hardware accelerated software libraries.
+
+There need be _no central authority_, no lock in, no lock out, and no
+asking for permission. Custom interfaces, their CFUs and libraries,
+may be open or proprietary, of broad or narrow interest. A new processor
+can use existing CFUs and CI libraries. A new custom interface, CFU, and
+library can be used by existing CPUs and systems. Many CFUs may implement
+a given custom interface, and many libraries may use a custom interface.
+
+Such open composition requires routine, robust integration of separately
+authored, separately versioned elements into stable systems that _just
+work_ so that if the various hardware and software elements correctly
+work separately, they correctly work together, and so that if a composed
+system works correctly today, it continues to work, even as interfaces
+and implementations evolve across years and decades.
+
+Such unbridled composition requires an unlimited number of independently
+developed custom interfaces to coexist within a fixed ABI and ISA. This
+is achieved with _custom interface multiplexing_, described below.
+
+//[NOTE]
+//====
+//Consider global renaming: custom interface to custom extension (CX);
+//custom interface library to CX library; and CFU to CXU. Then we would
+//have _CX libs target CXs_ and _CXUs implement CXs_.
+//====
+
+=== Examples
+
+Alice develops a multicore RISC-V-based FPGA SmartNIC application
+processor subsystem. The software stack includes processes that already
+use a cryptography CI library that issues custom instructions, of a
+cryptography custom interface, that execute on a cryptography custom
+function unit.
+
+Profiling reveals a compute bottleneck in file block data
+compression. Fortunately, the compression library can use a
+hardware-accelerated compression custom interface, if present in the
+system. Alice obtains a compression CFU package that implements the
+interface, adds it to the MPSoC system manifest, configures its parameter
+settings, then re-composes and rebuilds the FPGA design. The cryptography
+CFU, compression CFU, CFU interconnect, and CPU cores all use the same
+_CFU Logic Interface_, so this incurs no RTL coding. The _system CFU map_
+(a new part of the device tree) is updated to map from the compression
+_custom interface ID (CI_ID)_ (a 128-bit GUID) to the compression unit
+_CFU_ID._
+
+The compression library calls the CI Runtime to discover if compression
+acceleration is available. The runtime consults the CFU map for that
+CI_ID, finding the compression CFU_ID. Next the library uses the CI
+Runtime to _select_ the compression interface, and its CFU, prior to
+issuing compression instructions to this CFU. Later the cryptography
+library uses the same CI Runtime API to discover and select the
+cryptography interface prior to issuing cryptography instructions to
+the cryptography CFU.
+
+Later, Bob takes Alice's system and adds an ML inference library. For
+acceleration, Bob defines a new binary neural network custom interface,
+`bnn_ci`, identified with a new CI_ID he mints. Bob's new BNN custom
+instructions reuse standard custom instruction encodings, which is fine
+because they're scoped to `bnn_ci`. Bob develops `bobs_bnn_cfu` core, and CFU
+metadata that describes it. He adds that package to the system manifest
+and rebuilds the system, updating the CFU map. Bob's system now runs
+highly accelerated with cryptography, compression, and inference custom
+function instructions issuing from the various CPU cores and executing
+in the various CFUs.
+
+[[composed-system]]
+.Bob's system, composed from CPU and CFU packages and custom interface libraries
+image::composed-system.png[image]
+
+<<composed-system>> illustrates this.
+A _Composer_ tool assembles and configures the reusable, composable CPU
+and CFU RTL packages into a complete system, per the system manifest,
+and generates a devicetree (or similar) that determines the system CFU
+map. Each acclerated library uses the Runtime to select its respective
+custom iterface, and its CFU, prior to issuing custom function
+instructions of that interface to that CFU.
+
+=== Scope: reliable composition via strict isolation
+
+To ensure that composition of custom interfaces and their CFUs does
+not subtly change the behavior of any interface, each must operate in
+isolation. Therefore, each custom function (CF) instruction is of limited
+scope: exclusively computing an ALU-like integer function of up to two
+operands (integer register(s) and/or immediate value), with read/write
+access to the interface's private state (if any), writing the result to
+a destination register.
+
+A CF may not access other resources, such as floating-point registers
+or vector registers, pending definition of suitable custom instruction
+formats.
+
+A CF may not access _isolation-problematic_ shared resources such as
+memory, CSRs, the program counter, the instruction stream, exceptions,
+or interrupts, pending a means to ensure correct composition by
+design. (Except that, as with RISC-V floating point extensions, the
+default error model accumulates CFU errors in a shared CFU status CSR.)
+
+==== Stateless and stateful custom interfaces
+
+A custom interface may be stateless or stateful. For a stateless
+interface, each CF is a pure function of its operands, whereas a stateful
+interface has one or more isolated state contexts, and each CF may access,
+and as a side effect, update, the hart's _current_ state context of the
+interface (only).
+
+Isolated state means that latency notwithstanding, 1) the behavior of
+the interface only depends upon the series of CF requests issued on that
+interface and never upon on any other operation of the system; and 2)
+besides updating interface state, the CFU status CSR, and a destination
+register, issuing a CF has no effect upon any other architected state or
+behavior of the system. Issuing a CF instruction may update the current
+state context of the custom interface but has no effect upon another
+state context of that interface, nor that of any other interface.
+
+A CFU implementing a stateful custom interface is typically provisioned
+with one state context per hart, but other configurations, including
+one context per request, activity, fiber, task, or thread, or a small
+pool of shared contexts, or several harts sharing one context, or one
+singleton context, are also possible. Similarly, each CFU in a system
+may be configured with a different number of its state contexts.
+
+A <<serializable,_serializable_>> stateful custom interface
+supports interface-agnostic context management.
+
+[TIP]
+====
+Although custom intefaces never introduce nor use CSRs, the same effect
+can be obtained via custom functions that read or write facets of the
+interface state context.
+====
+
+=== Standard interfaces and formats
+
+To facilitate an open ecosystem of composable custom interfaces, CFUs,
+libraries, and tools, the specification defines common interop interfaces
+and formats:
+
+* the _CFU Logic Interface (CFU-LI),_
+* the _Custom Interface Hardware-Software Interface (CI-ABI), including CFU-extensions to RV-I (-Zicfu)_,
+* the _Custom Interface Runtime API (CI-RT)_, and
+* build-time _CFU Metadata (CFU-MD)._
+
+[[layers]]
+.Hardware-software interfaces stack. New standard interfaces and formats are shaded.
+image::composition-layers.png[image,width=400]
+
+The hardware-software interfaces stack (<<layers>>) shows how these
+interfaces and formats work together to compose user-defined custom
+interfaces CI~0~ and CI~1~, their libraries, and their CFUs into a system.
+
+==== CFU Logic Interface (CFU-LI)
+
+The CFU-LI defines the hardware-to-hardware logic interface between a
+_CFU requester_ (e.g., a CPU) and a _CFU responder_ (e.g., a CFU). When
+a custom function instruction issues, the CPU sends a _CFU request_,
+providing the request's _CFU identifier (<<CFU_ID,CFU_ID>>)_, the _custom function
+identifier (<<CF_ID,CF_ID>>), _state index (<<STATE_ID,STATE_ID>>)_, if any, and request data
+(operands). The CFU performs the custom function then sends a _CFU
+response_ providing response data and error status.
+
+In a system with multiple CPUs and/or CFUs, mux and adapter CFUs
+accept and route requests to CFUs and accept and route responses back
+to CPUs. The CFU-LI supports CPUs and CFUs of various _feature levels_
+of capability and complexity, including combinational CFUs, fixed-latency
+CFUs, and variable latency CFUs with flow control.
+
+[[intro-CSRs]]
+==== CFU hardware-software interface
+
+The CFU hardware-software interface, -Zicfu, repurposes three custom
+function instruction formats and adds four CSRs. The three instruction
+formats reuse the _custom-0_, _custom-1_, and _custom-2_ formats /
+major opcodes
+cite:[risc-v-unpriv(143)]
+but (via custom interface multiplexing compose correctly with any
+preexisting vendor-defined CPU-specific custom interfaces. The four new
+CFU CSRs are:
+
+* `mcfu_selector`: selects the hart's current <<CFU_ID,CFU_ID>> and <<STATE_ID,STATE_ID>>, for custom interface multiplexing;
+* `cfu_status`: accumulates CFU errors;
+* `mcfu_selector_table`, `cfu_selector_index`: efficient access control to CFUs and CFU state.
+
+[NOTE]
+====
+`mcfu_selector_table` is insufficient given various M/H/S/U privilege
+levels. This corner of the design requires additional work, and additional
+CSRs.
+====
+
+[[Intro-CIM]]
+==== Custom interface multiplexing
+
+Custom interface multiplexing provides an inexhaustible collision-free
+opcode space for CF instructions for diverse custom interfaces without
+resort to any _central assigned opcodes authority_, and thereby
+facilitates direct reuse of CI library binaries.
+
+A custom-interface-aware library, prior to issuing a CF instruction,
+must first CSR-write a _system and hart specific_ CI selector value to
+`mcfu_selector`, routing subsequently issued CF instructions on this
+hart to its CFU and to a specific state context. Like the -V vector
+extension's `vsetvl` instructions, a CSR-write to `mcfu_selector` is a
+prefix that modifies the behavior of CF instructions that follow. With
+each CF instruction issued, the CPU sends a CFU request to the hart's
+current CFU and its current state. This request is routed by standard
+Mux CFU and adapter cores to the hart's _current_ CFU, which performs
+the custom function using the hart's current state context. Its response
+is routed back to the CPU which writes the destination register and
+updates `cfu_status`.
+
+The `mcfu_selector` CI selector value, a tuple (<<CFU_ID,CFU_ID>>,
+<<STATE_ID,STATE_ID>>), is system specific because different systems may
+be configured with different sets of CFUs, with different CFU_ID mappings,
+and is hart specific because different harts may use different isolated
+state contexts. Raw CI selector values are not typically compiled into
+software binaries.
+
+In a system with multiple CI libraries that invoke CF instructions
+on different interfaces, each library uses the CI Runtime to look up
+selectors for a CI_ID and update `mcfu_selector`, routing CF instructions
+to its interface's CFU and state context. Over time, across library calls,
+`mcfu_selector` is written again and again.
+
+[TIP]
+====
+Reuse of custom instruction encodings across interfaces will make
+debugging, esp. disassembly, more challenging.
+====
+
+==== `IStateContext` and serializable stateful custom interfaces
+
+The specification defines a custom interface `IStateContext` with four
+standard custom functions for serializable stateful custom interfaces:
+
+[source,C++]
+....
+interface IStateContext {
+//  CF_ID       custom function
+    [1023] int  cf_read_status ();
+    [1022] void cf_write_status(int status);
+    [1021] int  cf_read_state  (int index);
+    [1020] void cf_write_state (int index, int state);
+};
+....
+
+The CFU status indicates cumulative error flags, clean/dirty, and state
+context size.  The read/write state functions access words of the state
+context.
+
+These standard custom functions enable an interface-aware CI library to
+access stateful interface specific error status, and an interface-agnostic
+runtime or operating system to reset, save, and reload state context(s).
+
+==== CI Application Programming Interface and CI-ABI
+
+The CI-API consists of the _CI Runtime_ API, and a calling convention
+rule. Both are necessary for correct discovery, operation, and composition
+of CI libraries. As described above (<<intro-CSRs>>) the current `mcfu_selector`
+CSR selects the current custom interface/CFU and state context for the
+hart. However, a CI library should not directly create a CI selector
+value, nor directly access the CSR. Rather a CI library uses the CI
+Runtime to look up the CI selector value for its custom interface's
+CI_ID and to write it to `mcfu_selector`, prior to issuing CF
+instructions. For example, using a C++ _RAII_ object ci to represent a
+(scoped) custom interface selection:
+
+[source,C++]
+....
+#include "ci.h"                         // CI Runtime: class use_ci { ... }
+use_ci ci(my_bitmanip_ci_id);           // csrrw mcfu_selector
+uint32_t count = cf(pcnt_cf, data, 0);  // cfu_reg cf_id, rd, rs1, rs2
+....
+
+The provisional CI-ABI defines a _callee-save_ calling convention for
+`mcfu_selector`. For example, consider CI library functions `a()` and
+`b()`, for interfaces `A` and `B`, that issue CF instructions `af0`,
+`af1`, `bf0`, `bf1`, in this program:
+
+[source,C++]
+....
+main() { a(); }
+a() { use_ci a_ci(A_ci_id); af0; b(); @1 af1; }
+b() { use_ci b_ci(B_ci_id); bf0; bf1; }
+....
+
+with execution trace:
+
+[source,C++]
+....
+main() { a() { a_ci(); af0; b() { b_ci(); bf0; bf1; ~b_ci(); } @1 af1; ~a_ci(); }
+....
+
+With a callee-save discipline, at point `@1`, upon return from `b()`, the
+current custom interface must be `A` again. Thus the `b_ci()` constructor
+saves `a()'s` `mcfu_selector` value while overwriting it; later its
+`~b_ci()` destructor restores it. This _RAII_ approach also correctly restores
+`mcfu_selector` in the event of an exception handling stack unwind.
+
+=== System composition
+
+==== Metadata and system manifest
+
+To support automatic composition of CPUs and CFUs into working systems,
+this specification defines a standard CFU metadata format that details
+each core's properties, features, and configurable parameters, including
+CFU-LI feature level, data widths, response latency (or variable),
+and number of state contexts. Each CPU and CFU package, as well as the
+system manifest, include a metadata file.
+
+==== Composer
+
+A system composer (human or tool) gathers the system manifest metadata and
+the metadata of the manifest-specified CPUs and CFUs, then uses (manual
+or automatic) constraint satisfaction to find feasible, optimal parameter
+settings across these components. The composer may also configure or
+generate mux and adapter CFUs to automatically interconnect the CPU and
+the CFUs.
+
+For example, a system composed from a CPU that supports two or three
+cycle fixed latency CFUs, a CFU~1~ that supports response latency
+of one or more cycles, a CFU~2~ that has a fixed response latency of
+three cycles, and CFU~3~ which is combinational (zero cycles latency),
+overall has a valid configuration with three cycles of CFU latency,
+with the CPU coupled to a mux CFU, coupled to CFU~1~ and CFU~2~ and to
+a _fixed latency adapter CFU_, coupled to CFU~3~.
+
+==== Diversity of systems and operating systems
+
+Composable custom interfaces and CFUs are designed for use across
+a broad spectrum of RISC-V systems, from a simple RVI20U-Zicsr-Zicfu
+microcontroller running bare metal fully trusted firmware, to a multicore
+RVA20S Linux profile, running secure multi-programmed, multithreaded user
+processes running various CI libraries, and with privileged hypervisors
+and operating systems securely managing access control to CFUs and
+CFU state.
+
+=== Future directions, TODOs
+
+The present specification focuses on composition at the hardware-software
+interface, and below. Future work includes:
+
+* Expand the scope of custom interfaces to include access to non-integer
+registers, CSRs, and memory, while preserving composition.
+
+* Expand the CFU Logic Interface to support greater computation
+flexibility and speculative execution.
+
+* Design and implement an automatic system composition tool.
+
+=== Acknowledgements
+
+Custom Interfaces are modeled upon the Interface system of the Microsoft
+Component Object Model (COM), a ubiquitous architecture for robust
+arms-length composition of independently authored, independently versioned
+software components, at scale, over decades
+cite:[ms-com-interfaces].
+
+[TIP]
+=====
+(End of non-normative Introduction section.)
+=====
+

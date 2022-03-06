@@ -1,0 +1,904 @@
+== Custom interfaces: the hardware-software interface
+
+The Custom Interface abstraction bridges software and hardware, enabling
+diverse software libraries which target the same interface and
+diverse hardware CFU cores which implement the same interface. Then
+_custom interface multiplexing_ enables composition of systems of
+separately authored and versioned components.
+
+=== Definitions
+
+A *custom function (CF)* is a function from two integer operands to an
+integer result and response status. May be stateless or stateful.
+
+[[CF_ID]]
+A *custom function identifier (CF_ID)* is an integer, in the scope of
+a custom interface, identifying a custom function. A *valid CF_ID* is
+a value that identifies a CF instruction implemented by a configured
+interface.
+
+A *stateless custom function* is a CF that is a pure function of
+its operands (only). Never reads nor writes any other architected
+state. Given the same operand values, always produces the same result
+and response status.
+
+A *stateful custom function* is a CF that is a function of its operands
+and its custom interface state context (only). May read and write the
+context but never reads or writes other architected state. Equivalently:
+a CF that is a function of its operands and of any prior CF invocations
+upon its custom interface (only).
+
+A *custom interface (CI, interface)* is a fixed named set of custom
+functions. May be stateless or stateful. _Fixed:_ immutable, i.e., any
+versioning of the CFs or the behavior of an interface necessarily defines
+a new interface. _Named:_ has a custom interface identifier.
+
+A *custom interface identifier (CI_ID)* is a 128-bit globally unique ID
+(_GUID_) [see RFC-4122], unique in history, identifying a custom
+interface__.__
+
+A *stateless custom interface* is a fixed named set of set of stateless
+custom functions.
+
+A *stateful custom interface* is a fixed named set of custom functions,
+at least one of which is a stateful custom function, plus a custom
+interface state context.
+
+A *custom interface state context (state context, state, context)*
+is an isolated collection of state associated with a stateful custom
+interface. Isolated: stateful custom functions of the interface may read
+and write the state context, but no other element or operation of the
+system may read or write the state context.
+
+[[serializable]]
+*`IStateContext`* is a stateful custom interface, identified as
+`CI_ID_IStateContext`, and with four stateful custom functions:
+{`cf_read_status`, `cf_write_status`, `cf_read_state`, `cf_write_state` },
+providing a standard way to manage a custom interface state context. A
+*serializable custom interface* is a stateful custom interface that
+inherits IStateContext.
+
+A *configured custom interface (configured interface)* is an interface
+that is configured (included) within a system and is implemented by a
+CFU of the system (a *configured CFU*). Within a system, a configured
+interface has some configured number of state contexts.
+
+A *configured interface subset* is a configured interface in which one
+or more custom functions of the interface are not implemented. The CF_IDs
+of unimplemented custom functions are invalid.
+
+[[STATE_ID]]
+A *custom interface state context identifier (STATE_ID)* is an integer
+index, in the scope of a configured interface, in the range [0,
+no. of state contexts-1] identifying one of an interface's contexts
+in the system. A stateless interface has zero state contexts and uses
+STATE_ID=0 whenever a STATE_ID is required. A *valid STATE_ID* is a
+value that identifies a state context of a configured interface.
+
+A *custom function instruction (CF instruction)* is a RISC-V custom
+instruction that executes a custom function using a custom function
+unit, sourcing the integer operands from the register file and/or from
+an immediate field of the instruction, writing the integer result to the
+register file, and updating the CFU status CSR with the response status.
+
+A *custom function unit (CFU)* is a core that implements one or more
+custom interfaces. A *stateful CFU* implements at least one stateful
+custom interface.
+
+[[CFU_ID]]
+A *CFU_ID* is an integer, in the scope of a system, that identifies
+a configured interface implemented by a CFU. When one CFU implements
+multiple configured interfaces, different CFU_IDs identify the configured
+interfaces. A *valid CFU_ID* is a CFU_ID value that identifies a
+configured interface.
+
+A *custom interface selector (CI selector, selector)* is a 32-bit value
+written to `mcfu_selector` CSR to enable custom interface multiplexing
+and specify the hart's current configured interface / CFU and current
+state context.
+
+[[selector-table]]
+A *CI selector table* is a 4 KB aligned, 4 KB sized table of 1024
+CI selectors. When CFU access control (§<<_cfu_access_control>>) is
+supported, each hart has a `mcfu_selector_table` CSR to address its CI
+selector table.
+
+A *selector index* is an integer that identifies an entry in a CI selector
+table (§<<_cfu_access_control>>).
+
+[[cfu_csrs]]
+=== New CFU control / status registers
+
+A -Zicfu compatible CPU shall implement the `mcfu_selector` and
+`cfu_status` CSRs for interface multiplexing and custom function
+execution.
+
+When CFU access control
+(§<<_cfu_access_control>>)
+is supported, a -Zicfu compatible CPU
+shall implement the `mcfu_selector_table` and `cfu_selector_index` CSRs.
+
+All CFU CSR fields marked _reserved_ are WPRI, write preserve, read
+ignored, and all other fields are WARL, write any/read legal values. (An
+invalid <<CFU_ID,CFU_ID>> or <<STATE_ID,STATE_ID>> value is still _legal_).
+
+All CFU CSRs are initialized to zero on reset.
+
+==== `mcfu_selector` CSR 0xBC0: select active CFU and state context
+
+The `mcfu_selector` CSR implements custom interface multiplexing. It
+is assigned various CI selectors over time. This enables or disables
+CI multiplexing and selects the hart's current CFU and state context
+(within that CFU). It may only be read or written in machine level.
+
+[NOTE]
+====
+In a privileged architecture system, user level read access to
+`mcfu_selector` values could reveal goings-on in other software threads
+and thus facilitate side channel attacks.
+====
+
+[NOTE]
+====
+In a privileged architecture with M/S/U levels, for example, what CSRs
+are required and what access permissions should they have?
+====
+
+.`mcfu_selector` CSR 0xBC0
+[wavedrom,target="`mcfu_selector`",svg]
+....
+{reg:[
+{bits: 8, name: 'cfu_id'},
+{bits: 8, name: 'reserved', type:1, vspace:88},
+{bits: 8, name: 'state_id'},
+{bits: 7, name: 'reserved', type:1},
+{bits: 8, name: 'en'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+The `mcfu_selector` CSR has the following fields:
+
+`.en`: enable custom interface multiplexing
+
+* When `en=0`, disable custom interface multiplexing. The `cfu_id`
+and `state_id` fields are ignored. No CFU is selected. `Custom-0`,
+`custom-1`, or `custom-2` instructions execute the CPU's built-in
+custom instructions.
+
+* When `en=1`, enable custom interface multiplexing. The
+`cfu_id` and `state_id` fields select the current CFU and state
+context. `Custom-0`/`-1`/`-2` instructions issue CFU requests to the CFU
+identified by `cfu_id` and to the state context identified by `state_id`.
+
+`.cfu_id`: select the hart's current CFU
+
+* A valid `cfu_id` identifies a configured CFU.
+
+* When enabled, when `cfu_id` does not identify a configured CFU, executing
+a CF instruction causes an invalid CFU_ID error. The `cfu_status.CI`
+error bit is set and the CF instruction's destination register, if any,
+is zeroed.
+
+`.state_id`: select the hart's current CFU's current state context
+
+* A valid `state_id` identifies a state context of a CFU.
+
+* When enabled, when `cfu_id` is valid, but `state_id` does not identify
+a state context of the current CFU, executing a CF instruction causes
+an invalid STATE_ID error. The `cfu_status.SI` error bit is set and the
+CF instruction's destination register, if any, is zeroed.
+
+No error occurs when `mcfu_selector` is CSR-written with an invalid
+CI selector, i.e., when `.cfu_id` or `.state_id` are invalid. Rather,
+subsequently executing a CF instruction may cause a CFU_ID or STATE_ID
+error.
+
+[[cfu_status]]
+==== `cfu_status` CSR 0x801: CFU status
+
+The `cfu_status` CSR accumulates CFU error flags. It may be written and
+read in all privilege levels.
+
+Typical application software will write a CI selector to `mcfu_selector`,
+write 0 to `cfu_status`, execute some CF instructions, and read
+`cfu_status` to determine if there were any errors.
+
+.`cfu_status` CSR 0x801
+[wavedrom,target="`cfu_status`",svg]
+....
+{reg:[
+{bits:1, name:'CI'},
+{bits:1, name:'SI'},
+{bits:1, name:'FI', attr:'accrued errors'},
+{bits:1, name:'OP'},
+{bits:1, name:'CU'},
+{bits: 27, name: 'reserved', type:1},
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+The `cfu_status` CSR has the following fields:
+
+`.CI`: invalid CFU_ID error
+
+* Set by a CF instruction when `mcfu_selector.cfu_id` is invalid.
+
+`.SI`: invalid STATE_ID error
+
+* Set by a CF instruction when `mcfu_selector.cfu_id` is valid but
+`mcfu_selector`.state_id is invalid.
+
+`.FI`: invalid CF_ID error
+
+* Set by a CF instruction when `mcfu_selector.cfu_id` and
+`mcfu_selector.state_id` are valid but the instruction's CF_ID is invalid.
+
+`.OP`: CFU operation error
+
+* Set by a CF instruction when `mcfu_selector.cfu_id`,
+`mcfu_selector.state_id`, and its CF_ID are valid but there is an error
+in the requested operation or its operands, in lieu of custom error state.
+
+`.CU`: custom CFU operation error
+
+* Set by a CF instruction of a stateful interface when
+`mcfu_selector.cfu_id`, `mcfu_selector.state_id`, and its CF_ID are
+valid but there is an error in the requested operation or its operands,
+with custom (interface-defined) error state available.
+
+[TIP]
+====
+The custom error state of a stateful interface may be obtained using
+custom functions of the interface. In addition, the custom error state
+of a serializable interface may also be obtained using
+<<IStateContext,`IStateContext`>>
+custom functions `cf_read_status` and/or `cf_read_state`.
+====
+
+==== `mcfu_selector_table` CSR 0xBC1: CFU selector table base
+
+When CFU access control (§<<_cfu_access_control>>)is supported, the
+`MXLEN`-bit-wide `mcfu_selector_table` CSR specifies the base address
+of thehart's CI selector table. The CSR may be read and written in
+machine level.
+
+.mcfu_selector_table CSR 0xBC1 (when MXLEN=32)
+[wavedrom,target="cfu_selector_table",svg]
+....
+{reg:[
+{bits: 12, name: '0'},
+{bits: 20, name: 'base_page'},
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+CSR-writes to `mcfu_selector_table` zero the twelve least significant
+bits of the table address, so a CI selector table address must be 4
+KB aligned.
+
+==== `cfu_selector_index` CSR 0x800: CFU selector index
+
+When CFU access control (§<<_cfu_access_control>>)  is supported, the
+`cfu_selector_index` CSR selects an entry from the hart's CI selector
+table entry to write to the `mcfu_selector` CSR. The CSR may be read
+and written in all privilege levels.
+
+.cfu_selector_index CSR 0x800
+[wavedrom,target="cfu_selector_table",svg]
+....
+{reg:[
+{bits: 10, name: 'index'},
+{bits:22, name:'reserved', type:1}
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+The 10-bit zero-extended index field specifies which entry in the hart's
+CI selector table (at the hart's `mcfu_selector_table`) to use as the
+hart's current CI selector.
+
+In response to CSR-write of `cfu_selector_index`, load the 32-bit CI
+selector at address (`mcfu_selector_table + cfu_selector_index.index*4`)
+and CSR-write the CI selector to `mcfu_selector`, performing the load
+and the CSR-write at the next higher privilege level, as if it were
+a `lw` instruction (and with a `lw` instruction's memory ordering
+rules) (§<<_cfu_access_control>>).
+
+==== Implicit CFU CSR fences
+
+Per hart, there is an implicit fence between any CFU CSR access and any
+series of `custom-0`/`-1`/`-2` instructions. All CFU CSR accesses happen
+before any CF instructions which follow, and all CF instructions happen
+before any CFU CSR accesses that follow.
+
+[TIP]
+====
+For example, after issuing a long latency CF instruction, a CSR read of
+`cfu_status` must await the CF instruction's CFU response.
+====
+
+=== Custom function instruction encodings
+
+When `mcfu_selector.en=1`, software issues CF instructions to the current
+state context of the current interface (i.e., of the current configured
+CFU) using R-type, I-type, and flex-type custom function instruction
+encodings.
+
+For each instruction encoding, the CF instruction specifies the CF_ID, and
+source operand values, which may be two source registers, or one source
+register and one immediate value. R-type and I-type instructions always
+write a destination register whereas flex-type instructions never do so.
+
+==== Custom-0 R-type encoding
+
+Assembly instruction: `cfu_reg cf_id,rd,rs1,rs2`
+
+An R-type CF instruction issues a CFU request for a zero-extended 10-bit
+CF_ID `cf_id` with two source register operands identified by `rs1` and
+`rs2`. The CFU response data is written to destination register `rd`.
+
+.CFU R-type instruction encoding
+[wavedrom,target="custom-0",svg]
+....
+{reg:[
+{bits: 7, name:11, attr: 'custom-0'},
+{bits: 5, name: 'rd'},
+{bits: 3, name: 'cf_id[2:0]'},
+{bits: 5, name: 'rs1',},
+{bits: 5, name: 'rs2'},
+{bits: 7, name: 'cf_id[9:3]'},
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+==== Custom-1 I-type encoding
+
+Assembly instruction: `cfu_imm cf_id,rd,rs1,imm`
+
+An I-type CF instruction issues a CFU request for a zero-extended 4-bit
+CF_ID `cf_id` with one source register operand identified by `rs1` and a
+signed-extended 8-bit immediate value `imm`. The CFU response is written
+to destination register `rd`.
+
+.CFU I-type instruction encoding
+[wavedrom,target="custom-1",svg]
+....
+{reg:[
+{bits: 7, name: 43, attr:'custom-1'},
+{bits: 5, name: 'rd'},
+{bits: 3, name: 0},
+{bits: 5, name: 'rs1'},
+{bits: 4, name: 'cf_id[3:0]'},
+{bits: 8, name: 'imm[7:0]'},
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+[NOTE]
+====
+This new, irregular immediate field encoding may have a disproportionate
+impact on area and critical path delay in the decode or execute pipeline
+stages of a RISC-V processor core.
+====
+
+Seven-eighths of the custom-1 encoding space is reserved for future
+custom function instruction encodings.
+
+.CFU reserved I-type instruction encodings
+[wavedrom,target="custom-1r",svg]
+....
+{reg:[
+{bits: 7, name: 43, attr:'custom-1'},
+{bits: 5, name: 'reserved', type:1},
+{bits: 3, name: '1-7'},
+{bits: 17, name: 'reserved', type:1},
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+[[custom-2]]
+==== Custom-2 flex-type encoding
+
+Assembly instruction: `cfu_flex cf_id,rs1,rs2` +
+Assembly instruction: `cfu_flex25 custom`
+
+A flex-type CF instruction issues a CFU request for a zero-extended
+10-bit CF_ID `cf_id` with two source register operands identified by
+`rs1` and `rs2`. There is no destination register and CFU response data is
+discarded. The instruction is executed purely for its effect upon the
+selected state context of the selected CFU.
+
+.CFU flex-type instruction encoding
+[wavedrom,target="custom-2",svg]
+....
+{reg:[
+{bits: 7, name:91, attr: 'custom-2'},
+{bits: 5, name: 'custom' },
+{bits: 3, name: 'cf_id[2:0]'},
+{bits: 5, name: 'rs1',},
+{bits: 5, name: 'rs2'},
+{bits: 7, name: 'cf_id[9:3]'},
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+Alternatively, equivalently, the `cfu_flex25` form of instruction issues
+an arbitrary 25-bit custom instruction.
+
+.CFU flex-type instruction alternate encoding
+[wavedrom,target="custom-2-alt",svg]
+....
+{reg:[
+{bits: 7, name:91, attr: 'custom-2'},
+{bits: 25, name: 'custom' },
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+[TIP]
+====
+A flex-type CF instruction may be used with a CFU-L2 request's raw
+instruction field `req_insn` (<<raw_insn>>) to provide an
+arbitrary 32-7=25-bit custom request to a CFU. The absence of an
+(integer) destination register field is a feature that provides added,
+CPU-uninterpreted, custom instruction bits to a CFU.
+====
+
+[TIP]
+====
+One disadvantage of this approach: when the selected CFU routinely
+discards the R[`rs1`] or R[`rs2`] operands, use of the flex-type custom
+function instruction can create a useless false dependency on the `rs1`
+and `rs2` registers, which may uselessly delay issue of the CF instruction
+in an out-of-order CPU core.
+====
+
+=== Custom function instruction execution via custom interface multiplexing
+
+<<execution>> illustrates how a custom function instruction and the CFU
+CSRs implement custom interface / CFU composition via custom interface
+multiplexing. When the CPU issues a custom function instruction,
+it produces a <<cfu_request,CFU request>> from the fields of the
+instruction, two source operands from the register file and/or an
+immediate field of the instruction, and the `cfu_id` and `state_id` fields
+of `mcfu_selector`. The CFU request may include the request ID cookie
+(defined by the CPU), the <<CFU_ID,CFU_ID>>, <<STATE_ID,STATE_ID>>,
+raw instruction, <<CF_ID,CF_ID>>, and operands. The CFU_ID identifies
+which CFU must process the request. The CFU includes state context(s)
+and a datapath. The STATE_ID selects the state context to use for this
+request. The CFU checks for errors in CFU_ID, STATE_ID, and CF_ID
+per <<cfu_status>>, processes the request, possibly updating this
+state context, and produces a CFU response, which may include the same
+request ID cookie, a success/error status, and the response data. The
+CPU commits the custom function instruction by updating `cfu_status`
+(when response status is an error condition) and writing the response
+data to the destination register.
+
+Multiple custom function instructions may be in flight at the same time,
+particularly in a system with pipelined CPUs or pipelined CFUs. A CPU
+may send a request ID and later receive the (same) ID back to correlate
+requests sent and responses received.
+
+[[execution]]
+.HW-SW interface: flow of information for execution of a custom function instruction
+image::cf-instruction-execution.png[image,width=360]
+
+<<mapping>> defines the mapping from HW-SW interface entities, such as
+the `cf_id`, `rd`, `rs1`, `rs2`, `imm` fields of the custom function instruction
+and the `mcfu_select` and `cfu_status` CSRs, to the CFU Logic Interface's
+request and response signals
+(§<<_cfu_li_signaling>>).
+
+[[mapping]]
+.Mapping of HW-SW interface entities to CFU-LI signals
+[width="80%",cols="20%,80%",options="header",]
+|===
+|*CFU-LI signal* |*<- Source or -> Destination*
+|`req_id` | <- CPU
+|`req_cfu` | <- `mcfu_select.cfu_id`
+|`req_state` | <- `mcfu_select.state_id`
+|`req_insn` | <- `insn`
+|`req_func` | <- `insn.cf_id`
+|`req_data0` | <- R[`insn.rs1`]
+|`req_data1` | <- R[`insn.rs2`] {`custom-0`/`-2`} or `insn.imm` {`custom-1`}
+|`resp_id` | -> CPU
+|`resp_status` | -> `cfu_status` bits
+|`resp_data` | -> R[`insn.rd`] {`custom-0`/`-1`}
+|===
+
+==== Precise exceptions
+
+Custom function instruction execution preserves precise exception
+semantics. If an instruction preceding (in execution order) a custom
+function instruction is an exception, the custom function instruction
+does not execute, and has no effect upon architected state, including
+the `cfu_status` CSR, and no effect on the current state context of the
+custom interface / CFU.
+
+If an instruction following (in execution order) a custom function
+instruction is an exception, the custom function instruction executes,
+updating destination register, `cfu_status`, and current state context,
+as appropriate.
+
+[TIP]
+====
+A CPU may speculatively issue a CF instruction to a stateless
+CFU. Misspeculation recovery entails completing and discarding the CFU
+response. The CF instruction does not commit and there is no change to
+architectural state.
+====
+
+[TIP]
+====
+A CPU may not speculatively issue a CF instruction to a stateful CFU
+because the instruction may update the current state context and the
+CFU Logic Interface has no means to cancel a CFU request. In other
+words, a CF instruction of a stateful CFU, once issued, always commits.
+====
+
+[TIP]
+====
+Speculation is more than branch prediction. In a pipelined CPU,
+instructions that follow a load or store instruction typically issue
+speculatively until the load or store is determined to not raise an
+access fault. CF instructions of stateful CFUs must not issue in the
+wake of an instruction that may yet trap.
+====
+
+[TIP]
+====
+When a long latency CF instruction issues and a pipelined CPU continues
+issuing the following instructions in its wake, and one traps, the CPU
+nevertheless commits the CF instruction when the CFU eventually sends
+the response.
+====
+
+[[IStateContext]]
+=== `IStateContext`: the standard custom functions
+
+The `IStateContext` custom interface defines four standard custom
+functions to manage interface state context data. Stateful custom
+interfaces should (albeit not _must_) inherit from this interface,
+i.e., incorporate these four custom functions. `IStateContext` provides
+a standard, uniform way to access the interface's custom error state
+and enables an interface-agnostic runtime or operating system to reset,
+save, and reload state contexts.
+
+.Standard stateful custom functions
+[width="100%",cols="20%,8%,30%,42%",options="header",]
+|===
+|*Custom function* |*CF_ID* |*Assembly instruction* |*Encoding*
+|`cf_read_status` |1023 |`cfu_read_status rd` |`cfu_reg 1023,rd,x0,x0`
+|`cf_write_status` |1022 |`cfu_write_status rs1` |`cfu_reg 1022,x0,rs1,x0`
+|`cf_read_state` |1021 |`cfu_read_state rd,rs1` |`cfu_reg 1021,rd,rs1,x0`
+|`cf_write_state` |1020 |`cfu_write_state rs1,rs2` |`cfu_reg 1020,x0,rs1,rs2`
+|===
+
+CF_IDs 1008-1023 (0x3F0-0x3FF) are reserved for standard custom
+functions. It is recommended, not mandatory, that these CF_IDs not be
+used for another purpose.
+
+Any CF instruction with CF_ID=1023 must be side effect free, i.e.,
+never modify any CFU state.
+
+==== Interface state context status word
+
+The `cf_read_status` and `cf_write_status` functions access the selected
+interface state context's status word.
+
+.CFU state context status word
+[wavedrom,target="custom-0",svg]
+....
+{reg:[
+{bits: 2, name: 'cs'},
+{bits: 10, name: 'state_size'},
+{bits: 12, name: 'reserved', type:1},
+{bits: 8, name: 'error'},
+]}
+....
+
+The interface state context status word has the following fields:
+
+`.cs`: context status
+
+* The state context has four context status values: { 0: off; 1:initial;
+2:clean; 3:dirty } which correspond to those of the `XS` field of the
+`mstatus` CSR, per the RISC-V Privileged ISA specification
+cite:[risc-v-priv(26)].
+
+* A write `.cs=1` has the side effect of resetting the _current_ state
+context to its initial (power up) state.
+
+`.state_size`: state context size
+
+* This WARL field specifies the _current_ size (number of XLEN-sized words) of
+the current state context.
+
+* Reads return the current size of the current state context.
+
+* The value read need not equal the last value written.
+
+* Different CFU implementations of the same custom interface may have
+different state context sizes.
+
+* Different state contexts of the same CFU may have different state context sizes.
+
+* At different times, the same state context of the same CFU may have different state context sizes.
+
+`.error`: custom error status
+
+* An 8-bit custom error status for the current interface / CFU and its state context.
+
+==== `cfu_read_status` standard custom function instruction
+
+Assembly instruction: `cfu_read_status rd`
+
+This instruction retrieves the state status word
+(§<<_interface_state_context_status_word>>) of the selected state context
+of the selected CFU and writes it to the `rd` destination register.
+
+`cfu_read_status` can never modify the selected state context, nor modify
+the behavior of the interface.
+
+The status word `.state_size` field may change as a side effect of
+executing a stateful CF instruction.
+
+For the CF instruction sequence [ `cfu_read_status`; `cfu_read_state`*;
+`cfu_read_status` ], the first and second `cfu_read_status` must return
+the same `.state_size`.
+
+For the CF instruction sequence [ `cfu_read_status`,
+_any-other-CF-instruction_ *, `cfu_read_status` ], the first and second
+`cfu_read_status` need not return the same `.state_size`.
+
+[TIP]
+====
+For most stateful CFUs, the size of a state context is
+fixed. For some stateful CFUs, the size of a state context may depend
+upon the sequence of CF instructions performed. For example, a stateful
+vector math CFU may provide CF instructions to allocate per-state context
+vector storage from a common, private shared pool, and may allow different
+state contexts to represent different sized vectors.
+====
+
+`cfu_read_status` may be used as a _probe_ after a `mcfu_selector` write,
+to check whether the selector addresses a valid CFU and state context:
+
+[source,asm]
+....
+csrw mfcu_selector,x1   ; select some CFU and state context
+csrw cfu_status,x0      ; clear cfu_status
+cfu_read_status x0      ; probe, discarding state status word
+csrr x2,cfu_status      ; retrieve cfu_status
+...                     ; cfu_status.ci => invalid CFU_ID
+...                     ; cfu_status.si => invalid STATE_ID
+....
+
+==== `cfu_write_status` standard custom function instruction
+
+Assembly instruction: `cfu_write_status rs1`
+
+This instruction writes the value of the `rs1` source register to the
+state status word of the selected state context of the selected CFU.
+
+A write `.cs=1` always has the side effect of resetting the selected
+state context to its initial (power up) state.
+
+For the sequence [ `cfu_write_status`; *; `cfu_read_status` ] the value of
+`.state_size` read need not equal the last value written.
+
+A `cfu_write_status` CF instruction never has any effect upon any other
+state context of the CFU, or of any ohter CFU.
+
+==== `cfu_read_state` standard custom function instruction
+
+Assembly instruction: `cfu_read_state rd,rs1`
+
+This instruction reads one (XLEN-bit) word of state, at the index
+specified by the `rs1` source register, from the selected state context
+of the selected CFU, and writes it to the `rd` destination register.
+
+==== `cfu_write_state` standard custom function instruction
+
+Assembly instruction: `cfu_write_state rs1,rs2`
+
+This instruction reads the value of the `rs2` source register and writes
+it to the selected state context of the selected CFU at the index
+specified by the value of the `rs1` source register. It silently drops
+attempts to write state at an invalid state index.
+
+=== Resource management and context switching
+
+A software resource manager (e.g., thread pool, language runtime, language
+virtual machine, RTOS, operating system, hypervisor) multiplexes software
+loci of execution (e.g., request, worker, actor, activity, task, fiber,
+continuation, thread, process), _locus_ for short, upon one or more
+hardware threads (_harts_).
+
+The RISC-V per-hart state includes the program counter and integer
+register file, and optionally, floating point and vector register files,
+and various CSRs. Composable interfaces extension *-Zicfu* extends
+per-hart state with the CFU CSRs (§<<cfu_csrs>>) and the various
+configured state contexts of the stateful configured custom interfaces.
+
+A CFU implementing a stateful custom interface is typically configured
+with one state context per hart in the entire system, but other
+configurations, including one context per locus, or a small pool
+of cooperatively or preemptively managed contexts, or several harts
+sharing one context, or one singleton context, are possible. Similarly,
+each CFU in a system may be configured with a different number of its
+state contexts.
+
+The resource manager maintains the mapping of loci to harts, and the
+mapping of harts to (per-CFU) state contexts. The resource manager
+consults a _system CFU map_ specifying the mapping CFU_IDs of the
+configured interfaces of the system, and for each interface/CFU, the
+no. of state contexts it is configured with. A stateless CFU has zero
+contexts.
+
+Over time, the resource manager must reset, save, and restore hart state,
+including its interface state contexts, to initialize a hart or
+to perform a context switch.
+
+To reset hart state, for each interface state context of the hart, execute
+
+[source,asm]
+....
+li a1,{.error=0,.cs=1/*initialize*/}
+lw a0,selectors[i]
+csrw mcfu_selector,a0
+cfu_write_status a1
+....
+
+This resets that state context to its initial state.
+
+To save hart state, for each interface state context of the hart,
+first execute
+
+[source,asm]
+....
+lw a0,selectors[i]
+csrw mcfu_selector,a0
+cfu_read_status a0
+sw a0,status[i]
+....
+
+to obtain `a0.state_size`, the size (in XLEN-bit words) of the serialized
+state context for the selected state context. Allocate array `save[i][]`
+to store the serialized state context. For each word in `a0.state_size`,
+execute
+
+[source,asm]
+....
+cfu_read_state a0,j
+sw/sd a0, save[i][j]
+....
+
+(When XLEN=32, use `sw`; when XLEN=64, use `sd`.)
+
+To restore hart state, for each interface state context of the hart,
+first execute
+
+[source,asm]
+....
+lw a0, selectors[i]
+csrw mcfu_selector, a0
+lw a0, status[i]
+cfu_write_status a0
+....
+
+to restore the state context status word. Then for each word in
+`status[i].state_size`, execute
+
+[source,asm]
+....
+lw/ld a0, save[i][j]
+cfu_write_state j,a0
+....
+
+to restore each word of the state context.
+
+When different CFUs implement the same custom interface, they may have
+different serializations, of different sizes.
+
+[NOTE]
+====
+Discuss preemption scenario where following context save, later restore,
+the locus moves to a different STATE_ID of a CFU.  `cfu_selector_index`
+may (but should not) change.  However, resource manager must change
+`mcfu_selector`.
+====
+
+[NOTE]
+====
+`cf_read_state` and `cf_write_state` are random access. It is
+possible this induces unnecessary CFU hardware area. Perhaps specify a
+stream-out/stream-in interface instead.
+====
+
+[NOTE]
+====
+Discuss impact of mixed sized serialized contexts upon system code and
+upon CFU design. Can a serialized state context ever be too big to reload?
+====
+
+[NOTE]
+====
+Is it necessary or helpful for CFU metadata to declare fixed- or
+variable-sized interface state contexts?
+====
+
+=== CFU access control
+
+Fully trusted software, executing in machine level, has full access
+to every CFU and every state context. Software may write an arbitrary
+CI selector value to the `mcfu_selector` CSR, addressing any CFU and
+any state context. This is sufficient to implement custom interface
+multiplexing but does not provide means to protect one hart's CFUs'
+state from another hart, nor to limit a hart's access to a given CFU.
+
+When a CPU implements user level and machine level privileged
+architecture, an attempt to CSR-write `mcfu_selector` from user level
+generates an illegal instruction exception.
+
+Machine level software may provide to user level softwrae an `ECALL`
+function to change `mcfu_selector`.
+
+Alternatively, the machine level illegal instruction exception handler
+can determine whether the new CI selector value is valid for the user
+level code executing on the hart, optionally perform the CSR-write on its
+behalf, and return from exception.
+
+Whether `ECALL` or exception handler, a detour into system level
+is prohibitively slow: reconfiguring custom interface multiplexing
+should take, at most, a few clock cycles.
+
+The optional CFU access control CSRs `mcfu_selector_table` and
+`cfu_selector_index` allow less privileged code _user code_ to
+rapidly multiplex custom interfaces, but only among those interfaces and
+state contexts granted access by more privileged code _system code_.
+
+CFU access control requires at least user level and machine level
+privileged architecture, and a memory access control system, i.e.,
+either RISC-V PMP or RISC-V virtual memory access control.
+
+For each hart, the system code provisions a <<selector-table,_CI selector
+table_>>, 4 KB aligned, comprising 1024 32-bit CI selectors, which is
+read/write to system code and inaccessible from user code. Initially the
+table is zero filled, as zero is a valid CI selector (disables custom
+interface multiplexing). The system code CSR-writes its address to the
+hart's `mcfu_selector_table` CSR. Then in response to a system call
+requesting access to an interface, and one of its state contexts, system
+code determines whether the access is granted. If so, it determines the
+CI selector value for it, allocates an entry for that CI selector value
+in the CI selector table, and returns the index (the _selector index)_
+of that entry to user code.
+
+[TIP]
+====
+This index is analogous to a Unix file descriptor -- an opaque token to
+a resource granted by system code.
+====
+
+To select this CI/CFU and its state, user code CSR-writes its index
+to `cfu_selector_index`. In response, the CPU loads from memory (at more
+privileged level) the CI selector word at that index in the selector table
+and CSR-writes it to `mcfu_selector` -- no exception handling detour
+required.
+
+[TIP]
+====
+This mechanism also conceals the specific CFU_ID and STATE_ID information
+from user code, precluding some possible side channel attacks.
+====
+

@@ -1,0 +1,41 @@
+== TODO
+
+Todo:
+
+* Chapter on CI Runtime (runtime) API
+* How CI and CFU versioning works; how CFU-LI versioning works
+
+=== Open design problems (post 1.0)
+
+* Developing, running accelerated libraries on systems where there is no custom interface / CFU implementation.
+* Developer tooling recommendations for disassembly, debugging, profiling, perf monitoring.
+
+=== Other CFU-like mechanisms
+
+* Intel Nios II Custom Instruction User Guide*
+
+* Xilinx LogiCORE IP Fast Simplex Link Bus*
+
+* Xilinx Connecting Customized IP to the MicroBlaze Soft Processor Using the Fast Simplex Link*
+
+* Rocket Custom Coprocessor (RoCC) Extension*
+
+* PicoRV "Pico Co-Processor Extension" (PCPI)
+
+* Core-V _cv-x-if_ (extension interface) (Tim Callahan's notes)
+
+=== Example: a stateful extended precision ALU
+
+[NOTE]
+====
+Here write up a fully worked example of a CFU-L1 extended precision ALU,
+its custom interface, CFU, and library code. (A follow up to a discussion
+on the RISC-V mailing list that didn't go anywhere.)
+====
+
+=== Cost model
+
+[NOTE]
+====
+Here write up a brief estimate of the FPGA area overhead of various -Zicfu and CFU-LI mechanisms and behaviors.
+====

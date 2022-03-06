@@ -1,0 +1,55 @@
+[[riscv-authoring]]
+= _Draft Proposed_ RISC-V Composable Custom Extensions Specification
+:description: Draft proposed specifications for composable custom extensions: custom interfaces and custom function units
+:company:
+:revdate: 03/05/2022
+:revnumber: 0.90.220305
+:revremark: Pre-release version
+:url-riscv: http://riscv.org
+:doctype: book
+:preface-title: Preface
+:colophon:
+:appendix-caption: Appendix
+:imagesdir: images
+//:title-logo-image: image:risc-v_logo.png[pdfwidth=3.25in,align=center]
+//:page-background-image: image:draft.svg[opacity=20%]
+//:title-page-background-image: none
+//:back-cover-image: image:backpage.png[opacity=25%]
+// Settings:
+:experimental:
+:reproducible:
+:imagesoutdir: images
+:bibtex-file: spec.bib
+:bibtex-order: alphabetical
+:bibtex-style: apa
+:icons: font
+:lang: en
+:listing-caption: Listing
+:sectnums:
+:toc: left
+:toclevels: 4
+:source-highlighter: pygments
+ifdef::backend-pdf[]
+:source-highlighter: coderay
+endif::[]
+:table-caption: Table
+:figure-caption: Figure
+:xrefstyle: short
+:chapter-label:
+:chapter-refsig: Chapter
+:!section-refsig:
+:appendix-refsig: Appendix
+:data-uri:
+:hide-uri-scheme:
+:stem: latexmath
+:footnote:
+
+[colophon]
+= Preface
+include::preface.adoc[]
+include::intro.adoc[]
+include::ci-abi.adoc[]
+include::cfu-li.adoc[]
+include::metadata.adoc[]
+include::todo.adoc[]
+include::bib.adoc[]

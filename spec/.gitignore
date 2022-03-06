@@ -1,0 +1,5 @@
+# spec.pdf -- check this in, for now, pending some CI rebuild TBD
+*.html
+images/*.svg
+.asciidoctor/*
+preface.adoc # derived from README.md

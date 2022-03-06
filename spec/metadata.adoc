@@ -1,0 +1,133 @@
+== CFU Metadata (CFU-MD)
+
+To help automate system composition, each composable hardware core (each
+CPU and CFU) shall include a metadata file which defines the properties,
+features, and supported values of its configuration parameters.
+
+For each core, for each configuration parameter, metadata may specify
+a subset of the set of legal configuration parameter values defined
+in §<<parameters>>.
+
+Metadata configuration parameter values are encoded as either a single
+value, a list of values, or a range of values. For a continuous range
+of integer values, the parameter value is range, and the inclusive
+range of values is found in a corresponding parameter whose name ends
+in `_range`. For example,
+
+[source,yaml]
+....
+parameter1: 0           # single value (scalar)
+parameter2: [32, 64]    # list of allowed values (sequence)
+parameter3: range       # range, via parameter3_range
+parameter3_range: [5,9] # inclusive range of integer values. Expands to [5,6,7,8,9]
+....
+
+=== CFU Metadata
+
+<<md-format>> specifies the CFU metadata format, in YAML.  Each legal
+configuration parameter range of §<<parameters>> _CFU_PARAM_ may be
+overridden (subset) through a YAML parameter line _parm_ .
+
+[[md-format]]
+.CFU metadata format
+[source,yaml]
+....
+cfu_name: string
+cfu_li:
+    feature_level: scalar                   # allowed values: 0-4. required
+    state_id_max: scalar | list | 'range'   # level 0+. 0 => stateless; default: any
+    req_id_w: scalar | list | 'range'       # level 2+. default: 0
+    cfu_id_w: scalar | list | 'range'       # level 0+. default: 0
+    state_id_w: scalar | list | 'range'     # level 1+. default: 0
+    insn_w: scalar | list | 'range'         # level 1+. default: 0
+    func_id_w: scalar | list | 'range'      # level 0+. default: 10
+    data_w: scalar | list                   # level 0+. default: 32
+    latency: scalar | list | 'range'        # level 1. default: 1
+    reset_latency: scalar | list | 'range'  # level 1. default: 0
+    xyz_range: [min,max]                    # when parameter xyz is range
+....
+
+[NOTE]
+====
+Need some stronger naming of CFUs and CPUs here. Perhaps a GUID, perhaps a URL. +
+====
+
+[NOTE]
+====
+Do we need to specify here which CI_IDs the CFU implements?
+====
+
+=== Example CFU metadata
+
+<<bobs_bnn_md>> is example CFU metadata for a CFU-L1 CFU which supports
+only one state context, requires at least 5-bit CF_IDs, requires XLEN=32,
+and supports a response latency of 2-4 cycles.
+
+[[bobs_bnn_md]]
+.Example CFU metadata (CFU-L1)
+[source,yaml]
+....
+cfu_name: bobs_bnn_cfu
+cfu_li:
+    feature_level: 1
+    state_id_max: 1         # only supports 1 state context
+    req_id_w:               # any req_id is fine
+    cfu_id_w: 0             # no req_cfu
+    state_id_w: 0           # no req_state_id
+    insn_w: 0               # no req_insn
+    func_id_w: range        # need >= 5-bit CF_IDs
+    func_id_w_range: [5,10] # so [5,6,7,8,9,10] are OK
+    data_w: 64              # XLEN=64-bit only +
+    latency: [2,3,4]        # configurable w/ 2-4 cycles of latency
+    reset_latency: 1        # requires at least 1 cycle of reset latency
+....
+
+=== CPU Metadata
+
+As described in §<<cpus>>, CPUs, as CFU requesters, use specific
+CFU-LI feature levels. As with CFUs, CPUs use CFU metadata to override
+configuration parameter defaults, in this case to define what the CPU
+requires or accepts of its CFU (which is, generally, the root of the
+DAG of CFUs).
+
+.CPU metadata format
+[source,yaml]
+....
+cpu_name: string
+cfu_li: # see [Listing 1].
+....
+
+=== Example CPU metadata
+
+<<cpu-md>> is example CFU metadata for a CPU that requires and supports
+only 32-bit combinational CFUs.
+
+[[cpu-md]]
+.Example CPU metadata (requires a CFU-L0 CFU DAG)
+[source,yaml]
+....
+cpu_name: carols_simple_scalar_cpu
+cfu_li:
+    feature_level: 0    # L0 combinational CFUs only
+    state_id_max:       # L0: n/a
+    req_id_w:           # L0: n/a
+    cfu_id_w:           # supports arbitrary CFU_IDs
+    state_id_w:         # L0: n/a
+    insn_w:             # L0: n/a
+    func_id_w:          # supports arbitrary CF_IDs
+    data_w: 32          # XLEN=32-bit only
+....
+
+=== System manifest
+
+[NOTE]
+====
+TODO
+====
+
+[NOTE]
+====
+Consider CI library metadata too.  "I may use use this subset { CF_IDs }
+of the CF_IDs of interface CI_ID."
+====
+
