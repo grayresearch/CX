@@ -7,7 +7,7 @@ hardware custom function units (CFUs), and software libraries.
 
 Eventually the work will include specifications, hardware packages,
 and software libraries. Presently the repo includes 
-[Draft Proposed RISC-V Composable Custom Extensions Specification](spec/spec.pdf)
+[Draft Proposed RISC-V Composable Custom Extensions Specification](https://raw.githubusercontent.com/grayresearch/CFU/main/spec/spec.pdf)
 with hardware CFU core packages, software libraries, tests, and other
 collateral to come.
 
