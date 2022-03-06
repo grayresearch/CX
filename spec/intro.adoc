@@ -1,4 +1,4 @@
-== Introduction: A composable custom extension ecosystem
+== Introduction: a composable custom extension ecosystem
 
 [TIP]
 ====
@@ -37,7 +37,7 @@ and deploy systems with multiple custom extensions and their libraries,
 enabling an open ecosystem, and marketplace, of custom extensions'
 hardware and software.
 
-=== Open, agile, interoperable, unfettered instruction set innovation
+=== Open, agile, interoperable instruction set innovation
 
 RISC-V International uses a community process to define a new optional
 standard extension to the RISC-V instruction set architecture. Candidate
@@ -72,9 +72,9 @@ work separately, they correctly work together, and so that if a composed
 system works correctly today, it continues to work, even as interfaces
 and implementations evolve across years and decades.
 
-Such unbridled composition requires an unlimited number of independently
-developed custom interfaces to coexist within a fixed ABI and ISA. This
-is achieved with <<multiplexing,_custom interface multiplexing_>>, described below.
+Composition also requires an unlimited number of independently developed
+custom interfaces to coexist within a fixed ABI and ISA. This is achieved
+with <<multiplexing,_custom interface multiplexing_>>, described below.
 
 === Examples
 
