@@ -300,7 +300,7 @@ custom interfaces (including multiple versions of one custom interface).
 every stateful interface implemented by this CFU. It must be 0 if every
 custom interface implemented by the CFU is stateless. It must be 1+ if
 any custom interface implemented by the CFU is stateful. When a leaf CFU
-implements multiple stateful custom interfaces, i.e. `CFU_CFU_ID_MAX`>1,
+implements multiple stateful custom interfaces, i.e. `CFU_CFU_ID_MAX>1`,
 each must be configured with the same number of state contexts.
 
 `CFU_LATENCY` and `CFU_RESET_LATENCY` are specific to CFU-L1 fixed
@@ -1452,11 +1452,11 @@ foot:{ tock:'0'
 
 Cycle-by-cycle:
 
-[arabic]
+[arabic,start=0]
 . Both CPUs CSR-write their hart's `mcfu_selector` registers, selecting CFU_ID=0=CFU~0~, and their hart's STATE_ID. +
 Both CPUs issue the first CF instruction (`f0`).
 
-[arabic]
+[arabic,start=0]
 . CPU~0~ sends first CFU request: REQ_ID=0 CFU_ID=0 STATE_ID=0 CF_ID=0, a.k.a. `0:u0<0>.f0`. +
 CPU~1~ sends first CFU request: REQ_ID=5 CFU_ID=0 STATE_ID=1 CF_ID=0, a.k.a. `5:u0<1>.f0`.
 . CPU~0~'s first request, destined for CFU~0~, wins arbitration for Mux output port 0. +
