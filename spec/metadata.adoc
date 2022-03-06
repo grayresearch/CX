@@ -25,8 +25,8 @@ parameter3_range: [5,9] # inclusive range of integer values. Expands to [5,6,7,8
 === CFU Metadata
 
 <<md-format>> specifies the CFU metadata format, in YAML.  Each legal
-configuration parameter range of §<<parameters>> _CFU_PARAM_ may be
-overridden (subset) through a YAML parameter line _parm_ .
+configuration parameter range of §<<parameters>> `CFU_PARAM` may be
+overridden (subsetted) through a YAML parameter line `param:` .
 
 [[md-format]]
 .CFU metadata format
@@ -34,16 +34,16 @@ overridden (subset) through a YAML parameter line _parm_ .
 ....
 cfu_name: string
 cfu_li:
-    feature_level: scalar                   # allowed values: 0-4. required
-    state_id_max: scalar | list | 'range'   # level 0+. 0 => stateless; default: any
-    req_id_w: scalar | list | 'range'       # level 2+. default: 0
-    cfu_id_w: scalar | list | 'range'       # level 0+. default: 0
-    state_id_w: scalar | list | 'range'     # level 1+. default: 0
-    insn_w: scalar | list | 'range'         # level 1+. default: 0
-    func_id_w: scalar | list | 'range'      # level 0+. default: 10
-    data_w: scalar | list                   # level 0+. default: 32
-    latency: scalar | list | 'range'        # level 1. default: 1
-    reset_latency: scalar | list | 'range'  # level 1. default: 0
+    feature_level: scalar                   # required.  allowed: 0-4
+    state_id_max: scalar | list | 'range'   # level:any. default: any. 0 => stateless
+    req_id_w: scalar | list | 'range'       # level:2+.  default: 0
+    cfu_id_w: scalar | list | 'range'       # level:any. default: 0
+    state_id_w: scalar | list | 'range'     # level:1+.  default: 0
+    insn_w: scalar | list | 'range'         # level:1+.  default: 0
+    func_id_w: scalar | list | 'range'      # level:any. default: 10
+    data_w: scalar | list                   # level:any. default: 32
+    latency: scalar | list | 'range'        # level:1.   default: 1
+    reset_latency: scalar | list | 'range'  # level:1.   default: 0
     xyz_range: [min,max]                    # when parameter xyz is range
 ....
 

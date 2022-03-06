@@ -549,10 +549,10 @@ words, a CF instruction of a stateful CFU, once issued, always commits.
 
 [TIP]
 ====
-Speculation is more than branch prediction. In a pipelined CPU,
-instructions that follow a load or store instruction typically issue
-speculatively until the load or store is determined to not raise an
-access fault. CF instructions of stateful CFUs must not issue in the
+Speculation is more than branch prediction. For example, in a pipelined
+CPU, instructions that follow a load or store instruction typically
+issue speculatively until the load or store is determined to not raise
+an access fault. CF instructions of stateful CFUs must not issue in the
 wake of an instruction that may yet trap.
 ====
 
@@ -562,6 +562,11 @@ When a long latency CF instruction issues and a pipelined CPU continues
 issuing the following instructions in its wake, and one traps, the CPU
 nevertheless commits the CF instruction when the CFU eventually sends
 the response.
+====
+
+[NOTE]
+====
+How can a CPU core determine dynamically whether a CF instruction, or its custom interface, is stateless?
 ====
 
 [[IStateContext]]

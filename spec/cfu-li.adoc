@@ -1331,8 +1331,8 @@ different, CFU-LI feature levels, in parallel, in the same cycle.
 Consider <<mux22>>, a system composed from two single-hart CPUs, two
 stateful CFUs, and a 2-input, 2-output Mux CFU. Fixed latency CFU~0~
 implements CFU-L1, configured with `CFU_LATENCY=1`. The CPUs, CFU~1~,
-and `Mux22` use/implement CFU-L2. `Cvt12`, a CFU level converter, up-converts
-CF0~0~ from CFU-L1 to CFU-L2.
+and `Mux22` use/implement CFU-L2. `Cvt12`, a CFU level converter,
+up-converts CFU~0~ from CFU-L1 to CFU-L2.
 
 [[mux22]]
 .CFU-L2 system, with two CPUs, mux CFU, converter CFU, CFU~0~ (L1), and CFU~1~ (L2)
@@ -1351,7 +1351,7 @@ transfers. In both directions, the mux consists of input ports (not
 registered), output port registers, an approximately fair output port
 arbiter, and a 2x2 channel crossbar. Each cycle, the mux determines
 which output ports are _available_ (i.e., are empty, or will transfer
-(valid and ready) this cycle) and which valid inputs are _eligible_
+(`valid & ready`) this cycle) and which valid inputs are _eligible_
 to transfer, then asserts ready, and transfers, some eligible inputs to
 available output ports, based upon a rotating priority order.
 
@@ -1533,11 +1533,11 @@ one for responses.
 
 [TIP]
 ====
-For example, in a Xilinx Versal FPGA, a CPU might transfer CFU requests,
-via CFU-L3-to-AXI-S bridge, AXI-S-to-NOC bridge, Versal NOC, NOC-to-AXI-S
-bridge, AXI-S-to-CFU-L3 bridge, to a CFU at the far corner of the FPGA
-fabric, later transferring CFU responses back to the _distant_ CPU by
-the same means.
+For example, in a AMD/Xilinx Versal FPGA, a CPU might transfer CFU
+requests, via CFU-L3-to-AXI-S bridge, AXI-S-to-NOC bridge, Versal NOC,
+NOC-to-AXI-S bridge, AXI-S-to-CFU-L3 bridge, to a CFU at the far corner
+of the FPGA fabric, later transferring CFU responses back to the _distant_
+CPU by the same means.
 ====
 
 <<cfu-axis>> presents a recommended canonical mapping between CFU-LI
@@ -1549,7 +1549,7 @@ signals and the two AXI-S streams.
 |===
 ^|*Dir* |*CFU-LI Port* |*Width* |*AXI-S Port*
 ^|in |`clk` | |`aclk`
-^|in |`rst` | |`aresetn` *
+^|in |`rst` | |`aresetn` _(inverted)_
 ^|in |`clk_en` | |-
 ^|in |`req_valid` | |`reqs_tvalid`
 ^|out |`req_ready` | |`reqs_tready`

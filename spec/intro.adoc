@@ -319,6 +319,7 @@ instructions. For example, using a C++ _RAII_ object ci to represent a
 [source,C++]
 ....
 #include "ci.h"                         // CI Runtime: class use_ci { ... }
+..
 use_ci ci(my_bitmanip_ci_id);           // csrrw mcfu_selector
 uint32_t count = cf(pcnt_cf, data, 0);  // cfu_reg cf_id, rd, rs1, rs2
 ....
