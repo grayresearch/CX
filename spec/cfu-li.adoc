@@ -1,4 +1,4 @@
-== Custom Function Unit Logic Interface (CFU-LI)
+== Custom Function Unit Logic Interface
 
 The CFU-LI defines a set of common hardware logic signaling interfaces
 enabling straightforward, correct composition of CPUs and CFUs. In the
@@ -841,6 +841,19 @@ Protocol:
 
 ==== CFU-L2 example
 
+<<cfu-l2-wave>> is an example waveform for three CFU-L2 CFU requests and
+responses, arising from executing three CF instructions `f0`-`f2`. (Assume
+`CFU_INSN_W=0`, no `req_insn`.) Each instruction issues a CFU request
+to the same CFU `u0`. Instructions `f0` and `f1` use state context `s0`;
+`f2` uses state context `s2`. The CFU receives request `f0`, with `req_id`
+`id0`, in cycle 2 and responds, with same `resp_id` `id0`, in cycle 3, a
+latency of 1 cycle. Requester asserts request `f1` in cycle 3, but it is
+not received by the CFU until it reasserts `req_ready` in cycle 4. The
+CFU responds to `f1` in cycle 6, with an error response, a latency of 2
+cycles. Requester asserts request `f2` in cycle 6, but it is not received
+by the CFU until it reasserts `req_ready` in cycle 7. The CFU responds to
+`f2` in cycle 10, a latency of 3 cycles.
+
 [[cfu-l2-wave]]
 .Example CFU-L2 signaling protocol waveform
 [wavedrom,target="cfu-l2",svg]
@@ -874,19 +887,6 @@ tock:0
 }
 }
 ....
-
-<<cfu-l2-wave>> is an example waveform for three CFU-L2 CFU requests and
-responses, arising from executing three CF instructions `f0`-`f2`. (Assume
-`CFU_INSN_W=0`, no `req_insn`.) Each instruction issues a CFU request
-to the same CFU `u0`. Instructions `f0` and `f1` use state context `s0`;
-`f2` uses state context `s2`. The CFU receives request `f0`, with `req_id`
-`id0`, in cycle 2 and responds, with same `resp_id` `id0`, in cycle 3, a
-latency of 1 cycle. Requester asserts request `f1` in cycle 3, but it is
-not received by the CFU until it reasserts `req_ready` in cycle 4. The
-CFU responds to `f1` in cycle 6, with an error response, a latency of 2
-cycles. Requester asserts request `f2` in cycle 6, but it is not received
-by the CFU until it reasserts `req_ready` in cycle 7. The CFU responds to
-`f2` in cycle 10, a latency of 3 cycles.
 
 === CFU-L3 elastic CFU signaling
 

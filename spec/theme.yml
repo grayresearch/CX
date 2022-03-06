@@ -47,8 +47,8 @@ page:
   size: letter
 base:
   font-family: body
-  font_size: 11.5
-  line_height_length: 12
+  font_size: 10.5
+  line_height_length: 11
   font_style: normal
   font_size_large: round($base_font_size * 1.25)
   font_size_small: round($base_font_size * 0.85)

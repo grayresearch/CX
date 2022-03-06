@@ -105,28 +105,27 @@ library uses the same CI Runtime API to discover and select the
 cryptography interface prior to issuing cryptography instructions to
 the cryptography CFU.
 
+[[composed-system]]
+.Bob's system, composed from CPU and CFU packages and custom interface libraries
+image::composed-system.png[image,width="80%"]
+
 Later, Bob takes Alice's system and adds an ML inference library. For
 acceleration, Bob defines a new binary neural network custom interface,
 `bnn_ci`, identified with a new CI_ID he mints. Bob's new BNN custom
-instructions reuse standard custom instruction encodings, which is fine
-because they're scoped to `bnn_ci`. Bob develops `bobs_bnn_cfu` core, and CFU
-metadata that describes it. He adds that package to the system manifest
-and rebuilds the system, updating the CFU map. Bob's system now runs
-highly accelerated with cryptography, compression, and inference custom
-function instructions issuing from the various CPU cores and executing
-in the various CFUs.
+instructions reuse the standard custom instruction encodings, which is
+fine because they're scoped to `bnn_ci`. Bob develops `bobs_bnn_cfu`
+core, and CFU metadata that describes it. He adds that package to the
+system manifest and rebuilds the system, updating the CFU map. Bob's
+system now runs highly accelerated with cryptography, compression,
+and inference custom function instructions issuing from the various CPU
+cores and executing in the various CFUs.
 
-[[composed-system]]
-.Bob's system, composed from CPU and CFU packages and custom interface libraries
-image::composed-system.png[image]
-
-<<composed-system>> illustrates this.
-A _Composer_ tool assembles and configures the reusable, composable CPU
-and CFU RTL packages into a complete system, per the system manifest,
-and generates a devicetree (or similar) that determines the system CFU
-map. Each acclerated library uses the Runtime to select its respective
-custom iterface, and its CFU, prior to issuing custom function
-instructions of that interface to that CFU.
+<<composed-system>> illustrates this.  A _Composer_ tool assembles and
+configures the reusable, composable CPU and CFU RTL packages into a
+complete system, per the system manifest, and generates a devicetree (or
+similar) that determines the system CFU map. Each acclerated library uses
+the Runtime to select its respective custom iterface, and its CFU, prior
+to issuing custom function instructions of that interface to that CFU.
 
 === Scope: reliable composition via strict isolation
 

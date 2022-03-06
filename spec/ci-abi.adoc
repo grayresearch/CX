@@ -260,7 +260,7 @@ custom functions `cf_read_status` and/or `cf_read_state`.
 
 ==== `mcfu_selector_table` CSR 0xBC1: CFU selector table base
 
-When CFU access control (§<<_cfu_access_control>>)is supported, the
+When CFU access control (§<<_cfu_access_control>>) is supported, the
 `MXLEN`-bit-wide `mcfu_selector_table` CSR specifies the base address
 of thehart's CI selector table. The CSR may be read and written in
 machine level.
@@ -485,14 +485,14 @@ CPU commits the custom function instruction by updating `cfu_status`
 (when response status is an error condition) and writing the response
 data to the destination register.
 
+[[execution]]
+.HW-SW interface: flow of information for execution of a custom function instruction
+image::cf-instruction-execution.png[image,width=360]
+
 Multiple custom function instructions may be in flight at the same time,
 particularly in a system with pipelined CPUs or pipelined CFUs. A CPU
 may send a request ID and later receive the (same) ID back to correlate
 requests sent and responses received.
-
-[[execution]]
-.HW-SW interface: flow of information for execution of a custom function instruction
-image::cf-instruction-execution.png[image,width=360]
 
 <<mapping>> defines the mapping from HW-SW interface entities, such as
 the `cf_id`, `rd`, `rs1`, `rs2`, `imm` fields of the custom function instruction
