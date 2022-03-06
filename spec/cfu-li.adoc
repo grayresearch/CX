@@ -624,7 +624,7 @@ analysis of its requester.
 <<cfu-l0-wave>> is an example waveform for three CFU-L0 requests
 and responses, arising from executing CF instructions `f0(a0,b0)`,
 `f1(a1,b1)`, and `f2(a2,b2)`. All three instructions issue to the same
-CFU `u0`. `f1` incurs an error.
+CFU `u0`. Function `f1` incurs an error.
 
 === CFU-L1 fixed latency CFU signaling
 
@@ -658,11 +658,15 @@ response, of every custom function implemented by the CFU. `CFU_LATENCY=0`
 configures the CFU to respond to the request in the same clock cycle.
 
 A CFI-L1 CFU with `CFU_LATENCY=0` resembles a CFU-L0 combinational
-CFU, except it may implement a stateful custom interface. Example: an
-extended precision arithmetic CFU which implements `add_save_carry` and
-`add_with_carry_save_carry` CF instructions. Like an ALU, this has zero
-cycle latency, but supports additional state context(s), each with a
-carry bit.
+CFU, except it may implement a stateful custom interface.
+
+[TIP]
+====
+Example: an extended precision arithmetic CFU which implements
+`add_save_carry` and `add_with_carry_save_carry` CF instructions. Like
+an ALU, this has zero cycle latency, but supports additional state
+context(s), each with a carry bit.
+====
 
 `CFU_RESET_LATENCY`, specific to CFU-L1, configures the CFU reset latency,
 which is the minimum number of clock cycles from negation of `rst`
