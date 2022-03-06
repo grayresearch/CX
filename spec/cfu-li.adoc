@@ -624,7 +624,7 @@ analysis of its requester.
 <<cfu-l0-wave>> is an example waveform for three CFU-L0 requests
 and responses, arising from executing CF instructions `f0(a0,b0)`,
 `f1(a1,b1)`, and `f2(a2,b2)`. All three instructions issue to the same
-CFU `u0`. Function `f1` incurs an error.
+CFU `u0`.  Function `f1` incurs an error.
 
 === CFU-L1 fixed latency CFU signaling
 

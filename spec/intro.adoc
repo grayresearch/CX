@@ -30,12 +30,12 @@ computation, means of discovery, or error reporting regimes. Composition
 is difficult, impairing reuse of hardware and software, and fragmenting
 the RISC-V ecosystem.
 
-The RISC-V Composable Custom Extensions Specification introduces a set
-of hardware-hardware and hardware-software interfaces and metadata
+The RISC-V Composable Custom Extensions Specification introduces a
+set of hardware-hardware and hardware-software interfaces and metadata
 designed to make it easy to create, compose, reuse, version, program,
-and deploy systems with multiple custom interfaces and their libraries,
-enabling an open ecosystem, and marketplace, of custom interfaces hardware
-and software.
+and deploy systems with multiple custom extensions and their libraries,
+enabling an open ecosystem, and marketplace, of custom extensions'
+hardware and software.
 
 === Open, agile, interoperable, unfettered instruction set innovation
 
@@ -232,9 +232,9 @@ function instruction formats and adds four CSRs. The three instruction
 formats reuse the _custom-0_, _custom-1_, and _custom-2_ formats /
 major opcodes
 cite:[risc-v-unpriv(143)]
-but (via custom interface multiplexing compose correctly with any
-preexisting vendor-defined CPU-specific custom interfaces. The four new
-CFU CSRs are:
+but (via custom interface multiplexing) compose correctly with any
+preexisting vendor-defined CPU-specific custom extensions and their
+custom instructions. The four new CFU CSRs are:
 
 * `mcfu_selector`: selects the hart's current <<CFU_ID,CFU_ID>> and <<STATE_ID,STATE_ID>>, for custom interface multiplexing;
 * `cfu_status`: accumulates CFU errors;
