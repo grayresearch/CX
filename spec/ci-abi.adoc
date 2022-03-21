@@ -211,10 +211,11 @@ write 0 to `cfu_status`, execute some CF instructions, and read
 {reg:[
 {bits:1, name:'CI'},
 {bits:1, name:'SI'},
+{bits:1, name:'OF'},
 {bits:1, name:'FI', attr:'accrued errors'},
 {bits:1, name:'OP'},
 {bits:1, name:'CU'},
-{bits: 27, name: 'reserved', type:1},
+{bits: 26, name: 'reserved', type:1},
 ],
 config: {lanes: 1, bits: 32},
 }
@@ -230,6 +231,12 @@ The `cfu_status` CSR has the following fields:
 
 * Set by a CF instruction when `mcfu_selector.cfu_id` is valid but
 `mcfu_selector`.state_id is invalid.
+
+`.OF`: state context is off error
+
+* Set by a CF instruction when `mcfu_selector.cfu_id` and
+`mcfu_selector.state_id` are valid but the selected state context is in
+the <<off-state,_off_>> state.
 
 `.FI`: invalid CF_ID error
 
@@ -625,6 +632,7 @@ cite:[risc-v-priv(26)].
 * On system reset, each state context of a serialable stateful interface
 CFU is in the `initial` state.
 
+[[off-state]]
 * A write `.cs=0` has the side effect of explicitly turning off the
 _current_ state context. In this state, all CF instructions except
 `cf_write_status` and `cf_read_status` signal `CFU_ERROR_OFF`, until the state
