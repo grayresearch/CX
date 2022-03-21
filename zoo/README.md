@@ -4,7 +4,7 @@ CFU Zoo
 This work-in-progress directory will provide various example CFUs, standard mux and adapter CFUs,
 CFU-LI compatible CPUs, and composed systems.
 
-The various testbenches require `cocotb cocotb-test pytest-xdist iverilog verilator-4.106`.
+The various testbenches require `cocotb` `cocotb-test` `pytest-xdist` `iverilog` `verilator-4.106`.
 Planning to automate setup and execution using `tox`.
 
 Until then, any testbench may be run with
