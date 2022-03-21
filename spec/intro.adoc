@@ -438,7 +438,7 @@ flexibility and speculative execution.
 
 === Acknowledgements
 
-Custom Interfaces are modeled upon the Interface system of the Microsoft
+Custom Interfaces are inspired by the Interface system of the Microsoft
 Component Object Model (COM), a ubiquitous architecture for robust
 arms-length composition of independently authored, independently versioned
 software components, at scale, over decades
