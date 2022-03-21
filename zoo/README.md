@@ -15,7 +15,7 @@ Until then, any testbench may be run with
 Current CFU examples:
 
 | CFU          | level | stateful | serializ. | comments            |
-|--------------|-------|--------------------------------------------|
+|--------------|-------|----------|-----------|---------------------|
 | popcount_cfu | L0    | -        | -         | -                   |
 | bnn_cfu      | L0    | -        | -         | reuses popcount_cfu |
 | mulacc_cfu   | L1    | yes      | yes       | -                   |
