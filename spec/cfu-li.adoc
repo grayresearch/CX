@@ -73,8 +73,8 @@ acyclic graph.
 
 === CFU-LI feature levels
 
-The CFU-LI is stratified into separate feature levels: -L0:combinational;
--L1: fixed latency; -L2: variable latency; -L3:elastic; and -L4:reordering.
+The CFU-LI is stratified into separate feature levels: -L0: combinational;
+-L1: fixed latency; -L2: variable latency; -L3: elastic; and -L4: reordering.
 Each feature level adds yet more CFU request and response
 signals, module ports, and behaviors to the feature level below it.
 
@@ -145,7 +145,8 @@ or elastic pipeline control to support response backpressure.
 
 [NOTE]
 ====
-Perhaps *streaming CFU* would be a better name.
+With request and response streams, perhaps *streaming CFU* would be a
+better name.
 ====
 
 [[cfu-l4]]

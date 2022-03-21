@@ -419,9 +419,10 @@ Assembly instruction: `cfu_flex25 custom`
 
 A flex-type CF instruction issues a CFU request for a zero-extended
 10-bit CF_ID `cf_id` with two source register operands identified by
-`rs1` and `rs2`. There is no destination register and CFU response data is
-discarded. The instruction is executed purely for its effect upon the
-selected state context of the selected CFU.
+`rs1` and `rs2`. There is no destination register and CFU response _data_
+(but not a possible _error status_) is discarded. The instruction is
+executed purely for its effect upon the selected state context of the
+selected CFU.
 
 .CFU flex-type instruction encoding
 [wavedrom,target="custom-2",svg]
@@ -667,6 +668,14 @@ different state context sizes.
 
 * An 8-bit custom error status for the current interface / CFU and its state context.
 
+[NOTE]
+====
+Define rules for what the interface can or must to with writes to this field.
+Need a way to zero a custom error.
+But this is not a free byte of storage per state context.
+An implementation is permitted to implement this as constant 0, for example.
+====
+
 ==== `cfu_read_status` standard custom function instruction
 
 Assembly instruction: `cfu_read_status rd`
@@ -896,9 +905,9 @@ is prohibitively slow: reconfiguring custom interface multiplexing
 should take, at most, a few clock cycles.
 
 The optional CFU access control CSRs `mcfu_selector_table` and
-`cfu_selector_index` allow less privileged code _user code_ to
-rapidly multiplex custom interfaces, but only among those interfaces and
-state contexts granted access by more privileged code _system code_.
+`cfu_selector_index` allow less privileged _user code_ to rapidly
+multiplex custom interfaces, but only among those interfaces and state
+contexts that it is granted access by more privileged _system code_.
 
 CFU access control requires at least user level and machine level
 privileged architecture, and a memory access control system, i.e.,
@@ -906,15 +915,15 @@ either RISC-V PMP or RISC-V virtual memory access control.
 
 For each hart, the system code provisions a <<selector-table,_CI selector
 table_>>, 4 KB aligned, comprising 1024 32-bit CI selectors, which is
-read/write to system code and inaccessible from user code. Initially the
-table is zero filled, as zero is a valid CI selector (disables custom
-interface multiplexing). The system code CSR-writes its address to the
-hart's `mcfu_selector_table` CSR. Then in response to a system call
-requesting access to an interface, and one of its state contexts, system
-code determines whether the access is granted. If so, it determines the
-CI selector value for it, allocates an entry for that CI selector value
-in the CI selector table, and returns the index (the _selector index)_
-of that entry to user code.
+read/write to system code and inaccessible from user code. Initially
+the table is zero filled, as zero is a valid CI selector ( `.en=0` which
+disables custom interface multiplexing). The system code CSR-writes its
+address to the hart's `mcfu_selector_table` CSR. Then in response to
+a system call requesting access to an interface, and one of its state
+contexts, system code determines whether the access is granted. If so,
+it determines the CI selector value for it, allocates an entry for that
+CI selector value in the CI selector table, and returns the index (the
+_selector index)_ of that entry to user code.
 
 [TIP]
 ====
