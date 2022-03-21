@@ -295,7 +295,7 @@ table entry to write to the `mcfu_selector` CSR. The CSR may be read
 and written in all privilege levels.
 
 .cfu_selector_index CSR 0x800
-[wavedrom,target="cfu_selector_table",svg]
+[wavedrom,target="cfu_selector_index",svg]
 ....
 {reg:[
 {bits: 10, name: 'index'},
