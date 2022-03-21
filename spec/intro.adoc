@@ -147,6 +147,12 @@ or interrupts, pending a means to ensure correct composition by
 design. (Except that, as with RISC-V floating point extensions, the
 default error model accumulates CFU errors in a shared CFU status CSR.)
 
+[TIP]
+====
+The isolated state of a custom interface can include private registers
+and private memories.
+====
+
 ==== Stateless and stateful custom interfaces
 
 A custom interface may be stateless or stateful. For a stateless
