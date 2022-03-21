@@ -403,9 +403,10 @@ error-checks the request data, performs the request, and outputs the first
 |`CFU_OK` |0 |no errors occurred processing request
 |`CFU_ERROR_CFU` |1 |`req_cfu` is not a CFU_ID implemented by CFU
 |`CFU_ERROR_STATE` |2 |`req_state` is not a valid STATE_ID for `req_cfu`
-|`CFU_ERROR_FUNC` |3 |`req_func` is not a valid CF_ID for `req_cfu`
-|`CFU_ERROR_OP` |4 |request operand(s) or state are a domain error for the custom function
-|`CFU_ERROR_CUSTOM` |5 |request causes a custom error (of a serializable custom interface)
+|`CFU_ERROR_OFF` |3 |`req_state` is valid but this <<serializable,_serializable_>> state context is in the _off_ state
+|`CFU_ERROR_FUNC` |4 |`req_func` is not a valid CF_ID for `req_cfu`
+|`CFU_ERROR_OP` |5 |request operand(s) or state are a domain error for the custom function
+|`CFU_ERROR_CUSTOM` |6 |request causes a custom error (of a serializable custom interface)
 |===
 
 When parameter `CPU_CFU_ID_W=0`, `req_cfu` is ignored: no `CFU_ERROR_CFU`
@@ -431,8 +432,8 @@ error state.
 ====
 
 In response to receiving `resp_status` of `CFU_ERROR_CFU`,
-`CFU_ERROR_STATE`, or `CFU_ERROR_FUNC`, a CPU ignores `resp_data` and
-uses zero as the result of the CF instruction.
+`CFU_ERROR_STATE`, `CFU_ERROR_OFF`, or `CFU_ERROR_FUNC`, a CPU ignores
+`resp_data` and uses zero as the result of the CF instruction.
 
 When a CF instruction writes a destination register, (i.e.,
 `custom-0`/`-1` but not `custom-2`), the result of the CF instruction

@@ -448,7 +448,7 @@ config: {lanes: 1, bits: 32},
 [TIP]
 ====
 A flex-type CF instruction may be used with a CFU-L2 request's raw
-instruction field `req_insn` (<<raw_insn>>) to provide an
+instruction field `req_insn` (<<raw-insn>>) to provide an
 arbitrary 32-7=25-bit custom request to a CFU. The absence of an
 (integer) destination register field is a feature that provides added,
 CPU-uninterpreted, custom instruction bits to a CFU.
@@ -617,13 +617,25 @@ The interface state context status word has the following fields:
 
 `.cs`: context status
 
-* The state context has four context status values: { 0: off; 1:initial;
-2:clean; 3:dirty } which correspond to those of the `XS` field of the
+* The state context has four context status values: { 0: `off`; 1: `initial`;
+2: `clean`; 3: `dirty` } which correspond to those of the `XS` field of the
 `mstatus` CSR, per the RISC-V Privileged ISA specification
 cite:[risc-v-priv(26)].
 
-* A write `.cs=1` has the side effect of resetting the _current_ state
-context to its initial (power up) state.
+* On system reset, each state context of a serialable stateful interface
+CFU is in the `initial` state.
+
+* A write `.cs=0` has the side effect of explicitly turning off the
+_current_ state context. In this state, all CF instructions except
+`cf_write_status` and `cf_read_status` signal `CFU_ERROR_OFF`, until the state
+context status is set to another state by a subsequent `cf_write_status`.
+
+* A write `.cs=1` has the side effect of resetting the entirey to the
+_current_ state context to its `initial` (power up) state.
+
+* When a CF instruction modifies any aspect of the current state context of
+a serializable CFU, its state context status automatically changes to
+`dirty`.
 
 `.state_size`: state context size
 
@@ -633,6 +645,8 @@ the current state context.
 * Reads return the current size of the current state context.
 
 * The value read need not equal the last value written.
+
+* Writes return the previous size and `cs` status of the current state context.
 
 * Different CFU implementations of the same custom interface may have
 different state context sizes.
@@ -695,7 +709,9 @@ csrr x2,cfu_status      ; retrieve cfu_status
 Assembly instruction: `cfu_write_status rs1`
 
 This instruction writes the value of the `rs1` source register to the
-state status word of the selected state context of the selected CFU.
+state status word of the selected state context of the selected CFU,
+and writes the previous value of the state context status word to the
+`rd` destination register.
 
 A write `.cs=1` always has the side effect of resetting the selected
 state context to its initial (power up) state.
@@ -720,8 +736,10 @@ Assembly instruction: `cfu_write_state rs1,rs2`
 
 This instruction reads the value of the `rs2` source register and writes
 it to the selected state context of the selected CFU at the index
-specified by the value of the `rs1` source register. It silently drops
-attempts to write state at an invalid state index.
+specified by the value of the `rs1` source register.
+It also writes the value of the `rs2` source register to the `rd`
+destination register. It silently drops attempts to write state at an
+invalid state index.
 
 === Resource management and context switching
 

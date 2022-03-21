@@ -28,6 +28,9 @@ parameter3_range: [5,9] # inclusive range of integer values. Expands to [5,6,7,8
 configuration parameter range of §<<parameters>> `CFU_PARAM` may be
 overridden (subsetted) through a YAML parameter line `param:` .
 
+The CFU metadata may also be used to specify `other` custom (non-standard / CFU
+specific) configuration parameter settings.
+
 [[md-format]]
 .CFU metadata format
 [source,yaml]
@@ -49,7 +52,7 @@ cfu_li:
 
 [NOTE]
 ====
-Need some stronger naming of CFUs and CPUs here. Perhaps a GUID, perhaps a URL. +
+Need some stronger naming of CFUs and CPUs here. Perhaps a GUID, perhaps a URL.
 ====
 
 [NOTE]
@@ -77,9 +80,12 @@ cfu_li:
     insn_w: 0               # no req_insn
     func_id_w: range        # need >= 5-bit CF_IDs
     func_id_w_range: [5,10] # so [5,6,7,8,9,10] are OK
-    data_w: 64              # XLEN=64-bit only +
+    data_w: 64              # XLEN=64-bit only
     latency: [2,3,4]        # configurable w/ 2-4 cycles of latency
     reset_latency: 1        # requires at least 1 cycle of reset latency
+other:
+    adder_tree: [0,1]       # non-standard config parameter
+    element_w: [4,8,16,32]  # non-standard config parameter
 ....
 
 === CPU Metadata
