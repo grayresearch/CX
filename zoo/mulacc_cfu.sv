@@ -28,7 +28,7 @@
 
 /* verilator lint_off DECLFILENAME */
 
-// mulacc_cfu: 32/64-bit population count CFU-L0 combinational CFU
+// mulacc_cfu: 32/64-bit stateful serializable fixed latency (CFU-L1) CFU
 module mulacc_cfu
     import common_pkg::*;
     import cfu_pkg::*;
@@ -105,12 +105,12 @@ module mulacc_cfu
     shift_reg #(.W($bits(func_id_t)),  .N(N)) func_ (.clk, .rst, .clk_en, .d(req_func),  .q(func));
     shift_reg #(.W($bits(state_id_t)), .N(N)) state_(.clk, .rst, .clk_en, .d(req_state), .q(state_raw));
     shift_reg #(.W($bits(data_t)),     .N(N)) prod_ (.clk, .rst, .clk_en, .d(prod_0),    .q(prod));
-    // (when N==0, shift_reg is a 0-stage shift register, e.g. just wires)
+    // (when N==0, shift_reg is a 0-stage shift register, i.e. just wires)
 
     // Compute response and update current accumulator and context status state.
     // All state access happens as the product emerges from the mult. pipeline.
     // This block is structured to minimize edge-case control signals from impacting
-    // logic-intenstive case statement datapath that computes resp_data.
+    // logic-intensive case statement datapath that computes resp_data.
     // Besides resp_*, block computes wr and cs for the sync state update block below.
     logic       wr;                     // state write enable
     cfu_cs_t    cs_nxt;                 // next CSW.CS (when func is cfid_write_status)
@@ -139,7 +139,7 @@ module mulacc_cfu
         default:            begin wr = 0; resp_data = prod; resp_status = CFU_ERROR_FUNC; end
         endcase
 
-        // error cases
+        // error cases, can overrule above CFU_ERROR_FUNC
         if (!resp_valid) begin
             // non-requests are ignored, no side effects
             resp_status = CFU_OK;       // not strictly necessary

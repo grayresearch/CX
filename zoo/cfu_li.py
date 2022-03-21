@@ -43,16 +43,16 @@ class IStateContext(IntEnum):
 
 # return a dictionary of the dut's request payload signals at some CFU-LI level
 def req(dut, level):
-    req = { "cfu":dut.req_cfu, "func":dut.req_func, "data0":dut.req_data0, "data1":dut.req_data1 }
+    req = { 'cfu':dut.req_cfu, 'func':dut.req_func, 'data0':dut.req_data0, 'data1':dut.req_data1 }
     if level > 0:
-        req["state"] = dut.req_state
+        req['state'] = dut.req_state
     if level == 4:
-        req["id"] = dut.req_id
+        req['id'] = dut.req_id
     return req
 
 # return a dictionary of the dut's response payload signals at some CFU-LI level
 def resp(dut, level):
-    resp = { "status":dut.resp_status, "data":dut.resp_data }
+    resp = { 'status':dut.resp_status, 'data':dut.resp_data }
     if level == 4:
-        resp["id"] = dut.resp_id
+        resp['id'] = dut.resp_id
     return resp

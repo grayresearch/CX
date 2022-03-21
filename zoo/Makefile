@@ -19,12 +19,12 @@
 # FIXME. This will be completely replaced shortly.
 
 all:
-    SIM=icarus pytest -n auto popcount_cfu_test.py
-    SIM=icarus pytest -n auto bnn_cfu_test.py
-    SIM=icarus pytest -n auto mulacc_cfu_test.py
-    SIM=verilator pytest -n auto popcount_cfu_test.py
-    SIM=verilator pytest -n auto bnn_cfu_test.py
-    SIM=verilator pytest -n auto mulacc_cfu_test.py
+	SIM=icarus pytest -n auto popcount_cfu_test.py
+	SIM=icarus pytest -n auto bnn_cfu_test.py
+	SIM=icarus pytest -n auto mulacc_cfu_test.py
+	SIM=verilator pytest -n auto popcount_cfu_test.py
+	SIM=verilator pytest -n auto bnn_cfu_test.py
+	SIM=verilator pytest -n auto mulacc_cfu_test.py
 
 clean:
-    cocotb-clean
+	cocotb-clean
