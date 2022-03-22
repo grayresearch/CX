@@ -40,6 +40,7 @@
 `resetall
 `timescale 1ns/1ps
 `default_nettype none
+
 `define vp /* verilator public */
 
 `define V(W) logic [msb(W):0]       /* parameteric width bit vector constructor */
