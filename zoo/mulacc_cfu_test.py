@@ -205,7 +205,7 @@ def test_mulacc(request, latency, states, width):
 
     run(
         includes=["."],
-        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv"],
+        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv", "shared.sv"],
         toplevel=dut,
         module=module,
         parameters=parameters,
