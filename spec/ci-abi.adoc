@@ -269,7 +269,7 @@ custom functions `cf_read_status` and/or `cf_read_state`.
 
 When CFU access control (§<<_cfu_access_control>>) is supported, the
 `MXLEN`-bit-wide `mcfu_selector_table` CSR specifies the base address
-of thehart's CI selector table. The CSR may be read and written in
+of the hart's CI selector table. The CSR may be read and written in
 machine level.
 
 .mcfu_selector_table CSR 0xBC1 (when MXLEN=32)
@@ -643,7 +643,7 @@ The interface state context status word has the following fields:
 `mstatus` CSR, per the RISC-V Privileged ISA specification
 cite:[risc-v-priv(26)].
 
-* On system reset, each state context of a serialable stateful interface
+* On system reset, each state context of a serializable stateful interface
 CFU is in the `initial` state.
 
 [[off-state]]
@@ -652,8 +652,8 @@ _current_ state context. In this state, all CF instructions except
 `cf_write_status` and `cf_read_status` signal `CFU_ERROR_OFF`, until the state
 context status is set to another state by a subsequent `cf_write_status`.
 
-* A write `.cs=1` has the side effect of resetting the entirey to the
-_current_ state context to its `initial` (power up) state.
+* A write `.cs=1` has the side effect of resetting the entire _current_
+state context to its `initial` (power up) state.
 
 * When a CF instruction modifies any aspect of the current state context of
 a serializable CFU, its state context status automatically changes to
@@ -750,7 +750,7 @@ For the sequence [ `cfu_write_status`; *; `cfu_read_status` ] the value of
 `.state_size` read need not equal the last value written.
 
 A `cfu_write_status` CF instruction never has any effect upon any other
-state context of the CFU, or of any ohter CFU.
+state context of the CFU, or of any other CFU.
 
 ==== `cfu_read_state` standard custom function instruction
 
@@ -922,7 +922,7 @@ When a CPU implements user level and machine level privileged
 architecture, an attempt to CSR-write `mcfu_selector` from user level
 generates an illegal instruction exception.
 
-Machine level software may provide to user level softwrae an `ECALL`
+Machine level software may provide to user level software an `ECALL`
 function to change `mcfu_selector`.
 
 Alternatively, the machine level illegal instruction exception handler

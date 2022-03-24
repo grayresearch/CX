@@ -133,7 +133,7 @@ TODO
 
 [NOTE]
 ====
-Consider CI library metadata too.  "I may use use this subset { CF_IDs }
+Consider CI library metadata too.  "I may use this subset { CF_IDs }
 of the CF_IDs of interface CI_ID."
 ====
 

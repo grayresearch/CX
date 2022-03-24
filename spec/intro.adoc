@@ -124,7 +124,7 @@ issuing from the various CPU cores and executing in the various CFUs.
 <<composed-system>> illustrates this.  A _Composer_ tool assembles and
 configures the reusable, composable CPU and CFU RTL packages into a
 complete system, per the system manifest, and generates a devicetree (or
-similar) that determines the system CFU map. Each acclerated library uses
+similar) that determines the system CFU map. Each accelerated library uses
 the Runtime to select its respective custom iterface, and its CFU, prior
 to issuing custom function instructions of that interface to that CFU.
 
@@ -183,7 +183,7 @@ supports interface-agnostic context management.
 
 [TIP]
 ====
-Although custom intefaces never introduce nor use CSRs, the same effect
+Although custom interfaces never introduce nor use CSRs, the same effect
 can be obtained via custom functions that read or write facets of the
 interface state context.
 ====
@@ -413,7 +413,7 @@ may evolve, changing or adding custom functions, changing behaviors,
 semantics.
 
 * Component implementation versioning. Without changing the interfaces
-it implements, the implmentation of a component such as a CFU, CPU,
+it implements, the implementation of a component such as a CFU, CPU,
 or a CI library may change for a bug fix, a performance enhancement,
 or any other reason..
 
@@ -441,7 +441,7 @@ first CFU ID and `CI_ID_IPosit2` to the second.  Thus each CI software
 library present can access the interface, functions, and behavior it
 depends upon, even if only one CFU module implements both behaviors.
 
-Note how custom interface multiplexing facilitiates interface versioning:
+Note how custom interface multiplexing facilitates interface versioning:
 a new version of an interface (i.e., a new interface) may be introduced
 at no cost to any existing or future interface.
 
@@ -449,7 +449,7 @@ Implementation versioning: This does not change the interface to a
 component (e.g.. for a CFU, its CFU-LI and the custom interface it
 implements).  At system composition time it may be necessary to specify
 implementation version requirements, perhaps in metadata, but this
-should not be visible to, computed upon, nor dependended upon, the
+should not be visible to, computed upon, nor depended upon, the
 HW-HW-SW interfaces.
 
 [NOTE]

@@ -323,7 +323,7 @@ CFU-L0 is combinational. Other feature levels' signaling is (mostly)
 synchronous to rising edge (_posedge_) of `clk`.
 
 When the reset input signal `rst` is asserted on posedge `clk`, it
-supercedes all other CFU-LI signaling. Any request processing in
+supersedes all other CFU-LI signaling. Any request processing in
 progress is abandoned, all internal state is reset, and `req_ready`
 and `resp_valid` output signals, if present, are negated. A CFU-L1 CFU
 (which does not have a `req_ready` output) must be ready to receive
@@ -517,9 +517,9 @@ Imagine a dynamic facility by which any arbitrary instruction word, not
 just `custom-0`/`-1`/`-2` format instructions, may be a CF instruction,
 issued to a CFU.
 This might be a table of (mask,pattern) tuples, or a 32-bit
-`mcfu_opcodes_mask` CSR bitvector of 5-bit major opcodes, identifying
+`mcfu_opcodes_mask` CSR bit vector of 5-bit major opcodes, identifying
 instructions to divert to the current CFU. Or perhaps, in the hardware
-domain, a CPU might frst issue each instruction to the current CFU, and
+domain, a CPU might first issue each instruction to the current CFU, and
 only execute the instruction in the CPU if the CFU delegates it back to
 the CPU.
 ====
