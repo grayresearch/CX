@@ -587,7 +587,8 @@ This enables a CPU to speculatively issue any CF instruction and issue
 its CFU request, then later, when speculation is resolved, issue its
 commit token or cancel token.  A stateful CFU, receiving and performing a
 CFU request, would defer from updating any CFU state until the request's
-corresponding commit token arrives.  ====
+corresponding commit token arrives.
+====
 
 [[IStateContext]]
 === `IStateContext`: the standard custom functions
