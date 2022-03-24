@@ -109,16 +109,17 @@ the cryptography CFU.
 .Bob's system, composed from CPU and CFU packages and custom interface libraries
 image::composed-system.png[image,width="80%"]
 
-Later, Bob takes Alice's system and adds an ML inference library. For
-acceleration, Bob defines a new binary neural network custom interface,
-`bnn_ci`, identified with a new CI_ID he mints. Bob's new BNN custom
-instructions reuse the standard custom instruction encodings, which is
-fine because they're scoped to `bnn_ci`. Bob develops `bobs_bnn_cfu`
-core, and CFU metadata that describes it. He adds that package to the
-system manifest and rebuilds the system, updating the CFU map. Bob's
-system now runs highly accelerated with cryptography, compression,
-and inference custom function instructions issuing from the various CPU
-cores and executing in the various CFUs.
+Later, Bob takes Alice's system design, replaces the CPU cores with
+different (but also CFU-compatible) cores, and adds an ML inference
+library. For further acceleration, Bob defines a new binary neural
+network inference custom interface, `IBNN`, identified with a new
+CI_ID he mints. Bob's new BNN custom instructions reuse the standard
+custom instruction encodings, which is fine because they're scoped to
+`IBNN`. Bob develops `bobs_bnn_cfu` core, and CFU metadata that describes
+it. He adds that package to the system manifest and rebuilds the system,
+updating the CFU map. Bob's system now runs highly accelerated with
+cryptography, compression, and inference custom function instructions
+issuing from the various CPU cores and executing in the various CFUs.
 
 <<composed-system>> illustrates this.  A _Composer_ tool assembles and
 configures the reusable, composable CPU and CFU RTL packages into a
@@ -326,20 +327,20 @@ instructions. For example, using a C++ _RAII_ object ci to represent a
 ....
 #include "ci.h"                         // CI Runtime: class use_ci { ... }
 ..
-use_ci ci(my_bitmanip_ci_id);           // csrrw mcfu_selector
+use_ci ci(CI_ID_IBitmanip);             // csrrw mcfu_selector
 uint32_t count = cf(pcnt_cf, data, 0);  // cfu_reg cf_id, rd, rs1, rs2
 ....
 
 The provisional CI-ABI defines a _callee-save_ calling convention for
 `mcfu_selector`. For example, consider CI library functions `a()` and
-`b()`, for interfaces `A` and `B`, that issue CF instructions `af0`,
+`b()`, for interfaces `IA` and `IB`, that issue CF instructions `af0`,
 `af1`, `bf0`, `bf1`, in this program:
 
 [source,C++]
 ....
 main() { a(); }
-a() { use_ci a_ci(A_ci_id); af0; b(); @1 af1; }
-b() { use_ci b_ci(B_ci_id); bf0; bf1; }
+a() { use_ci a_ci(CI_ID_IA); af0; b(); @1 af1; }
+b() { use_ci b_ci(CI_ID_IB); bf0; bf1; }
 ....
 
 with execution trace:
@@ -350,7 +351,7 @@ main() { a() { a_ci(); af0; b() { b_ci(); bf0; bf1; ~b_ci(); } @1 af1; ~a_ci(); 
 ....
 
 With a callee-save discipline, at point `@1`, upon return from `b()`, the
-current custom interface must be `A` again. Thus the `b_ci()` constructor
+current custom interface must be `IA` again. Thus the `b_ci()` constructor
 saves `a()'s` `mcfu_selector` value while overwriting it; later its
 `~b_ci()` destructor restores it. This _RAII_ approach also correctly restores
 `mcfu_selector` in the event of an exception handling stack unwind.
@@ -392,6 +393,72 @@ RVA20S Linux profile, running secure multi-programmed, multithreaded user
 processes running various CI libraries, and with privileged hypervisors
 and operating systems securely managing access control to CFUs and
 CFU state.
+
+[[versioning]]
+=== Versioning
+
+Interoperation specifications live for decades.  Meanwhile "the only
+constant is change".  This specification anticipates various axes of
+versioning.
+
+* Specification versioning. This specification and its requirements
+will evolve. The interfaces and formats it specifies will evolve. This
+includes the CFU Logic Interface, for example.
+
+* CFU-LI versioning. The CFU hardware-hardware interface spec will evolve,
+with new signals, behaviors, constraints, metadata.
+
+* Custom interface versioning. Any user-defined custom interface
+may evolve, changing or adding custom functions, changing behaviors,
+semantics.
+
+* Component implementation versioning. Without changing the interfaces
+it implements, the implmentation of a component such as a CFU, CPU,
+or a CI library may change for a bug fix, a performance enhancement,
+or any other reason..
+
+How are these anticipated and addressed?
+
+CFU-LI versioning: A CFU module configuration parameter `CFU_LI_VERSION`
+indicates to the CFU the version of the CFU-LI signals and semantics
+in effect.
+
+Interface versioning: A custom interface is immutable. To change or add
+any custom functions or their behaviors, a new custom interface must
+be minted. (Consider the many AVX vector extensions variants have been
+introduced over many years.)  With Microsoft COM software components, an
+interface `IFoo` might evolve to become `IFoo2`. The original `IFoo` remains
+and `IFoo` clients are unaffected.  But every component implements
+`IUnknown::QueryInterface()`, to determine if the component implements
+a given interface. A component might implement both interfaces, giving
+its client a choice.
+
+Similarly a CFU might implement two custom interfaces, e.g. `IPosit`, and
+`IPosit2`, an enhanced version of `IPosit` introduced later.  In that case,
+the CFU will have two CFU IDs, `CFU_CFU_ID_MAX=2`, one for each interface
+it implements, each present in the CFU Map, from `CI_ID_IPosit` to the
+first CFU ID and `CI_ID_IPosit2` to the second.  Thus each CI software
+library present can access the interface, functions, and behavior it
+depends upon, even if only one CFU module implements both behaviors.
+
+Note how custom interface multiplexing facilitiates interface versioning:
+a new version of an interface (i.e., a new interface) may be introduced
+at no cost to any existing or future interface.
+
+Implementation versioning: This does not change the interface to a
+component (e.g.. for a CFU, its CFU-LI and the custom interface it
+implements).  At system composition time it may be necessary to specify
+implementation version requirements, perhaps in metadata, but this
+should not be visible to, computed upon, nor dependended upon, the
+HW-HW-SW interfaces.
+
+[NOTE]
+====
+TODO: Add examples of Alice and Bob's travails with their composed SoC
+designs, over time.
+====
+
+All version numbering uses semantic versioning https://semver.org.
 
 === Pushing the envelope
 

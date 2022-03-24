@@ -1,3 +1,4 @@
+[[cfu-li]]
 == Custom Function Unit Logic Interface
 
 The CFU-LI defines a set of common hardware logic signaling interfaces
@@ -278,24 +279,28 @@ When `CFU_FUNC_ID_W<10`, how do standard custom functions (CF_ID in [0x3F0..0x3F
 
 [[other-parameters]]
 .CFU-LI: other CFU configuration parameters
-[width="100%",cols="8%,21%,8%,9%,54%",options="header",]
+[width="100%",cols="8%,21%,12%,12%,47%",options="header",]
 |===
 ^|*Level* |*Parameter* |*Range* |*Default* |*Description*
-^| |`CFU_VERSION` |100 |100 |CFU-LI version; 100 == 1.00
+^| |`CFU_LI_VERSION` |`24'h010000` | `24'h010000` |CFU-LI version; 24'h010000 == 1.00.00
 ^| |`CFU_CFU_ID_MAX` |1+ |1 |number of CFUs at/below this CFU
 ^|1+ |`CFU_STATE_ID_MAX` |0+ |0 |number of custom interface state contexts
 ^|1 |`CFU_LATENCY` |0+ |1 |latency (clock cycles) from a request to its response
 ^|1 |`CFU_RESET_LATENCY` |0+ |0 |min. latency (clock cycles) from negation of reset to first request
 |===
 
-`CFU_VERSION` is the CFU-LI version number the CFU is configured to
-implement, encoded as 100: the decimal version number.
+`CFU_LI_VERSION` indicates the version of the CFU-LI signals and semantics
+in effect, using semantic versioning
+https://semver.org, encoded as `24'hxxyy00`: (major=xx,minor=yy,patch=00).
+(Since `CFU_LI_VERSION` is an interface specification and not an
+implementation, there is never a patch level.)
 
 [TIP]
 ====
-This records, in code, the CFU-LI version implemented by a CFU, and
-anticipates evolution of CFU-LI.
+`CFU_LI_VERSION` anticipates subsequent evolution of CFU-LI.
 ====
+
+See also §<<versioning>>.
 
 `CFU_CFU_ID_MAX` is the number of logical CFUs at/below this CFU. For
 a leaf CFU this may be more than one when the CFU implements multiple
@@ -553,11 +558,11 @@ response after some propagation delay. There is no flow control.
 [width="100%",cols="37%,63%",options="header",]
 |===
 |*Parameter* |*Description*
-|`CFU_VERSION` |CFU-LI version number
+|`CFU_LI_VERSION` |CFU-LI version number
 |`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
 |===
 
-For `CFU_VERSION` and `CFU_CFU_ID_MAX`, see §<<parameters>>.
+For `CFU_LI_VERSION` and `CFU_CFU_ID_MAX`, see §<<parameters>>.
 
 ==== CFU-L0 signals
 
@@ -643,14 +648,14 @@ requesters, requesters must not send multiple simultaneous requests.
 [width="100%",cols="25%,75%",options="header",]
 |===
 |*Parameter* |*Description*
-|`CFU_VERSION` |CFU-LI version number
+|`CFU_LI_VERSION` |CFU-LI version number
 |`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
 |`CFU_STATE_ID_MAX` |number of custom interface state contexts
 |`CFU_LATENCY` |latency (clock cycles) from a request to its response
 |`CFU_RESET_LATENCY` |minimum latency (clock cycles) from negation of reset to first request
 |===
 
-For `CFU_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
+For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
 
 `CFU_LATENCY`, specific to CFU-L1, configures the CFU latency, which
 is the number of clock cycles from receiving a request to sending a
@@ -783,12 +788,12 @@ register file write arbitration logic.
 [width="100%",cols="34%,66%",options="header",]
 |===
 |*Parameter* |*Description*
-|`CFU_VERSION` |CFU-LI version number
+|`CFU_LI_VERSION` |CFU-LI version number
 |`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
 |`CFU_STATE_ID_MAX` |number of custom interface state contexts
 |===
 
-For `CFU_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
+For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
 
 ==== CFU-L2 signals
 
@@ -907,12 +912,12 @@ or negate `req_ready` to delay receipt of new requests.
 [width="100%",cols="34%,66%",options="header",]
 |===
 |*Parameter* |*Description*
-|`CFU_VERSION` |CFU-LI version number
+|`CFU_LI_VERSION` |CFU-LI version number
 |`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
 |`CFU_STATE_ID_MAX` |number of custom interface state contexts
 |===
 
-For `CFU_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
+For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
 
 ==== CFU-L3 signals
 
@@ -1057,12 +1062,12 @@ CFU implementations of the same custom interface.
 [width="100%",cols="34%,66%",options="header",]
 |===
 |*Parameter* |*Description*
-|`CFU_VERSION` |CFU-LI version number
+|`CFU_LI_VERSION` |CFU-LI version number
 |`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
 |`CFU_STATE_ID_MAX` |number of custom interface state contexts
 |===
 
-For `CFU_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see
+For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see
 §<<parameters>>.
 
 ==== CFU-L4 signals

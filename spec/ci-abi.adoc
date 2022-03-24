@@ -575,7 +575,19 @@ the response.
 [NOTE]
 ====
 How can a CPU core determine dynamically whether a CF instruction, or its custom interface, is stateless?
-====
+
+A software-defined approach could decorate the specification of a custom function to indicate
+whether it is stateful or stateless, and to encode this as an opcode bit
+in the `custom-0`/`-1`/`-2` instructions. Then a CPU may safely speculatively issue
+stateless CF instructions but non-speculatively issue stateful CF instructions.
+
+A hardware-defined approach could add to the request and response streams
+defined in <<cfu-li,CFU-LI>>, a third stream, called the _commit stream_.
+This enables a CPU to speculatively issue any CF instruction and issue
+its CFU request, then later, when speculation is resolved, issue its
+commit token or cancel token.  A stateful CFU, receiving and performing a
+CFU request, would defer from updating any CFU state until the request's
+corresponding commit token arrives.  ====
 
 [[IStateContext]]
 === `IStateContext`: the standard custom functions
@@ -611,7 +623,7 @@ The `cf_read_status` and `cf_write_status` functions access the selected
 interface state context's status word.
 
 .CFU state context status word
-[wavedrom,target="custom-0",svg]
+[wavedrom,target="state-context-status-word",svg]
 ....
 {reg:[
 {bits: 2, name: 'cs'},
@@ -801,22 +813,32 @@ csrw mcfu_selector,a0
 cfu_write_status a1
 ....
 
-This resets that state context to its initial state.
-
-To save hart state, for each interface state context of the hart,
-first execute
+This resets that state context to its initial state. It is also necessary
+to reset `cfu_status`.
 
 [source,asm]
 ....
+csrw cfu_status,x0
+....
+
+To save hart state, first save `cfu_status`, then
+for each interface state context of the hart,
+execute
+
+[source,asm]
+....
+csrr a0,cfu_status
+sw a0,saved_cfu_status
+...
 lw a0,selectors[i]
 csrw mcfu_selector,a0
 cfu_read_status a0
 sw a0,status[i]
 ....
 
-to obtain `a0.state_size`, the size (in XLEN-bit words) of the serialized
+to obtain `.state_size`, the size (in XLEN-bit words) of the serialized
 state context for the selected state context. Allocate array `save[i][]`
-to store the serialized state context. For each word in `a0.state_size`,
+to store the serialized state context. For each word in `.state_size`,
 execute
 
 [source,asm]
@@ -847,7 +869,14 @@ lw/ld a0, save[i][j]
 cfu_write_state j,a0
 ....
 
-to restore each word of the state context.
+to restore each word of the state context. Finally restore the
+saved `cfu_status`.
+
+[source,asm]
+....
+lw a0,saved_cfu_status
+csrw cfu_status,a0
+....
 
 When different CFUs implement the same custom interface, they may have
 different serializations, of different sizes.
