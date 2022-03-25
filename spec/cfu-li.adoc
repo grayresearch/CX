@@ -225,8 +225,8 @@ by a width parameter, configurable per CFU
 ^|4 ^|in |`req_id` |`CFU_REQ_ID_W` |request <<REQ_ID,REQ_ID>>
 ^| ^|in |`req_cfu` |`CFU_CFU_ID_W` |request <<CFU_ID,CFU_ID>>
 ^|1+ ^|in |`req_state` |`CFU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^|2+ ^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
 ^| ^|in |`req_func` |`CFU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^|2+ ^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
 ^| ^|in |`req_data0` |`CFU_DATA_W` |request operand data 0
 ^| ^|in |`req_data1` |`CFU_DATA_W` |request operand data 1
 ^|1+ ^|out |`resp_valid` | |response valid
@@ -257,8 +257,8 @@ ranges of possible values.
 ^|4 |<<REQ_ID,REQ_ID>> |`CFU_REQ_ID_W` |0-64 |0 |request/response ID width
 ^| |<<CFU_ID,CFU_ID>> |`CFU_CFU_ID_W` |0-16 |0 |CFU_ID width
 ^|1+ |<<STATE_ID,STATE_ID>> |`CFU_STATE_ID_W` |0-16 |0 |STATE_ID width
-^|2+ |`insn` |`CFU_INSN_W` |0, 32 |0 |raw instruction width
 ^| |<<CF_ID,CF_ID>> |`CFU_FUNC_ID_W` |0-10 |10 |CF_ID width
+^|2+ |`insn` |`CFU_INSN_W` |0, 32 |0 |raw instruction width
 ^| |`data` |`CFU_DATA_W` |32, 64 |32 |request/response data width
 ^| |`status` |`CFU_STATUS_W` |3 |3 |response status width
 |===
@@ -283,8 +283,8 @@ When `CFU_FUNC_ID_W<10`, how do standard custom functions (CF_ID in [0x3F0..0x3F
 |===
 ^|*Level* |*Parameter* |*Range* |*Default* |*Description*
 ^| |`CFU_LI_VERSION` |`24'h010000` | `24'h010000` |CFU-LI version; 24'h010000 == 1.00.00
-^| |`CFU_CFU_ID_MAX` |1+ |1 |number of CFUs at/below this CFU
-^|1+ |`CFU_STATE_ID_MAX` |0+ |0 |number of custom interface state contexts
+^| |`CFU_N_CFUS` |1+ |1 |number of CFUs at/below this CFU
+^|1+ |`CFU_N_STATES` |0+ |0 |number of custom interface state contexts
 ^|1 |`CFU_LATENCY` |0+ |1 |latency (clock cycles) from a request to its response
 ^|1 |`CFU_RESET_LATENCY` |0+ |0 |min. latency (clock cycles) from negation of reset to first request
 |===
@@ -302,15 +302,15 @@ implementation, there is never a patch level.)
 
 See also §<<versioning>>.
 
-`CFU_CFU_ID_MAX` is the number of logical CFUs at/below this CFU. For
+`CFU_N_CFUS` is the number of logical CFUs at/below this CFU. For
 a leaf CFU this may be more than one when the CFU implements multiple
 custom interfaces (including multiple versions of one custom interface).
 
-`CFU_STATE_ID_MAX` is the number of custom interface state contexts for
+`CFU_N_STATES` is the number of custom interface state contexts for
 every stateful interface implemented by this CFU. It must be 0 if every
 custom interface implemented by the CFU is stateless. It must be 1+ if
 any custom interface implemented by the CFU is stateful. When a leaf CFU
-implements multiple stateful custom interfaces, i.e. `CFU_CFU_ID_MAX>1`,
+implements multiple stateful custom interfaces, i.e. `CFU_N_CFUS>1`,
 each must be configured with the same number of state contexts.
 
 `CFU_LATENCY` and `CFU_RESET_LATENCY` are specific to CFU-L1 fixed
@@ -559,10 +559,10 @@ response after some propagation delay. There is no flow control.
 |===
 |*Parameter* |*Description*
 |`CFU_LI_VERSION` |CFU-LI version number
-|`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
+|`CFU_N_CFUS` |number of CFUs at/below this CFU
 |===
 
-For `CFU_LI_VERSION` and `CFU_CFU_ID_MAX`, see §<<parameters>>.
+For `CFU_LI_VERSION` and `CFU_N_CFUS`, see §<<parameters>>.
 
 ==== CFU-L0 signals
 
@@ -649,13 +649,13 @@ requesters, requesters must not send multiple simultaneous requests.
 |===
 |*Parameter* |*Description*
 |`CFU_LI_VERSION` |CFU-LI version number
-|`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
-|`CFU_STATE_ID_MAX` |number of custom interface state contexts
+|`CFU_N_CFUS` |number of CFUs at/below this CFU
+|`CFU_N_STATES` |number of custom interface state contexts
 |`CFU_LATENCY` |latency (clock cycles) from a request to its response
 |`CFU_RESET_LATENCY` |minimum latency (clock cycles) from negation of reset to first request
 |===
 
-For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
+For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see §<<parameters>>.
 
 `CFU_LATENCY`, specific to CFU-L1, configures the CFU latency, which
 is the number of clock cycles from receiving a request to sending a
@@ -789,11 +789,11 @@ register file write arbitration logic.
 |===
 |*Parameter* |*Description*
 |`CFU_LI_VERSION` |CFU-LI version number
-|`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
-|`CFU_STATE_ID_MAX` |number of custom interface state contexts
+|`CFU_N_CFUS` |number of CFUs at/below this CFU
+|`CFU_N_STATES` |number of custom interface state contexts
 |===
 
-For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
+For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see §<<parameters>>.
 
 ==== CFU-L2 signals
 
@@ -809,8 +809,8 @@ For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<paramete
 ^|out |`req_ready` | |request ready
 ^|in |`req_cfu` |`CFU_CFU_ID_W` |request <<CFU_ID,CFU_ID>>
 ^|in |`req_state` |`CFU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
 ^|in |`req_func` |`CFU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
 ^|in |`req_data0` |`CFU_DATA_W` |request operand data 0
 ^|in |`req_data1` |`CFU_DATA_W` |request operand data 1
 ^|out |`resp_valid` | |response valid
@@ -913,11 +913,11 @@ or negate `req_ready` to delay receipt of new requests.
 |===
 |*Parameter* |*Description*
 |`CFU_LI_VERSION` |CFU-LI version number
-|`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
-|`CFU_STATE_ID_MAX` |number of custom interface state contexts
+|`CFU_N_CFUS` |number of CFUs at/below this CFU
+|`CFU_N_STATES` |number of custom interface state contexts
 |===
 
-For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<parameters>>.
+For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see §<<parameters>>.
 
 ==== CFU-L3 signals
 
@@ -932,8 +932,8 @@ For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see §<<paramete
 ^|out |`req_ready` | |request ready
 ^|in |`req_cfu` |`CFU_CFU_ID_W` |request <<CFU_ID,CFU_ID>>
 ^|in |`req_state` |`CFU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
 ^|in |`req_func` |`CFU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
 ^|in |`req_data0` |`CFU_DATA_W` |request operand data 0
 ^|in |`req_data1` |`CFU_DATA_W` |request operand data 1
 ^|out |`resp_valid` | |response valid
@@ -1063,11 +1063,11 @@ CFU implementations of the same custom interface.
 |===
 |*Parameter* |*Description*
 |`CFU_LI_VERSION` |CFU-LI version number
-|`CFU_CFU_ID_MAX` |number of CFUs at/below this CFU
-|`CFU_STATE_ID_MAX` |number of custom interface state contexts
+|`CFU_N_CFUS` |number of CFUs at/below this CFU
+|`CFU_N_STATES` |number of custom interface state contexts
 |===
 
-For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see
+For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see
 §<<parameters>>.
 
 ==== CFU-L4 signals
@@ -1084,8 +1084,8 @@ For `CFU_LI_VERSION`, `CFU_CFU_ID_MAX`, and `CFU_STATE_ID_MAX`, see
 ^|in |`req_id` |`CFU_REQ_ID_W` |request <<REQ_ID,REQ_ID>>
 ^|in |`req_cfu` |`CFU_CFU_ID_W` |request <<CFU_ID,CFU_ID>>
 ^|in |`req_state` |`CFU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
 ^|in |`req_func` |`CFU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
 ^|in |`req_data0` |`CFU_DATA_W` |request operand data 0
 ^|in |`req_data1` |`CFU_DATA_W` |request operand data 1
 ^|out |`resp_valid` | |response valid
