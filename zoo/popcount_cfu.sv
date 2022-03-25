@@ -27,23 +27,13 @@ module popcount_cfu
     import common_pkg::*;
     import cfu_pkg::*;
 #(
-    parameter int CFU_VERSION       = 100,
-    parameter int CFU_CFU_ID_MAX    = 1,
-    parameter int CFU_CFU_ID_W      = 0,
-    parameter int CFU_FUNC_ID_W     = 0,
-    parameter int CFU_DATA_W        = 32,
-    parameter int ADDER_TREE        = 0
+    `CFU_L0_PARAMS(/*N_CFUS*/1, /*FUNC_ID_W*/0, /*DATA_W*/32),
+    parameter int ADDER_TREE    = 0
 ) (
-    input  logic                req_valid,
-    input  `V(CFU_CFU_ID_W)     req_cfu,
-    input  `V(CFU_FUNC_ID_W)    req_func,
-    input  `V(CFU_DATA_W)       req_data0,
-    input  `V(CFU_DATA_W)       req_data1,
-    output cfu_status_t         resp_status,
-    output `V(CFU_DATA_W)       resp_data
+    `CFU_L0_PORTS(input, output, req, resp)
 );
-    initial ignore(check_cfu_l0_params("popcount_cfu", CFU_VERSION,
-        CFU_CFU_ID_MAX, CFU_CFU_ID_W, CFU_FUNC_ID_W, CFU_DATA_W));
+    initial ignore(check_cfu_l0_params("popcount_cfu", CFU_VERSION, CFU_N_CFUS, CFU_CFU_ID_W,
+        CFU_FUNC_ID_W, CFU_DATA_W));
     wire _unused_ok = &{1'b0,req_data1,req_func,req_cfu,req_valid,1'b0};
 `ifdef POPCOUNT_CFU_VCD
     initial begin $dumpfile("popcount_cfu.vcd"); $dumpvars(0, popcount_cfu); end

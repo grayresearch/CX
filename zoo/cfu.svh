@@ -19,27 +19,160 @@
 
 `include "common.svh"
 
+`define CFU_L0_PARAMS(n_cfus,func_id_w,data_w)              \
+    parameter int CFU_VERSION       = 'h01_00_00,           \
+    parameter int CFU_N_CFUS        = n_cfus,               \
+    parameter int CFU_CFU_ID_W      = $clog2(CFU_N_CFUS),   \
+    parameter int CFU_FUNC_ID_W     = func_id_w,            \
+    parameter int CFU_DATA_W        = data_w
+
+`define CFU_L1_PARAMS(n_cfus,n_states,latency,reset_latency,func_id_w,data_w) \
+    parameter int CFU_VERSION       = 'h01_00_00,           \
+    parameter int CFU_N_CFUS        = n_cfus,               \
+    parameter int CFU_N_STATES      = n_states,             \
+    parameter int CFU_LATENCY       = latency,              \
+    parameter int CFU_RESET_LATENCY = reset_latency,        \
+    parameter int CFU_CFU_ID_W      = $clog2(CFU_N_CFUS),   \
+    parameter int CFU_STATE_ID_W    = $clog2(CFU_N_STATES), \
+    parameter int CFU_FUNC_ID_W     = func_id_w,            \
+    parameter int CFU_DATA_W        = data_w
+
+`define CFU_L2_PARAMS(n_cfus,n_states,insn_w,func_id_w,data_w) \
+    parameter int CFU_VERSION       = 'h01_00_00,           \
+    parameter int CFU_N_CFUS        = n_cfus,               \
+    parameter int CFU_N_STATES      = n_states,             \
+    parameter int CFU_CFU_ID_W      = $clog2(CFU_N_CFUS),   \
+    parameter int CFU_STATE_ID_W    = $clog2(CFU_N_STATES), \
+    parameter int CFU_INSN_W        = insn_w,               \
+    parameter int CFU_FUNC_ID_W     = func_id_w,            \
+    parameter int CFU_DATA_W        = data_w
+
+`define CFU_L3_PARAMS(n_cfus,n_states,insn_w,func_id_w,data_w) \
+    parameter int CFU_VERSION       = 'h01_00_00,           \
+    parameter int CFU_N_CFUS        = n_cfus,               \
+    parameter int CFU_N_STATES      = n_states,             \
+    parameter int CFU_CFU_ID_W      = $clog2(CFU_N_CFUS),   \
+    parameter int CFU_STATE_ID_W    = $clog2(CFU_N_STATES), \
+    parameter int CFU_INSN_W        = insn_w,               \
+    parameter int CFU_FUNC_ID_W     = func_id_w,            \
+    parameter int CFU_DATA_W        = data_w
+
+`define CFU_L4_PARAMS(n_cfus,n_states,insn_w,req_id_w,insn_w,func_id_w,data_w) \
+    parameter int CFU_VERSION       = 'h01_00_00,           \
+    parameter int CFU_N_CFUS        = n_cfus,               \
+    parameter int CFU_N_STATES      = n_states,             \
+    parameter int CFU_REQ_ID_W      = req_id_w,             \
+    parameter int CFU_CFU_ID_W      = $clog2(CFU_N_CFUS),   \
+    parameter int CFU_STATE_ID_W    = $clog2(CFU_N_STATES), \
+    parameter int CFU_INSN_W        = insn_w,               \
+    parameter int CFU_FUNC_ID_W     = func_id_w,            \
+    parameter int CFU_DATA_W        = data_w
+
+`define CFU_L0_PORTS(input,output,req,resp)     \
+    input  logic                req``_valid,    \
+    input  `V(CFU_CFU_ID_W)     req``_cfu,      \
+    input  `V(CFU_FUNC_ID_W)    req``_func,     \
+    input  `V(CFU_DATA_W)       req``_data0,    \
+    input  `V(CFU_DATA_W)       req``_data1,    \
+    output cfu_status_t         resp``_status,  \
+    output `V(CFU_DATA_W)       resp``_data
+
+`define CFU_CLOCK_PORTS                         \
+    input  logic                clk,            \
+    input  logic                rst,            \
+    input  logic                clk_en,
+
+`define CFU_L1_PORTS(input,output,req,resp)     \
+    input  logic                req``_valid,    \
+    input  `V(CFU_CFU_ID_W)     req``_cfu,      \
+    input  `V(CFU_STATE_ID_W)   req``_state,    \
+    input  `V(CFU_FUNC_ID_W)    req``_func,     \
+    input  `V(CFU_DATA_W)       req``_data0,    \
+    input  `V(CFU_DATA_W)       req``_data1,    \
+    output logic                resp``_valid,   \
+    output cfu_status_t         resp``_status,  \
+    output `V(CFU_DATA_W)       resp``_data
+
+`define CFU_L2_PORTS(input,output,req,resp)     \
+    input  logic                req``_valid,    \
+    output logic                req``_ready,    \
+    input  `V(CFU_CFU_ID_W)     req``_cfu,      \
+    input  `V(CFU_STATE_ID_W)   req``_state,    \
+    input  `V(CFU_INSN_W)       req``_insn,     \
+    input  `V(CFU_FUNC_ID_W)    req``_func,     \
+    input  `V(CFU_DATA_W)       req``_data0,    \
+    input  `V(CFU_DATA_W)       req``_data1,    \
+    output logic                resp``_valid,   \
+    output cfu_status_t         resp``_status,  \
+    output `V(CFU_DATA_W)       resp``_data
+
+`define CFU_L3_PORTS(input,output,req,resp)     \
+    input  logic                req``_valid,    \
+    output logic                req``_ready,    \
+    input  `V(CFU_CFU_ID_W)     req``_cfu,      \
+    input  `V(CFU_STATE_ID_W)   req``_state,    \
+    input  `V(CFU_INSN_W)       req``_insn,     \
+    input  `V(CFU_FUNC_ID_W)    req``_func,     \
+    input  `V(CFU_DATA_W)       req``_data0,    \
+    input  `V(CFU_DATA_W)       req``_data1,    \
+    output logic                resp``_valid,   \
+    input  logic                resp``_ready,   \
+    output cfu_status_t         resp``_status,  \
+    output `V(CFU_DATA_W)       resp``_data
+
+`define CFU_L4_PORTS(input,output,req,resp)     \
+    input  logic                req``_valid,    \
+    output logic                req``_ready,    \
+    input  `V(CFU_REQ_ID_W)     req``_id,       \
+    input  `V(CFU_CFU_ID_W)     req``_cfu,      \
+    input  `V(CFU_STATE_ID_W)   req``_state,    \
+    input  `V(CFU_INSN_W)       req``_insn,     \
+    input  `V(CFU_FUNC_ID_W)    req``_func,     \
+    input  `V(CFU_DATA_W)       req``_data0,    \
+    input  `V(CFU_DATA_W)       req``_data1,    \
+    output logic                resp``_valid,   \
+    input  logic                resp``_ready,   \
+    output `V(CFU_REQ_ID_W)     resp``_id,      \
+    output cfu_status_t         resp``_status,  \
+    output `V(CFU_DATA_W)       resp``_data
+
+`define CFU_L1_ALL_PORTS(input,output,req,resp) \
+    `CFU_CLOCK_PORTS                            \
+    `CFU_L1_PORTS(input,output,req,resp)
+
+`define CFU_L2_ALL_PORTS(input,output,req,resp) \
+    `CFU_CLOCK_PORTS                            \
+    `CFU_L2_PORTS(input,output,req,resp)
+
+`define CFU_L3_ALL_PORTS(input,output,req,resp) \
+    `CFU_CLOCK_PORTS                            \
+    `CFU_L3_PORTS(input,output,req,resp)
+
+`define CFU_L4_ALL_PORTS(input,output,req,resp) \
+    `CFU_CLOCK_PORTS                            \
+    `CFU_L4_PORTS(input,output,req,resp)
+
 package cfu_pkg;
 
 import common_pkg::*;
 
-function bit check_cfu_l0_params(string name, int version, int id_max, int cfu_w, int func_w, int data_w);
+function bit check_cfu_l0_params(string name, int version, int n_cfus, int cfu_w, int func_w, int data_w);
     check_cfu_l0_params =
-        check_param(name, "CFU_VERSION", version, 100)
-    &&  check_param(name, "CFU_CFU_ID_MAX", id_max, 1)
+        check_param(name, "CFU_VERSION", version, 'h01_00_00)
+    &&  check_param(name, "CFU_N_CFUS", n_cfus, 1)
     &&  check_param_range(name, "CFU_CFU_ID_W", cfu_w, 0, 16)
     &&  check_param_range(name, "CFU_FUNC_ID_W", func_w, 0, 10)
     &&  check_param_2(name, "CFU_DATA_ID_W", data_w, 32, 64);
 endfunction
 
 function bit check_cfu_l1_params(
-    string name, int version, int id_max, int latency, int reset_latency, int cfu_w,
+    string name, int version, int n_cfus, int latency, int reset_latency, int cfu_w,
     int state_w, int func_w, int data_w
 );
     check_cfu_l1_params =
-        check_param(name, "CFU_VERSION", version, 100)
-    &&  check_param(name, "CFU_CFU_ID_MAX", id_max, 1)
-    //  check_param CFU_STATE_ID_MAX in each CFU
+        check_param(name, "CFU_VERSION", version, 'h01_00_00)
+    &&  check_param(name, "CFU_N_CFUS", n_cfus, 1)
+    //  check_param CFU_N_STATES in each CFU
     &&  check_param_nonneg(name, "CFU_LATENCY", latency)
     &&  check_param_nonneg(name, "CFU_RESET_LATENCY", reset_latency)
     &&  check_param_range(name, "CFU_CFU_ID_W", cfu_w, 0, 16)

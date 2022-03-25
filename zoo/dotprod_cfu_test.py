@@ -215,7 +215,7 @@ def test_dotprod(request, latency, states, width, elem_w):
     module = os.path.splitext(os.path.basename(__file__))[0]
     parameters = {}
     parameters['CFU_LATENCY'] = latency
-    parameters['CFU_STATE_ID_MAX'] = states
+    parameters['CFU_N_STATES'] = states
     parameters['CFU_STATE_ID_W'] = (states-1).bit_length()
     parameters['CFU_DATA_W'] = width
     parameters['ELEM_W'] = elem_w
@@ -229,6 +229,6 @@ def test_dotprod(request, latency, states, width, elem_w):
         module=module,
         parameters=parameters,
         defines=['DOTPROD_CFU_VCD'],
-        extra_env={ 'CFU_STATE_ID_MAX':str(states), 'CFU_LATENCY':str(latency), 'ELEM_W':str(elem_w) },
+        extra_env={ 'CFU_N_STATES':str(states), 'CFU_LATENCY':str(latency), 'ELEM_W':str(elem_w) },
         sim_build=sim_build
     )

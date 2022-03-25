@@ -197,7 +197,7 @@ def test_mulacc(request, latency, states, width):
     module = os.path.splitext(os.path.basename(__file__))[0]
     parameters = {}
     parameters['CFU_LATENCY'] = latency
-    parameters['CFU_STATE_ID_MAX'] = states
+    parameters['CFU_N_STATES'] = states
     parameters['CFU_STATE_ID_W'] = (states-1).bit_length()
     parameters['CFU_DATA_W'] = width
     sim_build = os.path.join(".", "sim_build",
@@ -210,6 +210,6 @@ def test_mulacc(request, latency, states, width):
         module=module,
         parameters=parameters,
         defines=['MULACC_CFU_VCD'],
-        extra_env={ 'CFU_STATE_ID_MAX':str(states), 'CFU_LATENCY':str(latency) },
+        extra_env={ 'CFU_N_STATES':str(states), 'CFU_LATENCY':str(latency) },
         sim_build=sim_build
     )

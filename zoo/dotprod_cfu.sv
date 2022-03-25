@@ -34,29 +34,11 @@ module dotprod_cfu
     import common_pkg::*;
     import cfu_pkg::*;
 #(
-    parameter int CFU_VERSION       = 100,
-    parameter int CFU_CFU_ID_MAX    = 1,
-    parameter int CFU_STATE_ID_MAX  = 1,
-    parameter int CFU_LATENCY       = 0,
-    parameter int CFU_RESET_LATENCY = 0,
-    parameter int CFU_CFU_ID_W      = $clog2(CFU_CFU_ID_MAX),
-    parameter int CFU_STATE_ID_W    = $clog2(CFU_STATE_ID_MAX),
-    parameter int CFU_FUNC_ID_W     = $bits(cfid_t),
-    parameter int CFU_DATA_W        = 32,
-    parameter int ELEM_W            = 8
+    `CFU_L1_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*LATENCY*/0, /*RESET_LATENCY*/0,
+        /*FUNC_ID_W*/10, /*DATA_W*/32),
+    parameter int ELEM_W    = 8
 ) (
-    input  logic                clk,
-    input  logic                rst,
-    input  logic                clk_en,
-    input  logic                req_valid,
-    input  `V(CFU_CFU_ID_W)     req_cfu,
-    input  `V(CFU_STATE_ID_W)   req_state,
-    input  `V(CFU_FUNC_ID_W)    req_func,
-    input  `V(CFU_DATA_W)       req_data0,
-    input  `V(CFU_DATA_W)       req_data1,
-    output logic                resp_valid,
-    output cfu_status_t         resp_status,
-    output `V(CFU_DATA_W)       resp_data
+    `CFU_L1_ALL_PORTS(input, output, req, resp)
 );
     typedef `V(CFU_FUNC_ID_W)   func_id_t;
     typedef `V(CFU_STATE_ID_W)  state_id_t;
@@ -64,10 +46,10 @@ module dotprod_cfu
 
     initial begin
         ignore(
-            check_cfu_l1_params("dotprod_cfu", CFU_VERSION, CFU_CFU_ID_MAX,
+            check_cfu_l1_params("dotprod_cfu", CFU_VERSION, CFU_N_CFUS,
                 CFU_LATENCY, CFU_RESET_LATENCY, CFU_CFU_ID_W, CFU_STATE_ID_W,
                 CFU_FUNC_ID_W, CFU_DATA_W)
-        &&  check_param_pos("dotprod_cfu", "CFU_STATE_ID_MAX", CFU_STATE_ID_MAX)
+        &&  check_param_pos("dotprod_cfu", "CFU_N_STATES", CFU_N_STATES)
         &&  check_param("dotprod_cfu", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
         &&  check_param_expr("dotprod_cfu", "ELEM_W", ELEM_W,
               (2**$clog2(ELEM_W) == ELEM_W && 1 <= ELEM_W && ELEM_W <= CFU_DATA_W),
@@ -84,9 +66,9 @@ module dotprod_cfu
     } dotprod_cfid_t;                    // IDotProd CF_IDs
 
     // state contexts
-    logic [CFU_STATE_ID_MAX-1:0][1:0] css;// context statuses (flops)
-    logic [CFU_STATE_ID_MAX-1:0] zaccs; // zero'd-accumulators (flops)
-    data_t accs[CFU_STATE_ID_MAX];      // accumulators (prob. LUT-RAM)
+    logic [CFU_N_STATES-1:0][1:0] css;// context statuses (flops)
+    logic [CFU_N_STATES-1:0] zaccs; // zero'd-accumulators (flops)
+    data_t accs[CFU_N_STATES];      // accumulators (prob. LUT-RAM)
     // Cannot flash clear accs[*] on reset. Flash set zero-indicators zaccs[*] instead.
 
     // elementwise products
@@ -135,7 +117,7 @@ module dotprod_cfu
         data_t      acc;                // accumulator value, or zero when zaccs[state]
 
         // clamp state index here to keep simulation clean; CFU_ERROR_STATE check is later
-        state = (int'(state_raw) < CFU_STATE_ID_MAX) ? state_raw : 0;
+        state = (int'(state_raw) < CFU_N_STATES) ? state_raw : 0;
 
         // current and possible new context status words
         csw = '0; csw.state_size = 1; csw.cs = css[state];
@@ -160,7 +142,7 @@ module dotprod_cfu
             resp_status = CFU_OK;       // not strictly necessary
             wr = 0;
         end
-        else if (int'(state_raw) >= CFU_STATE_ID_MAX) begin
+        else if (int'(state_raw) >= CFU_N_STATES) begin
             // invalid state index
             resp_status = CFU_ERROR_STATE;
             wr = 0;
@@ -175,7 +157,7 @@ module dotprod_cfu
     always_ff @(posedge clk) begin
         if (rst) begin
             // reset all state contexts to init status, with all accumulators zero
-            css <= {CFU_STATE_ID_MAX{CFU_INIT}};
+            css <= {CFU_N_STATES{CFU_INIT}};
             zaccs <= '1;
         end
         else if (clk_en && wr) begin

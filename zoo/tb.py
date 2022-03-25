@@ -33,7 +33,7 @@ class TB:
         self.level = level
         self.n_bits = dut.req_data0.value.n_bits
         self.latency = int(os.environ.get("CFU_LATENCY")) if level == 1 else 0
-        self.n_states = int(os.environ.get("CFU_STATE_ID_MAX")) if level > 0 else 0
+        self.n_states = int(os.environ.get("CFU_N_STATES")) if level > 0 else 0
 
         # for combinational CFUs (CFU-L0) tests issue at 1 ns timesteps;
         # for synchronous CFUs (>L0), requests and responses are monitored on posedge(clk)
