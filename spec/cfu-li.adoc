@@ -75,7 +75,7 @@ acyclic graph.
 === CFU-LI feature levels
 
 The CFU-LI is stratified into separate feature levels: -L0: combinational;
--L1: fixed latency; -L2: variable latency; -L3: elastic; and -L4: reordering.
+-L1: fixed latency; -L2: variable latency; and -L3: reordering.
 Each feature level adds yet more CFU request and response
 signals, module ports, and behaviors to the feature level below it.
 
@@ -116,42 +116,23 @@ multiply-accumulate unit wherein the state is the current total.
 Perhaps minimum II should also be configurable, e.g. CFU_INIT_INTERVAL=1+.
 ====
 
-==== CFU-L2: variable latency, request-only flow control CFU (variable latency CFU)
+[[cfu-l2]]
+==== CFU-L2: variable latency CFU
 
 The CFU computes a function of the CFU request and the specified state
 context, if any, updating the context, sending a CFU response, *in order,
-in a later clock cycle*. There is *request flow control* so the CFU can
-suspend receiving requests.
-
-[TIP]
-====
-Example: a multiply-divide unit with a variable-latency multi-cycle
-divide, with early-out, and which is not ready to receive requests while
-the divider is busy.
-====
-
-==== CFU-L3: variable latency, request/response flow control CFU (elastic CFU)
-
-The CFU computes a function of a CFU request and the specified state
-context, if any, updating the context, sending a CFU response, in order,
-in a later clock cycle. There is *request and response flow control*
-so the CFU can suspend receiving requests and the requester can suspend
+in a later clock cycle*. There is *request and response flow control*
+so the CFU can suspend receiving requests and the CPU can suspend
 receiving responses.
 
 [TIP]
 ====
-Example: the above multiply-divide unit but also with response queueing
-or elastic pipeline control to support response backpressure.
+Example: a multiply-divide unit with a variable-latency multi-cycle
+divide, with early-out.
 ====
 
-[NOTE]
-====
-With request and response streams, perhaps *streaming CFU* would be a
-better name.
-====
-
-[[cfu-l4]]
-==== CFU-L4: reordering CFU
+[[cfu-l3]]
+==== CFU-L3: reordering CFU
 
 The CFU computes a function of the CFU request and the specified state
 context, if any, updating the context, and sending a CFU response in a
@@ -159,7 +140,7 @@ later clock cycle. *Responses for requests with the same state context
 are sent in order, otherwise may be sent out of order*. There is request
 and response flow control.
 
-CFU-L4 incorporates a <<req-resp-id,request-response ID>> for the
+CFU-L3 incorporates a <<req-resp-id,request-response ID>> for the
 requester to correlate responses received to requests sent.
 
 [TIP]
@@ -173,22 +154,21 @@ sending the pmul response ahead of the pdiv response.
 
 In summary, all CFU-LI feature levels have request and response function,
 data, and status. Level 0 is combinational. Level 1 adds clocking,
-fixed latency, and state contexts. Level 2 adds variable latency,
-request flow control, request ID, and raw instruction. Level 3 adds
-response flow control. Level 4 adds reordering. (<<levels-table>>.)
+fixed latency, and state contexts. Level 2 adds variable latency and
+request and response flow control and the raw instruction.
+Level 3 adds reordering. (<<levels-table>>.)
 
 [[levels-table]]
 .CFU-LI feature levels summary
-[width="100%",cols="8%,17%,18%,20%,15%,9%,13%",options="header",]
+[width="100%",cols="7%,16%,20%,25%,20%,12%",options="header",]
 |===
 ^|*Level* |*CFU type* ^a|
 *Req valid, func, data, resp data, status*
-^|*Clock, reset, clock enable, state ID, resp valid* ^|*Req ready, raw insn, resp ID* ^|*Resp ready* ^|*Reorder responses, req ID*
-^|0 |combinational ^|Y ^| ^| ^| ^|
-^|1 |fixed latency ^|Y ^|Y ^| ^| ^|
-^|2 |variable latency ^|Y ^|Y ^|Y ^| ^|
-^|3 |elastic ^|Y ^|Y ^|Y ^|Y ^|
-^|4 |reordering ^|Y ^|Y ^|Y ^|Y ^|Y
+^|*Clock, reset, clock enable, state ID, resp valid* ^|*Req ready, resp ready, raw insn* ^|*Reordering, req ID*
+^|0 |combinational ^|Y ^| ^| ^|
+^|1 |fixed latency ^|Y ^|Y ^| ^|
+^|2 |variable latency ^|Y ^|Y ^|Y ^|
+^|3 |reordering ^|Y ^|Y ^|Y ^|Y
 |===
 
 [TIP]
@@ -222,7 +202,7 @@ by a width parameter, configurable per CFU
 ^|1+ ^|in |`clk_en` | |clock enable
 ^| ^|in |`req_valid` | |request valid
 ^|2+ ^|out |`req_ready` | |request ready
-^|4 ^|in |`req_id` |`CFU_REQ_ID_W` |request <<REQ_ID,REQ_ID>>
+^|3 ^|in |`req_id` |`CFU_REQ_ID_W` |request <<REQ_ID,REQ_ID>>
 ^| ^|in |`req_cfu` |`CFU_CFU_ID_W` |request <<CFU_ID,CFU_ID>>
 ^|1+ ^|in |`req_state` |`CFU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
 ^| ^|in |`req_func` |`CFU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
@@ -230,8 +210,8 @@ by a width parameter, configurable per CFU
 ^| ^|in |`req_data0` |`CFU_DATA_W` |request operand data 0
 ^| ^|in |`req_data1` |`CFU_DATA_W` |request operand data 1
 ^|1+ ^|out |`resp_valid` | |response valid
-^|3+ ^|in |`resp_ready` | |response ready
-^|4 ^|out |`resp_id` |`CFU_REQ_ID_W` |response ID
+^|2+ ^|in |`resp_ready` | |response ready
+^|3 ^|out |`resp_id` |`CFU_REQ_ID_W` |response ID
 ^| ^|out |`resp_status` |`CFU_STATUS_W` |response status
 ^| ^|out |`resp_data` |`CFU_DATA_W` |response data
 |===
@@ -240,7 +220,7 @@ All signals are positive-true logic.
 [NOTE]
 ====
 It is unfortunate the custom function ID is *CF_ID* in the HW-SW interface
-and *FUNC_ID* in the CFU-LI.
+and *FUNC_ID* in CFU-LI.
 ====
 
 [[parameters]]
@@ -254,7 +234,7 @@ ranges of possible values.
 [width="100%",cols="8%,12%,18%,8%,10%,44%",options="header",]
 |===
 ^|*Level* |*Quantity* |*Width Parameter* |*Range* |*Default* |*Description*
-^|4 |<<REQ_ID,REQ_ID>> |`CFU_REQ_ID_W` |0-64 |0 |request/response ID width
+^|3 |<<REQ_ID,REQ_ID>> |`CFU_REQ_ID_W` |0-64 |0 |request/response ID width
 ^| |<<CFU_ID,CFU_ID>> |`CFU_CFU_ID_W` |0-16 |0 |CFU_ID width
 ^|1+ |<<STATE_ID,STATE_ID>> |`CFU_STATE_ID_W` |0-16 |0 |STATE_ID width
 ^| |<<CF_ID,CF_ID>> |`CFU_FUNC_ID_W` |0-10 |10 |CF_ID width
@@ -279,10 +259,10 @@ When `CFU_FUNC_ID_W<10`, how do standard custom functions (CF_ID in [0x3F0..0x3F
 
 [[other-parameters]]
 .CFU-LI: other CFU configuration parameters
-[width="100%",cols="8%,21%,12%,12%,47%",options="header",]
+[width="100%",cols="8%,21%,12%,12%,47%",options="header,unbreakable",]
 |===
 ^|*Level* |*Parameter* |*Range* |*Default* |*Description*
-^| |`CFU_LI_VERSION` |`24'h010000` | `24'h010000` |CFU-LI version; 24'h010000 == 1.00.00
+^| |`CFU_LI_VERSION` |`24'h010000` | `24'h010000` |CFU-LI version; `24'h01_00_00` == 1.00.00
 ^| |`CFU_N_CFUS` |1+ |1 |number of CFUs at/below this CFU
 ^|1+ |`CFU_N_STATES` |0+ |0 |number of custom interface state contexts
 ^|1 |`CFU_LATENCY` |0+ |1 |latency (clock cycles) from a request to its response
@@ -291,16 +271,14 @@ When `CFU_FUNC_ID_W<10`, how do standard custom functions (CF_ID in [0x3F0..0x3F
 
 `CFU_LI_VERSION` indicates the version of the CFU-LI signals and semantics
 in effect, using semantic versioning
-https://semver.org, encoded as `24'hxxyy00`: (major=xx,minor=yy,patch=00).
-(Since `CFU_LI_VERSION` is an interface specification and not an
-implementation, there is never a patch level.)
+https://semver.org, encoded as `24'hxx_yy_00`: (major=xx,minor=yy,patch=00).
+Since `CFU_LI_VERSION` is an interface specification and not an
+implementation, there is never a patch level. See also §<<versioning>>.
 
 [TIP]
 ====
 `CFU_LI_VERSION` anticipates subsequent evolution of CFU-LI.
 ====
-
-See also §<<versioning>>.
 
 `CFU_N_CFUS` is the number of logical CFUs at/below this CFU. For
 a leaf CFU this may be more than one when the CFU implements multiple
@@ -368,11 +346,8 @@ preexisting RTL function units, sans `clk_en` gating, into new CFUs.
 [[flow-control]]
 ==== Request and response valid-ready flow control
 
-CFU-L2, -L3, and -L4 provide CFU request channel synchronous valid-ready
-flow control. CFU-L3 and -L4 also provide CFU response channel synchronous
-valid-ready flow control.
-
-With synchronous valid-ready flow control, the sender may assert data
+CFU-L2 and -L3 provide CFU request and response channel synchronous
+valid-ready flow control. For each channel, the sender may assert data
 and a positive-true data `valid` signal indicating it is ready to send
 data. The receiver may assert a positive-true `ready` signal indicating it
 is ready to receive data. On posedge `clk`, if both `valid` and `ready` are
@@ -386,9 +361,8 @@ until the receiver asserts `ready` and the transfer occurs.
 A `valid` output must not depend (via combinational logic) upon a `ready`
 input. However, a `ready` output may depend upon a `valid` input.
 
-For feature levels that include both request and response flow control,
-a requester may not indefinitely negate `resp_ready` in response to a
-responder negating `req_ready`.
+With request and response flow control, a requester must not indefinitely
+negate `resp_ready` in response to a responder negating `req_ready`.
 
 [TIP]
 ====
@@ -527,7 +501,7 @@ the CPU.
 [[req-resp-id]]
 ==== Request-response ID
 
-CFU-LI feature level 4 <<cfu-l4,(reordering CFU)>> includes a request-response
+CFU-LI feature level 3 <<cfu-l3,(reordering CFU)>> includes a request-response
 ID <<REQ_ID,REQ_ID>>, a `REQ_ID_W` -bit signal used by requesters to
 correlate responses received with requests sent. With each request, the
 CFU receives the REQ_ID as `req_id`, and later, with each response, the
@@ -608,7 +582,7 @@ analysis of its requester.
 
 [[cfu-l0-wave]]
 .Example CFU-L0 signaling protocol waveform
-[wavedrom,target="cfu-l0",svg]
+[wavedrom,target="cfu-l0",svg,width="90%"]
 ....
 {signal: [
 ['Request',
@@ -772,15 +746,22 @@ response, otherwise due in cycle 7, is also delayed, until cycle 21.
 
 === CFU-L2 variable latency CFU signaling
 
-A variable latency CFU computes a function of the CFU request and the
-specified state context, if any, updating the context, sending a CFU
-response, *in order, in a later clock cycle*. There is *request flow
-control*.
+A variable latency CFU computes a function of a CFU request and the specified
+state context, if any, updating the context, sending a CFU response,
+in order, in a later clock cycle. There is *request and response flow
+control* so the CFU can suspend receiving requests and the requester
+can suspend receiving responses.
 
-When the requester is a CPU, use of CFU-L2 means the CPU must be ready to
-accept a response from the CFU on any cycle. This simplifies the design
-of the CFU but may complicate the design of the CPU pipeline and its
-register file write arbitration logic.
+[TIP]
+====
+When the requester is a CPU, use of CFU-L2 allows the CPU to delay receipt
+of a CFU response. This affords the CPU pipeline greater flexibility
+to dynamically prioritize other units' accesses to register file write
+port(s). Conversely, CFU-L2 can complicate design of a CFU, which may
+have to respond to negated `resp_ready` by buffering the response in an
+output FIFO or by applying back pressure through its processing pipeline,
+or negate `req_ready` to delay receipt of new requests.
+====
 
 ==== CFU-L2 configuration parameters
 
@@ -798,7 +779,6 @@ For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see §<<parameters>>.
 ==== CFU-L2 signals
 
 .CFU-L2 signals
-
 [width="100%",cols="11%,24%,27%,38%",options="header",]
 |===
 ^|*Dir* |*Port* |*Width Parameter* |*Description*
@@ -814,6 +794,7 @@ For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see §<<parameters>>.
 ^|in |`req_data0` |`CFU_DATA_W` |request operand data 0
 ^|in |`req_data1` |`CFU_DATA_W` |request operand data 1
 ^|out |`resp_valid` | |response valid
+^|in |`resp_ready` | |response ready
 ^|out |`resp_status` |`CFU_STATUS_W` |response status
 ^|out |`resp_data` |`CFU_DATA_W` |response data
 |===
@@ -836,147 +817,23 @@ Protocol:
 .. CFU performs response status / error checking per §<<error-checking>>.
 .. CFU performs a custom function of the operands and the selected state context.
 .. CFU may update the selected state context, logically prior to any updates from subsequent requests.
-. Response transfer
-[loweralpha]
-.. Prior to issuing responses from subsequent requests (i.e., in order of requests) CFU asserts `resp_status` and `resp_data` and asserts `resp_valid`.
-.. Requester receives CFU response on posedge `clk`.
-
-==== CFU-L2 example
-
-<<cfu-l2-wave>> is an example waveform for three CFU-L2 CFU requests and
-responses, arising from executing three CF instructions `f0`-`f2`. (Assume
-`CFU_INSN_W=0`, no `req_insn`.) Each instruction issues a CFU request
-to the same CFU `u0`. Instructions `f0` and `f1` use state context `s0`;
-`f2` uses state context `s2`. The CFU receives request `f0` in cycle 2
-and responds in cycle 3, a latency of 1 cycle. Requester asserts request
-`f1` in cycle 3, but it is not received by the CFU until it reasserts
-`req_ready` in cycle 4. The CFU responds to `f1` in cycle 6, with an
-error response, a latency of 2 cycles. Requester asserts request `f2` in
-cycle 6, but it is not received by the CFU until it reasserts `req_ready`
-in cycle 7. The CFU responds to `f2` in cycle 10, a latency of 3 cycles.
-
-[[cfu-l2-wave]]
-.Example CFU-L2 signaling protocol waveform
-[wavedrom,target="cfu-l2",svg]
-....
-{signal: [
-{    name: 'clk',         wave: 'P...........'},
-{    name: 'rst',         wave: '10..........'},
-{    name: 'clk_en',      wave: '01..........'},
-['Request',
-{  name: 'req_valid',   wave: '0.1..01.0...' },
-{  name: 'req_ready',   wave: '0.1010.1....'  },
-{  name: 'req_cfu',     wave: 'x.34.x5.x...', data: 'u0 u0 u0'  },
-{  name: 'req_state',   wave: 'x.34.x5.x...', data: 's0 s0 s2'  },
-{  name: 'req_func',    wave: 'x.34.x5.x...', data: 'f0 f1 f2'  },
-{  name: 'req_data0',   wave: 'x.34.x5.x...', data: 'a0 a1 a2'  },
-{  name: 'req_data1',   wave: 'x.34.x5.x...', data: 'b0 b1 b2'  },
-],
-['Response',
-{  name: 'resp_valid',  wave: '0..10.10..10' },
-{  name: 'resp_status',  wave: 'x..3x.4x..5x', data: 'ok err1 ok' },
-{  name: 'resp_data',   wave: 'x..3x.4x..5x', data: 'res0 0 res2'  },
-]
-],
-head:{
-tick:0
-},
-foot:{
-tock:0
-}
-}
-....
-
-=== CFU-L3 elastic CFU signaling
-
-An elastic CFU computes a function of a CFU request and the specified
-state context, if any, updating the context, sending a CFU response,
-in order, in a later clock cycle. There is *request and response flow
-control* so the CFU can suspend receiving requests and the requester
-can suspend receiving responses.
-
-[TIP]
-====
-When the requester is a CPU, use of CFU-L3 allows the CPU to delay receipt
-of a CFU response. This affords the CPU pipeline greater flexibility
-to dynamically prioritize other units' accesses to register file write
-port(s). Conversely, CFU-L3 may complicate design of the CFU, which may
-respond to negated `resp_ready` by buffering the response in an output
-FIFO or by applying back pressure through its processing pipeline,
-or negate `req_ready` to delay receipt of new requests.
-====
-
-==== CFU-L3 configuration parameters
-
-.CFU-L3 configuration parameters
-[width="100%",cols="34%,66%",options="header",]
-|===
-|*Parameter* |*Description*
-|`CFU_LI_VERSION` |CFU-LI version number
-|`CFU_N_CFUS` |number of CFUs at/below this CFU
-|`CFU_N_STATES` |number of custom interface state contexts
-|===
-
-For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see §<<parameters>>.
-
-==== CFU-L3 signals
-
-.CFU-L3 signals
-[width="100%",cols="11%,24%,27%,38%",options="header",]
-|===
-^|*Dir* |*Port* |*Width Parameter* |*Description*
-^|in |`clk` | |clock
-^|in |`rst` | |reset
-^|in |`clk_en` | |clock enable
-^|in |`req_valid` | |request valid
-^|out |`req_ready` | |request ready
-^|in |`req_cfu` |`CFU_CFU_ID_W` |request <<CFU_ID,CFU_ID>>
-^|in |`req_state` |`CFU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^|in |`req_func` |`CFU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
-^|in |`req_insn` |`CFU_INSN_W` |request raw instruction
-^|in |`req_data0` |`CFU_DATA_W` |request operand data 0
-^|in |`req_data1` |`CFU_DATA_W` |request operand data 1
-^|out |`resp_valid` | |response valid
-^|in |`resp_ready` | |response ready
-^|out |`resp_status` |`CFU_STATUS_W` |response status
-^|out |`resp_data` |`CFU_DATA_W` |response data
-|===
-
-==== CFU-L3 signaling protocol
-
-CFU-L3 is synchronous to posedge `clk`. See §<<clocking>>.
-CFU-L3 includes the request's raw instruction. See §<<raw-insn>>.
-
-Protocol:
-
-[arabic]
-. Request transfer.
-[loweralpha]
-.. Requester asserts CFU request signals `req_*` and asserts `req_valid`.
-.. Responder may assert `req_ready`.
-.. CFU receives CFU request on posedge `clk` when `req_valid` and `req_ready` are both asserted, per §<<flow-control>>.
-. Custom function execution.
-[loweralpha]
-.. CFU performs response status / error checking per §<<error-checking>>.
-.. CFU performs a custom function of the operands and the selected state context.
-.. CFU may update the selected state context, logically prior to any updates from subsequent requests.
 . Response transfer.
 [loweralpha]
 .. Prior to issuing responses from subsequent requests (i.e., in order of requests) CFU asserts `resp_status` and `resp_data` and asserts `resp_valid`.
 .. Requester may assert `resp_ready`.
 .. Requester receives CFU response on posedge `clk` when `resp_valid` and `resp_ready` are both asserted, per §<<flow-control>>.
 
-==== CFU-L3 example
+==== CFU-L2 example
 
-<<cfu-l3-wave>> is an example waveform for four CFU-L3 CFU requests and
+<<cfu-l2-wave>> is an example waveform for four CFU-L2 CFU requests and
 responses, arising from executing four CF instructions `f0`-`f3`. (Assume
 `CFU_INSN_W=0`, no `req_insn`.) Each instruction issues a CFU request
 to the same CFU `u0`. Instructions `f0` and `f1` use state context `s0`;
 `f2` and `f3` use state context `s2`.
 
-[[cfu-l3-wave]]
-.Example CFU-L3 signaling protocol waveform
-[wavedrom,target="cfu-l3",svg]
+[[cfu-l2-wave]]
+.Example CFU-L2 signaling protocol waveform
+[wavedrom,target="cfu-l2",svg]
 ....
 {signal: [
 {    name: 'clk',         wave: 'P........|...'},
@@ -1020,7 +877,7 @@ the CFU until it asserts `req_ready` in cycle 7. The CFU responds to
 Requester asserts request `f3` in cycle 21, and the CFU responds in
 cycle 22.
 
-=== CFU-L4 reordering CFU signaling
+=== CFU-L3 reordering CFU signaling
 
 A reordering CFU computes a function of the CFU request and the specified
 state context, if any, updating the context, and sending a CFU response
@@ -1028,7 +885,7 @@ in a later clock cycle. *Responses for requests with the same context
 are sent in order, otherwise may be sent out of order*. There is request
 and response flow control.
 
-CFU-L4 incorporates a <<req-resp-id,request-response ID>> for the
+CFU-L3 incorporates a <<req-resp-id,request-response ID>> for the
 requester to correlate responses received to requests sent.
 
 [TIP]
@@ -1056,9 +913,9 @@ identical response data and program behavior over time and over different
 CFU implementations of the same custom interface.
 ====
 
-==== CFU-L4 configuration parameters
+==== CFU-L3 configuration parameters
 
-.CFU-L4 configuration parameters
+.CFU-L3 configuration parameters
 [width="100%",cols="34%,66%",options="header",]
 |===
 |*Parameter* |*Description*
@@ -1070,9 +927,9 @@ CFU implementations of the same custom interface.
 For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see
 §<<parameters>>.
 
-==== CFU-L4 signals
+==== CFU-L3 signals
 
-.CFU-L4 signals
+.CFU-L3 signals
 [width="100%",cols="11%,24%,27%,38%",options="header",]
 |===
 ^|*Dir* |*Port* |*Width Parameter* |*Description*
@@ -1095,18 +952,18 @@ For `CFU_LI_VERSION`, `CFU_N_CFUS`, and `CFU_N_STATES`, see
 ^|out |`resp_data` |`CFU_DATA_W` |response data
 |===
 
-==== CFU-L4 signaling protocol
+==== CFU-L3 signaling protocol
 
-CFU-L4 is synchronous to posedge `clk`. See §<<clocking>>.
-CFU-L4 includes a request-response ID. See §<<req-resp-id>>.
-CFU-L4 includes the request's raw instruction. See §<<raw-insn>>.
+CFU-L3 is synchronous to posedge `clk`. See §<<clocking>>.
+CFU-L3 includes a request-response ID. See §<<req-resp-id>>.
+CFU-L3 includes the request's raw instruction. See §<<raw-insn>>.
 
 Protocol:
 
 [arabic]
 . Request transfer.
 [loweralpha]
-.. Requester asserts CFU request signals `req_*` (including new CFU-L4 signal `req_id`) and asserts `req_valid`.
+.. Requester asserts CFU request signals `req_*` (including new CFU-L3 signal `req_id`) and asserts `req_valid`.
 .. Responder may assert `req_ready`.
 .. CFU receives CFU request on posedge `clk` when `req_valid` and `req_ready` are both asserted, per §<<flow-control>>
 . Custom function execution.
@@ -1120,9 +977,9 @@ Protocol:
 .. Requester may assert `resp_ready`.
 .. Requester receives CFU response on posedge `clk` when `resp_valid` and `resp_ready` are both asserted, per §<<flow-control>>.
 
-==== CFU-L4 example
+==== CFU-L3 example
 
-<<cfu-l4-wave>> is an example waveform for four CFU-L4 CFU requests,
+<<cfu-l3-wave>> is an example waveform for four CFU-L3 CFU requests,
 illustrating two different valid out-of-order response sequences, arising
 from executing four CF instructions `f0`-`f3`. (Assume `CFU_INSN_W=0`,
 no `req_insn`.) Each instruction issues a CFU request to the same CFU
@@ -1134,9 +991,9 @@ Note that each CFU request is tagged with a `req_id`, a value that is returned
 by the CFU with the corresponding `resp_id`, and used by the requester to
 correlate responses to requests and recover the reordering as necessary.
 
-[[cfu-l4-wave]]
-.Example CFU-L4 signaling protocol waveform, with two of the possible response orderings
-[wavedrom,target="cfu-l4",svg]
+[[cfu-l3-wave]]
+.Example CFU-L3 signaling protocol waveform, with two of the possible response orderings
+[wavedrom,target="cfu-l3",svg]
 ....
 {signal: [
 {    name: 'clk',         wave: 'P..........'},
@@ -1190,12 +1047,11 @@ CFU-LI includes a set of configurable adapters to raise any CFU to any
 higher feature level, easing composition:
 
 * `Cvt01`: raise L0 to L1: add configurable latency pipelining
-* `Cvt02`, `Cvt12`: raise L0 or L1 to L2: add request flow control (always accepts requests)
-* `Cvt03`, `Cvt13`, `Cvt23`: raise L0-L2 to L3: add response flow control (may suspend requests)
+* `Cvt02`, `Cvt12`: raise L0 or L1 to L2: add request-response flow control (may suspend requests)
 
 [NOTE]
 ====
-TODO: Write up the L4 adapters, which are just L3 adapters with a
+TODO: Describe the L3 adapters, which are just L2 adapters with a
 <<req-resp-id,request-response ID>> FIFO.
 ====
 
@@ -1220,30 +1076,6 @@ into several pipeline stages, achieving higher frequency operation.
 
 A `Cvt02` adapter CFU implements CFU-L2, including its configuration
 parameters (§<<_cfu_l2_configuration_parameters>>), adapting L2 requests
-to and responses from a subordinate combinational L0 CFU. It implements
-request (non) flow control by permanently asserting `req_ready`. For
-each request received, it sends a response, asserting `resp_valid`,
-`resp_status`, and `resp_data` on next posedge `clk`.
-
-==== `Cvt12`: raise CFU-L1 to CFU-L2
-
-A `Cvt12` adapter CFU implements CFU-L2, including its configuration
-parameters (§<<_cfu_l2_configuration_parameters>>), plus `CFU_LATENCY`
-(§<<_cfu_l1_configuration_parameters>>), adapting L2 requests to and
-responses from a subordinate fixed latency L1 CFU. The `CFU_LATENCY`
-parameter specifies the latency of the _subordinate CFU_.  The adapter
-implements request (non) flow control by permanently asserting
-`req_ready`. For each request received, it sends a response,
-asserting `resp_valid`, `resp_status`, and `resp_data` on posedge `clk`
-after no fewer than `CFU_LATENCY` cycles.
-
-When `CFU_LATENCY=0`, the subordinate CFU response must be registered,
-so the adapter's response latency is one cycle.
-
-==== `Cvt03`: raise CFU-L0 to CFU-L3
-
-A `Cvt03` adapter CFU implements CFU-L3, including its configuration
-parameters (§<<_cfu_l3_configuration_parameters>>), adapting L3 requests
 to and responses from a subordinate combinational L0 CFU. The adapter
 has a fixed latency of one cycle -- a response is sent one cycle after
 a request is received.
@@ -1251,16 +1083,16 @@ a request is received.
 [TIP]
 ====
 To avoid arbitrary CFU response queuing, yet keep signaling simple and
-frugal, the `Cvt03` adapter might negate `req_ready` on any cycle that it
+frugal, the `Cvt02` adapter might negate `req_ready` on any cycle that it
 has a valid response waiting (asserting `resp_valid`) and the requester
 negates `resp_ready`.
 ====
 
-==== `Cvt13`: raise CFU-L1 to CFU-L3
+==== `Cvt12`: raise CFU-L1 to CFU-L2
 
-A `Cvt13` adapter CFU implements CFU-L3, including its configuration
-parameters (§<<_cfu_l3_configuration_parameters>>), plus `CFU_LATENCY`
-(§<<_cfu_l1_configuration_parameters>>), adapting L3 requests to and
+A `Cvt12` adapter CFU implements CFU-L2, including its configuration
+parameters (§<<_cfu_l2_configuration_parameters>>), plus `CFU_LATENCY`
+(§<<_cfu_l1_configuration_parameters>>), adapting L2 requests to and
 responses from a subordinate fixed latency L1 CFU.
 
 The `CFU_LATENCY` parameter, which specifies the latency of the
@@ -1273,19 +1105,6 @@ transfers paused, the response FIFO fills and the adapter CFU negates
 
 When `CFU_LATENCY=0`, the subordinate CFU response must be registered
 and therefore the adapter's response latency is at least one cycle.
-
-==== `Cvt23`: raise CFU-L2 to CFU-L3
-
-A `Cvt23` adapter CFU implements CFU-L3, including its configuration
-parameters (§<<_cfu_l3_configuration_parameters>>), adapting L3
-requests to and responses from a subordinate variable latency L2 CFU.
-
-[TIP]
-====
-In one implementation, sans response FIFO queueing, the adapter negates
-`req_ready` on any cycle that it has a valid response waiting (asserting
-`resp_valid`) and the requester negates `resp_ready`.
-====
 
 [[cpus]]
 === CFU-LI-compliant CPUs
@@ -1305,18 +1124,22 @@ An austere single-cycle CPU might use CFU-L0 with a combinational CFU
 
 A pipelined in-order CPU might use CFU-L1 with a fixed latency CFU
 configured for (e.g.) 2 cycles latency. It might also use CFU-L2 with
-a variable latency CFU, stalling in WB-stage (writeback) if awaiting a
-slow CFU response.
+a variable latency CFU, stalling the pipeline during cycles where CF
+instructions cannot issue because the selected CFU negates `req_ready`,
+and itself negating `resp_ready` during write-back cycles when the
+register file's write port or other necessary resource is unavaiable.
 
-An out-of-order completion CPU might use a CFU-L2 variable latency CFU
-or a -L3 elastic CFU, the latter if its WB-stage register file write
-arbiter cannot always accept a CFU response writeback on any cycle.
+An out-of-order completion CPU, i.e. one that may commit low latency
+instructions before prior high latency insturctions, might issue CF
+instructions to a CFU-L2 variable latency CFU and in some future cycle
+retire the variable latency CFU response, here again negating `resp_ready`
+when it is unable to accept a response to writeback.
 
 An OoO completion CPU, that handles reordered CFU responses, might use
-a CFU-L4 reordering CFU.
+a CFU-L3 reordering CFU.
 ====
 
-A CPU has one or more sets of CFU request and response ports. For each
+A CPU may have one or more sets of CFU request and response ports. For each
 such set, a CPU may send zero or one CFU request per cycle and receive
 zero or one CFU response per cycle.
 
@@ -1408,8 +1231,8 @@ In the narrative that follows, that _A sends B_ means _A asserts B
 ahead of next posedge `clk`,_ whereas _B transfers to C_ means _during
 this cycle C receives and accepts it_. Recall with CFU-L2, request
 transfers occur when both `req_valid` and `req_ready` are asserted
-(§<<flow-control>>), whereas response transfers occur when `resp_valid`
-is asserted.
+(§<<flow-control>>), and response transfers occur when `resp_valid`
+and `resp_ready` are asserted.
 
 [[mux22-wave]]
 .Example 2-input 2-output CFU-L2 Mux CFU signaling protocol waveform
@@ -1528,15 +1351,15 @@ CFU~0~'s response to CPU~0~'s fifth request transfers to CPU~0~.
 
 In some configured systems, preexisting infrastructure components
 that implement AXI4-Stream protocol may be used to help compose CPUs
-and CFUs. A fully flow controlled CFU-LI -L3 or -L4 transfer may be
+and CFUs. A fully flow controlled CFU-LI -L2 or -L3 transfer may be
 transported over two AXI4-Stream (AXI-S) streams, one for requests and
 one for responses.
 
 [TIP]
 ====
 For example, in a AMD/Xilinx Versal FPGA, a CPU might transfer CFU
-requests, via CFU-L3-to-AXI-S bridge, AXI-S-to-NOC bridge, Versal NOC,
-NOC-to-AXI-S bridge, AXI-S-to-CFU-L3 bridge, to a CFU at the far corner
+requests, via CFU-L2-to-AXI-S bridge, AXI-S-to-NOC bridge, Versal NOC,
+NOC-to-AXI-S bridge, AXI-S-to-CFU-L2 bridge, to a CFU at the far corner
 of the FPGA fabric, later transferring CFU responses back to the _distant_
 CPU by the same means.
 ====
@@ -1545,7 +1368,7 @@ CPU by the same means.
 signals and the two AXI-S streams.
 
 [[cfu-axis]]
-.Recommended mapping between CFU-L3/-L4 and request/response AXI4-Streams
+.Recommended mapping between CFU-L2/-L3 and request/response AXI4-Streams
 [width="80%",cols="9%,24%,26%,41%",options="header,unbreakable"]
 |===
 ^|*Dir* |*CFU-LI Port* |*Width* |*AXI-S Port*
@@ -1567,8 +1390,8 @@ signals and the two AXI-S streams.
 ^|out |`resp_valid` | |`resps_tvalid`
 ^|in |`resp_ready` | |`resps_tready`
 ^|out |`resp_id` |`CFU_REQ_ID_W` |`resps_tid` _or_ `resps_tdest`
-^|out |`resp_data` |`CFU_DATA_W` |`resps_tdata`
 ^|out |`resp_status` |`CFU_STATUS_W` |`resps_tuser`
+^|out |`resp_data` |`CFU_DATA_W` |`resps_tdata`
 ^|out |- | |`resps_tlast` _optional_
 ^|out |- |* |`resps_tstrb` _optional_
 ^|out |- |* |`resps_tkeep` _optional_

@@ -37,7 +37,7 @@ specific) configuration parameter settings.
 ....
 cfu_name: string
 cfu_li:
-    feature_level: scalar                   # required.  allowed: 0-4
+    feature_level: scalar                   # required.  allowed: 0-3
     state_id_max: scalar | list | 'range'   # level:any. default: any. 0 => stateless
     req_id_w: scalar | list | 'range'       # level:2+.  default: 0
     cfu_id_w: scalar | list | 'range'       # level:any. default: 0
