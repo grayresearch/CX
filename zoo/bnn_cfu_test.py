@@ -82,5 +82,6 @@ def test_bnn(request, width):
         module=module,
         parameters=parameters,
         defines=['BNN_CFU_VCD'],
+        extra_env={ 'CFU_DATA_W':str(width) },
         sim_build=sim_build
     )

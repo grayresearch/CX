@@ -229,6 +229,6 @@ def test_dotprod(request, latency, states, width, elem_w):
         module=module,
         parameters=parameters,
         defines=['DOTPROD_CFU_VCD'],
-        extra_env={ 'CFU_N_STATES':str(states), 'CFU_LATENCY':str(latency), 'ELEM_W':str(elem_w) },
+        extra_env={ 'CFU_N_STATES':str(states), 'CFU_LATENCY':str(latency), 'CFU_DATA_W':str(width), 'ELEM_W':str(elem_w) },
         sim_build=sim_build
     )

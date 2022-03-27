@@ -43,7 +43,8 @@
 
 `define vp /* verilator public */
 
-`define V(W) logic [msb(W):0]       /* parameteric width bit vector constructor */
+`define V(W)    logic [msb(W):0]            /* parameteric width bit vector constructor */
+`define NV(N,W) logic [(N)-1:0][msb(W):0]   /* parameteric width packed vector of bit vector constructor */
 
 /* verilator lint_off DECLFILENAME */
 
@@ -93,6 +94,12 @@ function bit check_param_pos(string name, string param_name, int actual);
     check_param_pos = actual > 0;
     if (!check_param_pos)
         $error("%s: parameter %s=%1d, must be positive", name, param_name, actual);
+endfunction
+
+function bit check_param_pos2exp(string name, string param_name, int actual);
+    check_param_pos2exp = (actual > 0) && (2**$clog2(actual) == actual);
+    if (!check_param_pos2exp)
+        $error("%s: parameter %s=%1d, must be positive power of two", name, param_name, actual);
 endfunction
 
 function bit check_param_nonneg(string name, string param_name, int actual);

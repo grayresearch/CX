@@ -78,5 +78,6 @@ def test_popcount(request, width, adder_tree):
         module=module,
         parameters=parameters,
         defines=['POPCOUNT_CFU_VCD'],
+        extra_env={ 'CFU_DATA_W':str(width) },
         sim_build=sim_build
     )

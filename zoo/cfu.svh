@@ -37,35 +37,35 @@
     parameter int CFU_FUNC_ID_W     = func_id_w,            \
     parameter int CFU_DATA_W        = data_w
 
-`define CFU_L2_PARAMS(n_cfus,n_states,insn_w,func_id_w,data_w) \
+`define CFU_L2_PARAMS(n_cfus,n_states,func_id_w,insn_w,data_w) \
     parameter int CFU_VERSION       = 'h01_00_00,           \
     parameter int CFU_N_CFUS        = n_cfus,               \
     parameter int CFU_N_STATES      = n_states,             \
     parameter int CFU_CFU_ID_W      = $clog2(CFU_N_CFUS),   \
     parameter int CFU_STATE_ID_W    = $clog2(CFU_N_STATES), \
-    parameter int CFU_INSN_W        = insn_w,               \
     parameter int CFU_FUNC_ID_W     = func_id_w,            \
+    parameter int CFU_INSN_W        = insn_w,               \
     parameter int CFU_DATA_W        = data_w
 
-`define CFU_L3_PARAMS(n_cfus,n_states,insn_w,func_id_w,data_w) \
+`define CFU_L3_PARAMS(n_cfus,n_states,func_id_w,insn_w,data_w) \
     parameter int CFU_VERSION       = 'h01_00_00,           \
     parameter int CFU_N_CFUS        = n_cfus,               \
     parameter int CFU_N_STATES      = n_states,             \
     parameter int CFU_CFU_ID_W      = $clog2(CFU_N_CFUS),   \
     parameter int CFU_STATE_ID_W    = $clog2(CFU_N_STATES), \
-    parameter int CFU_INSN_W        = insn_w,               \
     parameter int CFU_FUNC_ID_W     = func_id_w,            \
+    parameter int CFU_INSN_W        = insn_w,               \
     parameter int CFU_DATA_W        = data_w
 
-`define CFU_L4_PARAMS(n_cfus,n_states,insn_w,req_id_w,insn_w,func_id_w,data_w) \
+`define CFU_L4_PARAMS(n_cfus,n_states,req_id_w,func_id_w,insn_w,data_w) \
     parameter int CFU_VERSION       = 'h01_00_00,           \
     parameter int CFU_N_CFUS        = n_cfus,               \
     parameter int CFU_N_STATES      = n_states,             \
     parameter int CFU_REQ_ID_W      = req_id_w,             \
     parameter int CFU_CFU_ID_W      = $clog2(CFU_N_CFUS),   \
     parameter int CFU_STATE_ID_W    = $clog2(CFU_N_STATES), \
-    parameter int CFU_INSN_W        = insn_w,               \
     parameter int CFU_FUNC_ID_W     = func_id_w,            \
+    parameter int CFU_INSN_W        = insn_w,               \
     parameter int CFU_DATA_W        = data_w
 
 `define CFU_L0_PORTS(input,output,req,resp)     \
@@ -98,8 +98,8 @@
     output logic                req``_ready,    \
     input  `V(CFU_CFU_ID_W)     req``_cfu,      \
     input  `V(CFU_STATE_ID_W)   req``_state,    \
-    input  `V(CFU_INSN_W)       req``_insn,     \
     input  `V(CFU_FUNC_ID_W)    req``_func,     \
+    input  `V(CFU_INSN_W)       req``_insn,     \
     input  `V(CFU_DATA_W)       req``_data0,    \
     input  `V(CFU_DATA_W)       req``_data1,    \
     output logic                resp``_valid,   \
@@ -111,8 +111,8 @@
     output logic                req``_ready,    \
     input  `V(CFU_CFU_ID_W)     req``_cfu,      \
     input  `V(CFU_STATE_ID_W)   req``_state,    \
-    input  `V(CFU_INSN_W)       req``_insn,     \
     input  `V(CFU_FUNC_ID_W)    req``_func,     \
+    input  `V(CFU_INSN_W)       req``_insn,     \
     input  `V(CFU_DATA_W)       req``_data0,    \
     input  `V(CFU_DATA_W)       req``_data1,    \
     output logic                resp``_valid,   \
@@ -126,8 +126,8 @@
     input  `V(CFU_REQ_ID_W)     req``_id,       \
     input  `V(CFU_CFU_ID_W)     req``_cfu,      \
     input  `V(CFU_STATE_ID_W)   req``_state,    \
-    input  `V(CFU_INSN_W)       req``_insn,     \
     input  `V(CFU_FUNC_ID_W)    req``_func,     \
+    input  `V(CFU_INSN_W)       req``_insn,     \
     input  `V(CFU_DATA_W)       req``_data0,    \
     input  `V(CFU_DATA_W)       req``_data1,    \
     output logic                resp``_valid,   \
@@ -159,7 +159,7 @@ import common_pkg::*;
 function bit check_cfu_l0_params(string name, int version, int n_cfus, int cfu_w, int func_w, int data_w);
     check_cfu_l0_params =
         check_param(name, "CFU_VERSION", version, 'h01_00_00)
-    &&  check_param(name, "CFU_N_CFUS", n_cfus, 1)
+    &&  check_param_pos(name, "CFU_N_CFUS", n_cfus)
     &&  check_param_range(name, "CFU_CFU_ID_W", cfu_w, 0, 16)
     &&  check_param_range(name, "CFU_FUNC_ID_W", func_w, 0, 10)
     &&  check_param_2(name, "CFU_DATA_ID_W", data_w, 32, 64);
@@ -171,7 +171,7 @@ function bit check_cfu_l1_params(
 );
     check_cfu_l1_params =
         check_param(name, "CFU_VERSION", version, 'h01_00_00)
-    &&  check_param(name, "CFU_N_CFUS", n_cfus, 1)
+    &&  check_param_pos(name, "CFU_N_CFUS", n_cfus)
     //  check_param CFU_N_STATES in each CFU
     &&  check_param_nonneg(name, "CFU_LATENCY", latency)
     &&  check_param_nonneg(name, "CFU_RESET_LATENCY", reset_latency)
@@ -181,7 +181,25 @@ function bit check_cfu_l1_params(
     &&  check_param_2(name, "CFU_DATA_ID_W", data_w, 32, 64);
 endfunction
 
-typedef enum logic [2:0] {
+function bit check_cfu_l2_params(string name, int version, int n_cfus, int cfu_w, int state_w, int func_w, int insn_w, int data_w);
+    check_cfu_l2_params =
+        check_param(name, "CFU_VERSION", version, 'h01_00_00)
+    &&  check_param_pos(name, "CFU_N_CFUS", n_cfus)
+    //  check_param CFU_N_STATES in each CFU
+    &&  check_param_range(name, "CFU_CFU_ID_W", cfu_w, 0, 16)
+    &&  check_param_range(name, "CFU_STATE_ID_W", state_w, 0, 16)
+    &&  check_param_range(name, "CFU_FUNC_ID_W", func_w, 0, 10)
+    &&  check_param_2(name, "CFU_INSN_W", insn_w, 0, 32)
+    &&  check_param_2(name, "CFU_DATA_ID_W", data_w, 32, 64);
+endfunction
+
+function bit check_cfu_l3_params(string name, int version, int n_cfus, int cfu_w, int state_w, int func_w, int insn_w, int data_w);
+    check_cfu_l3_params = check_cfu_l2_params(name, version, n_cfus, cfu_w, state_w, func_w, insn_w, data_w);
+endfunction
+
+parameter int CFU_STATUS_W  = 3;
+
+typedef enum logic [CFU_STATUS_W-1:0] {
     CFU_OK,                         // OK: no errors
     CFU_ERROR_CFU,                  // error: invalid CFU_ID
     CFU_ERROR_OFF,                  // error: (stateful interface) is off

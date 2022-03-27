@@ -210,6 +210,6 @@ def test_mulacc(request, latency, states, width):
         module=module,
         parameters=parameters,
         defines=['MULACC_CFU_VCD'],
-        extra_env={ 'CFU_N_STATES':str(states), 'CFU_LATENCY':str(latency) },
+        extra_env={ 'CFU_N_STATES':str(states), 'CFU_LATENCY':str(latency), 'CFU_DATA_W':str(width) },
         sim_build=sim_build
     )

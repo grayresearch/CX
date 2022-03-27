@@ -31,7 +31,7 @@ class TB:
     def __init__(self, dut, level):
         self.dut = dut
         self.level = level
-        self.n_bits = dut.req_data0.value.n_bits
+        self.n_bits = int(os.environ.get("CFU_DATA_W")) 
         self.latency = int(os.environ.get("CFU_LATENCY")) if level == 1 else 0
         self.n_states = int(os.environ.get("CFU_N_STATES")) if level > 0 else 0
 
