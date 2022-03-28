@@ -11,6 +11,8 @@ Until then, any testbench may be run with
 `
 [SIM=[icarus|verilator]] pytest -n auto <cfu>_test.py
 `
+RTL code may only use the subset of System Verilog that is implemented by Icarus Verilog and
+Verilator, and must be free of warnings, esp. Verilator lint warnings.
 
 Current CFU examples:
 

@@ -32,7 +32,7 @@ module popcount_cfu
 ) (
     `CFU_L0_PORTS(input, output, req, resp)
 );
-    initial ignore(check_cfu_l0_params("popcount_cfu", CFU_VERSION, CFU_N_CFUS, CFU_CFU_ID_W,
+    initial ignore(check_cfu_l0_params("popcount_cfu", CFU_LI_VERSION, CFU_N_CFUS, CFU_CFU_ID_W,
         CFU_FUNC_ID_W, CFU_DATA_W));
     wire _unused_ok = &{1'b0,req_data1,req_func,req_cfu,req_valid,1'b0};
 `ifdef POPCOUNT_CFU_VCD

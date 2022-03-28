@@ -46,7 +46,7 @@ module dotprod_cfu
 
     initial begin
         ignore(
-            check_cfu_l1_params("dotprod_cfu", CFU_VERSION, CFU_N_CFUS,
+            check_cfu_l1_params("dotprod_cfu", CFU_LI_VERSION, CFU_N_CFUS,
                 CFU_LATENCY, CFU_RESET_LATENCY, CFU_CFU_ID_W, CFU_STATE_ID_W,
                 CFU_FUNC_ID_W, CFU_DATA_W)
         &&  check_param_pos("dotprod_cfu", "CFU_N_STATES", CFU_N_STATES)

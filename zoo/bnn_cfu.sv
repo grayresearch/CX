@@ -31,7 +31,7 @@ module bnn_cfu
 ) (
     `CFU_L0_PORTS(input, output, req, resp)
 );
-    initial ignore(check_cfu_l0_params("bnn_cfu", CFU_VERSION, CFU_N_CFUS, CFU_CFU_ID_W,
+    initial ignore(check_cfu_l0_params("bnn_cfu", CFU_LI_VERSION, CFU_N_CFUS, CFU_CFU_ID_W,
         CFU_FUNC_ID_W, CFU_DATA_W));
     wire _unused_ok = &{1'b0,req_func,req_cfu,req_valid,1'b0};
 `ifdef BNN_CFU_VCD
@@ -40,7 +40,7 @@ module bnn_cfu
 
     wire `V(CFU_DATA_W) xnor_ = req_data0 ~^ req_data1;
 
-    popcount_cfu #(.CFU_VERSION(CFU_VERSION), .CFU_N_CFUS(CFU_N_CFUS), .CFU_CFU_ID_W(CFU_CFU_ID_W),
+    popcount_cfu #(.CFU_LI_VERSION(CFU_LI_VERSION), .CFU_N_CFUS(CFU_N_CFUS), .CFU_CFU_ID_W(CFU_CFU_ID_W),
         .CFU_FUNC_ID_W(CFU_FUNC_ID_W), .CFU_DATA_W(CFU_DATA_W))
     count(.req_valid, .req_cfu, .req_func, .req_data0(xnor_),
         .req_data1('0), .resp_status, .resp_data);
