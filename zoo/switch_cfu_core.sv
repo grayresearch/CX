@@ -61,11 +61,11 @@ module switch_cfu_core
     input  `NV(N_TGTS, CFU_DATA_W)      t_resp_datas
 );
     initial ignore(
-		check_cfu_l2_params("switch_cfu_core", CFU_LI_VERSION, CFU_N_CFUS,
-			CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_INSN_W, CFU_DATA_W)
-	&&  check_param("switch_cfu_core", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
-	&&  check_param_pos("switch_cfu_core", "N_INIS", N_INIS)
-	&&  check_param_pos("switch_cfu_core", "N_TGTS", N_TGTS));
+        check_cfu_l2_params("switch_cfu_core", CFU_LI_VERSION, CFU_N_CFUS,
+            CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_INSN_W, CFU_DATA_W)
+    &&  check_param("switch_cfu_core", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
+    &&  check_param_pos("switch_cfu_core", "N_INIS", N_INIS)
+    &&  check_param_pos("switch_cfu_core", "N_TGTS", N_TGTS));
 `ifdef SWITCH_CFU_CORE_VCD
     initial begin $dumpfile("switch_cfu_core.vcd"); $dumpvars(0, switch_cfu_core); end
 `endif
