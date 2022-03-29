@@ -1,4 +1,4 @@
-// switch_cfu.sv: connect initiators to target CFUs (CFU-L2)
+// switch_cfu_core.sv: connect initiators to target CFUs (CFU-L2)
 //
 // Copyright (C) 2019-2022, Gray Research LLC.
 // 
@@ -19,122 +19,7 @@
 
 /* verilator lint_off DECLFILENAME */
 
-// switch_cfu: Switch CFU: connect initiators to target CFUs (CFU-L2)
-module switch_cfu
-    import common_pkg::*;
-    import cfu_pkg::*;
-#(
-    `CFU_L2_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*FUNC_ID_W*/10, /*INSN_W*/0, /*DATA_W*/32),
-    parameter int N_INIS    = 1,            // no. of initiators
-    parameter int N_TGTS    = CFU_N_CFUS,   // no. of targets
-    parameter int N_REQS    = 16            // max no. of in-flight requests per initiator and per target
-) (
-`define IP(j) `CFU_L2_PORTS(input, output, i``j``_req, i``j``_resp)
-`define TP(j) `CFU_L2_PORTS(output, input, t``j``_req, t``j``_resp)
-    `CFU_CLOCK_PORTS,
-    `IP(0), `IP(1), `IP(2), `IP(3), `IP(4), `IP(5), `IP(6), `IP(7),
-    `TP(0), `TP(1), `TP(2), `TP(3), `TP(4), `TP(5), `TP(6), `TP(7)
-);
-    initial begin
-        ignore(
-            check_cfu_l2_params("switch_cfu", CFU_LI_VERSION, CFU_N_CFUS,
-                CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_INSN_W, CFU_DATA_W)
-        &&  check_param("switch_cfu", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
-        &&  check_param_expr("switch_cfu", "N_INIS", N_INIS, 1 <= N_INIS && N_INIS <= 8, "1 <= N_INIS && N_INIS <= 8")
-        &&  check_param_expr("switch_cfu", "N_TGTS", N_TGTS, 1 <= N_TGTS && N_TGTS <= 8, "1 <= N_TGTS && N_TGTS <= 8"));
-    end
-`ifdef SWITCH_CFU_VCD
-    initial begin $dumpfile("switch_cfu.vcd"); $dumpvars(0, switch_cfu); end
-`endif
-
-    `V(N_INIS)                   i_req_valids;
-    `V(N_INIS)                   i_req_readys;
-    `NV(N_INIS, CFU_CFU_ID_W)    i_req_cfus;
-    `NV(N_INIS, CFU_STATE_ID_W)  i_req_states;
-    `NV(N_INIS, CFU_FUNC_ID_W)   i_req_funcs;
-    `NV(N_INIS, CFU_INSN_W)      i_req_insns;
-    `NV(N_INIS, CFU_DATA_W)      i_req_data0s;
-    `NV(N_INIS, CFU_DATA_W)      i_req_data1s;
-    `V(N_INIS)                   i_resp_valids;
-    `V(N_INIS)                   i_resp_readys;
-    `NV(N_INIS, CFU_STATUS_W)    i_resp_statuss;
-    `NV(N_INIS, CFU_DATA_W)      i_resp_datas;
-
-    `V(N_TGTS)                   t_req_valids;
-    `V(N_TGTS)                   t_req_readys;
-    `NV(N_TGTS, CFU_CFU_ID_W)    t_req_cfus;
-    `NV(N_TGTS, CFU_STATE_ID_W)  t_req_states;
-    `NV(N_TGTS, CFU_FUNC_ID_W)   t_req_funcs;
-    `NV(N_TGTS, CFU_INSN_W)      t_req_insns;
-    `NV(N_TGTS, CFU_DATA_W)      t_req_data0s;
-    `NV(N_TGTS, CFU_DATA_W)      t_req_data1s;
-    `V(N_TGTS)                   t_resp_valids;
-    `V(N_TGTS)                   t_resp_readys;
-    `NV(N_TGTS, CFU_STATUS_W)    t_resp_statuss;
-    `NV(N_TGTS, CFU_DATA_W)      t_resp_datas;
-
-    // Map discrete named ports <=> indexed ports for switch_cfu_core.
-    // INI and TGT macros may index out-of-bounds but tis is benign since all
-    // indexing is guarded by module parameters N_INIS and N_TGTS.
-    always_comb begin
-        i_req_valids  = '0;
-        i_req_cfus    = '0;
-        i_req_states  = '0;
-        i_req_funcs   = '0;
-        i_req_insns   = '0;
-        i_req_data0s  = '0;
-        i_req_data1s  = '0;
-        i_resp_readys = '0;
-
-        t_req_readys   = '0;
-        t_resp_valids  = '0;
-        t_resp_statuss = '0;
-        t_resp_datas   = '0;
-
-`define I(io,p,j) io``_``p``s[j] = io``j``_``p
-`define O(io,p,j) io``j``_``p = io``_``p``s[j]
-`define INI(j)                      \
-        if (j < N_INIS) begin       \
-            `I(i,req_valid,j);      \
-            `O(i,req_ready,j);      \
-            `I(i,req_cfu,j);        \
-            `I(i,req_state,j);      \
-            `I(i,req_func,j);       \
-            `I(i,req_insn,j);       \
-            `I(i,req_data0,j);      \
-            `I(i,req_data1,j);      \
-            `O(i,resp_valid,j);     \
-            `I(i,resp_ready,j);     \
-            `O(i,resp_status,j);    \
-            `O(i,resp_data,j);      \
-        end
-`define TGT(j)                      \
-        if (j < N_TGTS) begin       \
-            `O(t,req_valid,j);      \
-            `I(t,req_ready,j);      \
-            `O(t,req_cfu,j);        \
-            `O(t,req_state,j);      \
-            `O(t,req_func,j);       \
-            `O(t,req_insn,j);       \
-            `O(t,req_data0,j);      \
-            `O(t,req_data1,j);      \
-            `I(t,resp_valid,j);     \
-            `O(t,resp_ready,j);     \
-            `I(t,resp_status,j);    \
-            `I(t,resp_data,j);      \
-        end
-        /* verilator lint_off SELRANGE */
-        `INI(0) `INI(1) `INI(2) `INI(3) `INI(4) `INI(5) `INI(6) `INI(7)
-        `TGT(0) `TGT(1) `TGT(2) `TGT(3) `TGT(4) `TGT(5) `TGT(6) `TGT(7)
-        /* verilator lint_on SELRANGE */
-    end
-
-    switch_cfu_core #(`CFU_L2_PARAMS_MAP, .N_INIS(N_INIS), .N_TGTS(N_TGTS), .N_REQS(N_REQS))
-        switch(.*);
-endmodule
-
-
-// switch_cfu_core: switch CFU core: connect initiators to target CFUs (CFU-L2),
+// switch_cfu_core: connect initiators to target CFUs (CFU-L2),
 // wherein each port is a vector of the corresponding initiator or target CFU port signals
 module switch_cfu_core
     import common_pkg::*;
@@ -143,7 +28,7 @@ module switch_cfu_core
     `CFU_L2_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*FUNC_ID_W*/10, /*INSN_W*/0, /*DATA_W*/32),
     parameter int N_INIS    = 1,            // no. of initiators
     parameter int N_TGTS    = CFU_N_CFUS,   // no. of targets
-    parameter int N_REQS    = 16            // max no. of in-flight requests per initiator and per target
+    parameter int N_REQS    = 16            // max no. of in-flight requests per initiator or target
 ) (
     input  logic                        clk,
     input  logic                        rst,
@@ -175,14 +60,12 @@ module switch_cfu_core
     input  `NV(N_TGTS, CFU_STATUS_W)    t_resp_statuss,
     input  `NV(N_TGTS, CFU_DATA_W)      t_resp_datas
 );
-    initial begin
-        ignore(
-            check_cfu_l2_params("switch_cfu_core", CFU_LI_VERSION, CFU_N_CFUS,
-                CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_INSN_W, CFU_DATA_W)
-        &&  check_param("switch_cfu_core", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
-        &&  check_param_pos("switch_cfu_core", "N_INIS", N_INIS)
-        &&  check_param_pos("switch_cfu_core", "N_TGTS", N_TGTS));
-    end
+    initial ignore(
+		check_cfu_l2_params("switch_cfu_core", CFU_LI_VERSION, CFU_N_CFUS,
+			CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_INSN_W, CFU_DATA_W)
+	&&  check_param("switch_cfu_core", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
+	&&  check_param_pos("switch_cfu_core", "N_INIS", N_INIS)
+	&&  check_param_pos("switch_cfu_core", "N_TGTS", N_TGTS));
 `ifdef SWITCH_CFU_CORE_VCD
     initial begin $dumpfile("switch_cfu_core.vcd"); $dumpvars(0, switch_cfu_core); end
 `endif
@@ -266,7 +149,6 @@ module switch_cfu_core
               .o_v(valids[t]), .o_rdy(t_resp_hss[t]), .o(heads[t]));
         end
         always_comb begin
-            t_readys = '0;
             for (int i = 0; i < N_INIS; ++i)
                 i_matchs[i] = valids[i_tgts[i]] && heads[i_tgts[i]] == i;
         end
@@ -299,12 +181,12 @@ module switch_cfu_core
             ini_t       ini;
 
             i_req_mask = '0;
-            // determine which eligible initiators want to send a request to this target
+            // determine which valid eligible initiators want to send a request to this target
             for (int i = 0; i < N_INIS; ++i)
                 if (i_req_valids[i] && i_req_cfus[i] == cfu_id_t'(t) && i_eligible(i, t))
                     i_req_mask[i] = 1;
             ini = i_pri_enc(i_req_mask, t_inis[t]);
-            if (|i_req_mask && t_req_avails[t] && t_readys[t]) begin
+            if (i_req_mask != 0 && t_req_avails[t] && t_readys[t]) begin
                 t_xfers[t] = 1;
                 i_req_readys[ini] = 1;
                 t_inis_nxt[t] = ini;
