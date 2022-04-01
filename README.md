@@ -20,8 +20,8 @@ in the hope that it may motivate and inform a hypothetical _Composable
 Custom Extensions_ RISC-V Extension Working Group.
 
 This work summarizes years of ongoing discussions and prototyping by
-(alphabetical order): Tim Ansell, Tim Callahan, Jan Gray, Maciej Kurc,
-Guy Lemieux, Charles Pappon, Tim Vogt.
+(alphabetical order): Tim Ansell, Tim Callahan, Jan Gray, Karol Gugala,
+Maciej Kurc, Guy Lemieux, Charles Pappon, Zdenek Prikryl, Tim Vogt.
 
 * * *
 
