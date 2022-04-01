@@ -18,8 +18,8 @@ Custom Extensions_ RISC-V Extension Working Group.
 present specifications as their own _custom extension_.)
 
 This work summarizes years of ongoing discussions and prototyping by
-(alphabetical order): Tim Ansell, Tim Callahan, Jan Gray, Maciej Kurc,
-Guy Lemieux, Charles Pappon, Tim Vogt.
+(alphabetical order): Tim Ansell, Tim Callahan, Jan Gray, Karol Gugala,
+Maciej Kurc, Guy Lemieux, Charles Pappon, Zdenek Prikryl, Tim Vogt.
 
 
 * * *
