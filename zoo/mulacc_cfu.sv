@@ -1,6 +1,6 @@
 // mulacc_cfu.sv: multiply-accumulate serializable stateful fixed latency (CFU-L1) CFU
 //
-// Copyright (C) 2019-2022, Gray Research LLC.
+// Copyright (C) 2019-2023, Gray Research LLC.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,20 +23,17 @@
 //  1022:   cfid_write_status
 //  1023:   cfid_read_status
 
-`include "common.svh"
 `include "cfu.svh"
 
 /* verilator lint_off DECLFILENAME */
 
 // mulacc_cfu: 32/64-bit stateful serializable fixed latency (CFU-L1) CFU
 module mulacc_cfu
-    import common_pkg::*;
-    import cfu_pkg::*;
+    import common_pkg::*, cfu_pkg::*;
 #(
-    `CFU_L1_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*LATENCY*/0, /*RESET_LATENCY*/0,
-        /*FUNC_ID_W*/10, /*DATA_W*/32)
+    `CFU_L1_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*LAT*/0, /*RESET*/0, /*FUNC_ID_W*/10, /*DATA_W*/32)
 ) (
-    `CFU_L1_ALL_PORTS(input, output, req, resp)
+    `CFU_CLK_L1_PORTS(input, output, req, resp)
 );
     typedef `V(CFU_FUNC_ID_W)   func_id_t;
     typedef `V(CFU_STATE_ID_W)  state_id_t;
@@ -44,10 +41,9 @@ module mulacc_cfu
 
     initial begin
         ignore(
-            check_cfu_l1_params("mulacc_cfu", CFU_LI_VERSION, CFU_N_CFUS, CFU_LATENCY, CFU_RESET_LATENCY,
-                CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_DATA_W)
-        &&  check_param_pos("mulacc_cfu", "CFU_N_STATES", CFU_N_STATES)
-        &&  check_param("mulacc_cfu", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t)));
+            `CHECK_CFU_L1_PARAMS
+        &&  check_param_pos("CFU_N_STATES", CFU_N_STATES)
+        &&  check_param("CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t)));
     end
     wire _unused_ok = &{1'b0,req_cfu,1'b0};
 `ifdef MULACC_CFU_VCD

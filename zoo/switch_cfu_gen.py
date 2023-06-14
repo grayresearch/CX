@@ -2,7 +2,7 @@
 """
 generate an m-initiator n-target switch_cfu
 
-Copyright (C) 2019-2022, Gray Research LLC.
+Copyright (C) 2019-2023, Gray Research LLC.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ def generate(ports = 2):
     t = Template(
 """// {{name}}.sv: connect {{m}} initiator(s) to {{n}} target CFUs (CFU-L2)
 //
-// Copyright (C) 2019-2022, Gray Research LLC.
+// Copyright (C) 2019-2023, Gray Research LLC.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,8 +66,7 @@ def generate(ports = 2):
 
 // {{name}}: connect {{m}} initiator(s) to {{n}} target CFUs (CFU-L2)
 module {{name}}
-    import common_pkg::*;
-    import cfu_pkg::*;
+    import common_pkg::*, cfu_pkg::*;
 #(
     `CFU_L2_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
     parameter int N_REQS    = 16    // max no. of in-flight requests per initiator and per target
@@ -79,9 +78,8 @@ module {{name}}
     `CFU_L2_PORTS(output, input, t{{'%01d'%p}}_req, t{{'%01d'%p}}_resp){% if not loop.last %},{% endif %} {% endfor %}
 );
     initial ignore(
-        check_cfu_l2_params("{{name}}", CFU_LI_VERSION, CFU_N_CFUS,
-            CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_INSN_W, CFU_DATA_W)
-    &&  check_param("{{name}}", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t)));
+        `CHECK_CFU_L2_PARAMS
+    &&  check_param("CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t)));
 `ifdef SWITCH_CFU_VCD
     initial begin $dumpfile("{{name}}.vcd"); $dumpvars(0, {{name}}); end
 `endif

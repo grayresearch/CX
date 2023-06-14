@@ -1,6 +1,6 @@
 // common.svh: Common package
 //
-// Copyright (C) 2019-2022, Gray Research LLC.
+// Copyright (C) 2019-2023, Gray Research LLC.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@
 
 `define V(W)    logic [msb(W):0]            /* parameteric width bit vector constructor */
 `define NV(N,W) logic [(N)-1:0][msb(W):0]   /* parameteric width packed vector of bit vector constructor */
+`define CNT(W)  `V($clog2(W))               /* counter in [0,W) (NOT [0,W]!) */
 
 /* verilator lint_off DECLFILENAME */
 
@@ -66,46 +67,46 @@ endfunction
 
 // parameter checking help
 
-function bit check_param(string name, string param_name, int actual, int required);
+function bit check_param(string param_name, int actual, int required);
     check_param = (actual == required);
     if (!check_param)
-        $error("%s: parameter %s=%1d, must be %1d", name, param_name, actual, required);
+        $error("%m: parameter %s=%1d, must be %1d", param_name, actual, required);
 endfunction
 
-function bit check_param_range( string name, string param_name, int actual, int low, int high);
+function bit check_param_range(string param_name, int actual, int low, int high);
     check_param_range = (low <= actual && actual <= high);
     if (!check_param_range)
-        $error("%s: parameter %s=%1d, must be in [%1d,%1d]", name, param_name, actual, low, high);
+        $error("%m: parameter %s=%1d, must be in [%1d,%1d]", param_name, actual, low, high);
 endfunction
 
-function bit check_param_2(string name, string param_name, int actual, int req0, int req1);
+function bit check_param_2(string param_name, int actual, int req0, int req1);
     check_param_2 = (actual == req0 || actual == req1);
     if (!check_param_2)
-        $error("%s: parameter %s=%1d, must be %1d or %1d", name, param_name, actual, req0, req1);
+        $error("%m: parameter %s=%1d, must be %1d or %1d", param_name, actual, req0, req1);
 endfunction
 
-function bit check_param_expr(string name, string param_name, int actual, bit expr, string required);
+function bit check_param_expr(string param_name, int actual, bit expr, string required);
     check_param_expr = expr;
     if (!check_param_expr)
-        $error("%s: parameter %s=%1d, %s", name, param_name, actual, required);
+        $error("%m: parameter %s=%1d, %s", param_name, actual, required);
 endfunction
 
-function bit check_param_pos(string name, string param_name, int actual);
+function bit check_param_pos(string param_name, int actual);
     check_param_pos = actual > 0;
     if (!check_param_pos)
-        $error("%s: parameter %s=%1d, must be positive", name, param_name, actual);
+        $error("%m: parameter %s=%1d, must be positive", param_name, actual);
 endfunction
 
-function bit check_param_pos2exp(string name, string param_name, int actual);
+function bit check_param_pos2exp(string param_name, int actual);
     check_param_pos2exp = (actual > 0) && (2**$clog2(actual) == actual);
     if (!check_param_pos2exp)
-        $error("%s: parameter %s=%1d, must be positive power of two", name, param_name, actual);
+        $error("%m: parameter %s=%1d, must be positive power of two", param_name, actual);
 endfunction
 
-function bit check_param_nonneg(string name, string param_name, int actual);
+function bit check_param_nonneg(string param_name, int actual);
     check_param_nonneg = actual >= 0;
     if (!check_param_nonneg)
-        $error("%s: parameter %s=%1d, must be nonnegative", name, param_name, actual);
+        $error("%m: parameter %s=%1d, must be nonnegative", param_name, actual);
 endfunction
 
 task ignore(bit _);

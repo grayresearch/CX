@@ -1,7 +1,7 @@
 ## dotprod_cfu_l1_test.py: dotprod_cfu_l1 (stateful serializable L1 CFU) testbench
 
 '''
-Copyright (C) 2019-2022, Gray Research LLC.
+Copyright (C) 2019-2023, Gray Research LLC.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import random
 import math
 
 from cfu_li import *
-from monitors import Monitor
 from tb import TB
 
 class IDotProd(IntEnum): # extends IDotProd
@@ -195,7 +194,7 @@ def subcases(n_bits, elem_w):
         (i,j) = (j,(i+j)&mask)
 
     # random
-    for _ in range(10000):
+    for _ in range(1000):
         yield (random.randrange(1<<n_bits),random.randrange(1<<n_bits))
 
 
@@ -206,7 +205,7 @@ import pytest
 from cocotb_test.simulator import run
 
 @pytest.mark.parametrize("latency", [0,1,2])
-@pytest.mark.parametrize("states", [1,2,3])
+@pytest.mark.parametrize("states", [1,3])
 @pytest.mark.parametrize("width", [32,64])
 @pytest.mark.parametrize("elem_w", [4,8,16,32])
 

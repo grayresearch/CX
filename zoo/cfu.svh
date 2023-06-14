@@ -1,6 +1,6 @@
 // cfu_li.svh: CFU-LI package
 //
-// Copyright (C) 2019-2022, Gray Research LLC.
+// Copyright (C) 2019-2023, Gray Research LLC.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 `define CFU_SVH
 
 `include "common.svh"
+
+// Macros to abstract CFU-LI parameters, param checks, ports, port maps
 
 `define CFU_L0_PARAMS(n_cfus,func_id_w,data_w)              \
     parameter int CFU_LI_VERSION    = 'h01_00_00,           \
@@ -47,16 +49,6 @@
     parameter int CFU_INSN_W        = insn_w,               \
     parameter int CFU_DATA_W        = data_w
 
-`define CFU_L2_PARAMS_MAP               \
-    .CFU_LI_VERSION(CFU_LI_VERSION),    \
-    .CFU_N_CFUS(CFU_N_CFUS),            \
-    .CFU_N_STATES(CFU_N_STATES),        \
-    .CFU_CFU_ID_W(CFU_CFU_ID_W),        \
-    .CFU_STATE_ID_W(CFU_STATE_ID_W),    \
-    .CFU_FUNC_ID_W(CFU_FUNC_ID_W),      \
-    .CFU_INSN_W(CFU_INSN_W),            \
-    .CFU_DATA_W(CFU_DATA_W)
-
 `define CFU_L3_PARAMS(n_cfus,n_states,req_id_w,func_id_w,insn_w,data_w) \
     parameter int CFU_LI_VERSION    = 'h01_00_00,           \
     parameter int CFU_N_CFUS        = n_cfus,               \
@@ -67,6 +59,34 @@
     parameter int CFU_FUNC_ID_W     = func_id_w,            \
     parameter int CFU_INSN_W        = insn_w,               \
     parameter int CFU_DATA_W        = data_w
+
+`define CHECK_CFU_L0_PARAMS \
+    check_cfu_l0_params(CFU_LI_VERSION, CFU_N_CFUS, CFU_CFU_ID_W, CFU_FUNC_ID_W, CFU_DATA_W)
+
+`define CHECK_CFU_L1_PARAMS \
+    check_cfu_l1_params(CFU_LI_VERSION, CFU_N_CFUS, CFU_LATENCY, CFU_RESET_LATENCY, \
+        CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_DATA_W)
+
+`define CHECK_CFU_L2_PARAMS \
+    check_cfu_l2_params(CFU_LI_VERSION, CFU_N_CFUS, CFU_CFU_ID_W, CFU_STATE_ID_W, \
+        CFU_FUNC_ID_W, CFU_DATA_W)
+
+`define CFU_L0_PARAMS_MAP               \
+    .CFU_LI_VERSION(CFU_LI_VERSION),    \
+    .CFU_N_CFUS(CFU_N_CFUS),            \
+    .CFU_CFU_ID_W(CFU_CFU_ID_W),        \
+    .CFU_FUNC_ID_W(CFU_FUNC_ID_W),      \
+    .CFU_DATA_W(CFU_DATA_W)
+
+`define CFU_L2_PARAMS_MAP               \
+    .CFU_LI_VERSION(CFU_LI_VERSION),    \
+    .CFU_N_CFUS(CFU_N_CFUS),            \
+    .CFU_N_STATES(CFU_N_STATES),        \
+    .CFU_CFU_ID_W(CFU_CFU_ID_W),        \
+    .CFU_STATE_ID_W(CFU_STATE_ID_W),    \
+    .CFU_FUNC_ID_W(CFU_FUNC_ID_W),      \
+    .CFU_INSN_W(CFU_INSN_W),            \
+    .CFU_DATA_W(CFU_DATA_W)
 
 `define CFU_L0_PORTS(input,output,req,resp)     \
     input  logic                req``_valid,    \
@@ -123,59 +143,98 @@
     output cfu_status_t         resp``_status,  \
     output `V(CFU_DATA_W)       resp``_data
 
-`define CFU_L1_ALL_PORTS(input,output,req,resp) \
+`define CFU_CLK_L1_PORTS(input,output,req,resp) \
     `CFU_CLOCK_PORTS,                           \
     `CFU_L1_PORTS(input,output,req,resp)
 
-`define CFU_L2_ALL_PORTS(input,output,req,resp) \
+`define CFU_CLK_L2_PORTS(input,output,req,resp) \
     `CFU_CLOCK_PORTS,                           \
     `CFU_L2_PORTS(input,output,req,resp)
 
-`define CFU_L3_ALL_PORTS(input,output,req,resp) \
+`define CFU_CLK_L3_PORTS(input,output,req,resp) \
     `CFU_CLOCK_PORTS,                           \
     `CFU_L3_PORTS(input,output,req,resp)
+
+`define DECLARE_CFU_L0_NETS(prefix)         \
+    logic                prefix``_valid;    \
+    `V(CFU_CFU_ID_W)     prefix``_cfu;      \
+    `V(CFU_FUNC_ID_W)    prefix``_func;     \
+    `V(CFU_DATA_W)       prefix``_data0;    \
+    `V(CFU_DATA_W)       prefix``_data1;    \
+    cfu_status_t         prefix``_status;   \
+    `V(CFU_DATA_W)       prefix``_data
+
+`define CFU_L0_PORT_MAP(to_req,from_req, to_resp,from_resp) \
+    .to_req``_valid  (from_req``_valid),    \
+    .to_req``_cfu    (from_req``_cfu),      \
+    .to_req``_func   (from_req``_func),     \
+    .to_req``_data0  (from_req``_data0),    \
+    .to_req``_data1  (from_req``_data1),    \
+    .to_resp``_status(from_resp``_status),  \
+    .to_resp``_data  (from_resp``_data)
+
+`define CFU_CLK_PORT_MAP \
+    .clk(clk), .rst(rst), .clk_en(clk_en)
+        
+`define CFU_L2_PORT_MAP(to_req,from_req, to_resp,from_resp) \
+    .to_req``_valid  (from_req``_valid),    \
+    .to_req``_ready  (from_req``_ready),    \
+    .to_req``_cfu    (from_req``_cfu),      \
+    .to_req``_state  (from_req``_state),    \
+    .to_req``_func   (from_req``_func),     \
+    .to_req``_insn   (from_req``_insn),     \
+    .to_req``_data0  (from_req``_data0),    \
+    .to_req``_data1  (from_req``_data1),    \
+    .to_resp``_valid (from_resp``_valid),   \
+    .to_resp``_ready (from_resp``_ready),   \
+    .to_resp``_status(from_resp``_status),  \
+    .to_resp``_data  (from_resp``_data)
+
+`define CFU_CLK_L2_PORT_MAP(to_req,from_req, to_resp,from_resp) \
+    `CFU_CLK_PORT_MAP, `CFU_L2_PORT_MAP_CLK(to_req,from_req, to_resp,from_resp)
 
 package cfu_pkg;
 
 import common_pkg::*;
 
-function bit check_cfu_l0_params(string name, int version, int n_cfus, int cfu_w, int func_w, int data_w);
-    return check_param(name, "CFU_LI_VERSION", version, 'h01_00_00)
-        && check_param_pos(name, "CFU_N_CFUS", n_cfus)
-        && check_param_range(name, "CFU_CFU_ID_W", cfu_w, 0, 16)
-        && check_param_range(name, "CFU_FUNC_ID_W", func_w, 0, 10)
-        && check_param_2(name, "CFU_DATA_ID_W", data_w, 32, 64);
+function bit check_cfu_l0_params(int version, int n_cfus, int cfu_w, int func_w, int data_w);
+    return check_param("CFU_LI_VERSION", version, 'h01_00_00)
+        && check_param_pos("CFU_N_CFUS", n_cfus)
+        && check_param_range("CFU_CFU_ID_W", cfu_w, 0, 16)
+        && check_param_range("CFU_FUNC_ID_W", func_w, 0, 10)
+        && check_param_2("CFU_DATA_ID_W", data_w, 32, 64);
 endfunction
 
 function bit check_cfu_l1_params(
-    string name, int version, int n_cfus, int latency, int reset_latency, int cfu_w,
+    int version, int n_cfus, int latency, int reset_latency, int cfu_w,
     int state_w, int func_w, int data_w
 );
-    return check_param(name, "CFU_LI_VERSION", version, 'h01_00_00)
-        && check_param_pos(name, "CFU_N_CFUS", n_cfus)
+    return check_param("CFU_LI_VERSION", version, 'h01_00_00)
+        && check_param_pos("CFU_N_CFUS", n_cfus)
         // check_param CFU_N_STATES in each CFU
-        && check_param_nonneg(name, "CFU_LATENCY", latency)
-        && check_param_nonneg(name, "CFU_RESET_LATENCY", reset_latency)
-        && check_param_range(name, "CFU_CFU_ID_W", cfu_w, 0, 16)
-        && check_param_range(name, "CFU_STATE_ID_W", state_w, 0, 16)
-        && check_param_range(name, "CFU_FUNC_ID_W", func_w, 0, 10)
-        && check_param_2(name, "CFU_DATA_ID_W", data_w, 32, 64);
+        && check_param_nonneg("CFU_LATENCY", latency)
+        && check_param_nonneg("CFU_RESET_LATENCY", reset_latency)
+        && check_param_range("CFU_CFU_ID_W", cfu_w, 0, 16)
+        && check_param_range("CFU_STATE_ID_W", state_w, 0, 16)
+        && check_param_range("CFU_FUNC_ID_W", func_w, 0, 10)
+        && check_param_2("CFU_DATA_ID_W", data_w, 32, 64);
 endfunction
 
-function bit check_cfu_l2_params(string name, int version, int n_cfus, int cfu_w, int state_w, int func_w, int insn_w, int data_w);
-    return check_param(name, "CFU_LI_VERSION", version, 'h01_00_00)
-        && check_param_pos(name, "CFU_N_CFUS", n_cfus)
+function bit check_cfu_l2_params(int version, int n_cfus, int cfu_w, int state_w, int func_w, int insn_w, int data_w);
+    return check_param("CFU_LI_VERSION", version, 'h01_00_00)
+        && check_param_pos("CFU_N_CFUS", n_cfus)
         // check_param CFU_N_STATES in each CFU
-        && check_param_range(name, "CFU_CFU_ID_W", cfu_w, 0, 16)
-        && check_param_range(name, "CFU_STATE_ID_W", state_w, 0, 16)
-        && check_param_range(name, "CFU_FUNC_ID_W", func_w, 0, 10)
-        && check_param_2(name, "CFU_INSN_W", insn_w, 0, 32)
-        && check_param_2(name, "CFU_DATA_ID_W", data_w, 32, 64);
+        && check_param_range("CFU_CFU_ID_W", cfu_w, 0, 16)
+        && check_param_range("CFU_STATE_ID_W", state_w, 0, 16)
+        && check_param_range("CFU_FUNC_ID_W", func_w, 0, 10)
+        && check_param_2("CFU_INSN_W", insn_w, 0, 32)
+        && check_param_2("CFU_DATA_ID_W", data_w, 32, 64);
 endfunction
 
-function bit check_cfu_l3_params(string name, int version, int n_cfus, int cfu_w, int state_w, int func_w, int insn_w, int data_w);
-    return check_cfu_l2_params(name, version, n_cfus, cfu_w, state_w, func_w, insn_w, data_w);
+function bit check_cfu_l3_params(int version, int n_cfus, int cfu_w, int state_w, int func_w, int insn_w, int data_w);
+    return check_cfu_l2_params(version, n_cfus, cfu_w, state_w, func_w, insn_w, data_w);
 endfunction
+
 
 parameter int CFU_STATUS_W  = 3;
 

@@ -1,7 +1,7 @@
 // dotprod_cfu.sv: dot product of vectors of elements, a serializable stateful fixed latency
 // (CFU-L1) CFU
 //
-// Copyright (C) 2019-2022, Gray Research LLC.
+// Copyright (C) 2019-2023, Gray Research LLC.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,21 +24,18 @@
 //  1022:   cfid_write_status
 //  1023:   cfid_read_status
 
-`include "common.svh"
 `include "cfu.svh"
 
 /* verilator lint_off DECLFILENAME */
 
 // dotprod_cfu: 32/64-bit stateful serializable fixed latency (CFU-L1) CFU
 module dotprod_cfu
-    import common_pkg::*;
-    import cfu_pkg::*;
+    import common_pkg::*, cfu_pkg::*;
 #(
-    `CFU_L1_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*LATENCY*/0, /*RESET_LATENCY*/0,
-        /*FUNC_ID_W*/10, /*DATA_W*/32),
+    `CFU_L1_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*LAT*/0, /*RESET*/0, /*FUNC_ID_W*/10, /*DATA_W*/32),
     parameter int ELEM_W    = 8
 ) (
-    `CFU_L1_ALL_PORTS(input, output, req, resp)
+    `CFU_CLK_L1_PORTS(input, output, req, resp)
 );
     typedef `V(CFU_FUNC_ID_W)   func_id_t;
     typedef `V(CFU_STATE_ID_W)  state_id_t;
@@ -46,12 +43,10 @@ module dotprod_cfu
 
     initial begin
         ignore(
-            check_cfu_l1_params("dotprod_cfu", CFU_LI_VERSION, CFU_N_CFUS,
-                CFU_LATENCY, CFU_RESET_LATENCY, CFU_CFU_ID_W, CFU_STATE_ID_W,
-                CFU_FUNC_ID_W, CFU_DATA_W)
-        &&  check_param_pos("dotprod_cfu", "CFU_N_STATES", CFU_N_STATES)
-        &&  check_param("dotprod_cfu", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
-        &&  check_param_expr("dotprod_cfu", "ELEM_W", ELEM_W,
+            `CHECK_CFU_L1_PARAMS
+        &&  check_param_pos("CFU_N_STATES", CFU_N_STATES)
+        &&  check_param("CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
+        &&  check_param_expr("ELEM_W", ELEM_W,
               (2**$clog2(ELEM_W) == ELEM_W && 1 <= ELEM_W && ELEM_W <= CFU_DATA_W),
               "must be power of 2"));
     end

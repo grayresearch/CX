@@ -1,6 +1,6 @@
 // switch_cfu_core.sv: connect initiators to target CFUs (CFU-L2)
 //
-// Copyright (C) 2019-2022, Gray Research LLC.
+// Copyright (C) 2019-2023, Gray Research LLC.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-`include "common.svh"
 `include "cfu.svh"
 
 /* verilator lint_off DECLFILENAME */
@@ -22,8 +21,7 @@
 // switch_cfu_core: connect initiators to target CFUs (CFU-L2),
 // wherein each port is a vector of the corresponding initiator or target CFU port signals
 module switch_cfu_core
-    import common_pkg::*;
-    import cfu_pkg::*;
+    import common_pkg::*, cfu_pkg::*;
 #(
     `CFU_L2_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*FUNC_ID_W*/10, /*INSN_W*/0, /*DATA_W*/32),
     parameter int N_INIS    = 1,            // no. of initiators
@@ -61,11 +59,10 @@ module switch_cfu_core
     input  `NV(N_TGTS, CFU_DATA_W)      t_resp_datas
 );
     initial ignore(
-        check_cfu_l2_params("switch_cfu_core", CFU_LI_VERSION, CFU_N_CFUS,
-            CFU_CFU_ID_W, CFU_STATE_ID_W, CFU_FUNC_ID_W, CFU_INSN_W, CFU_DATA_W)
-    &&  check_param("switch_cfu_core", "CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
-    &&  check_param_pos("switch_cfu_core", "N_INIS", N_INIS)
-    &&  check_param_pos("switch_cfu_core", "N_TGTS", N_TGTS));
+        `CHECK_CFU_L2_PARAMS
+    &&  check_param("CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t))
+    &&  check_param_pos("N_INIS", N_INIS)
+    &&  check_param_pos("N_TGTS", N_TGTS));
 `ifdef SWITCH_CFU_CORE_VCD
     initial begin $dumpfile("switch_cfu_core.vcd"); $dumpvars(0, switch_cfu_core); end
 `endif

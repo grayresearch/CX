@@ -1,6 +1,6 @@
 // popcount_cfu.sv: 32/64-bit population count CFU-L0 combinational CFU
 //
-// Copyright (C) 2019-2022, Gray Research LLC.
+// Copyright (C) 2019-2023, Gray Research LLC.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,23 +17,20 @@
 // IPopcount custom functions:
 //     *:   popcount
 
-`include "common.svh"
 `include "cfu.svh"
 
 /* verilator lint_off DECLFILENAME */
 
 // popcount_cfu: 32/64-bit population count CFU-L0 combinational CFU
 module popcount_cfu
-    import common_pkg::*;
-    import cfu_pkg::*;
+    import common_pkg::*, cfu_pkg::*;
 #(
     `CFU_L0_PARAMS(/*N_CFUS*/1, /*FUNC_ID_W*/0, /*DATA_W*/32),
-    parameter int ADDER_TREE    = 0
+    parameter int ADDER_TREE = 0
 ) (
     `CFU_L0_PORTS(input, output, req, resp)
 );
-    initial ignore(check_cfu_l0_params("popcount_cfu", CFU_LI_VERSION, CFU_N_CFUS, CFU_CFU_ID_W,
-        CFU_FUNC_ID_W, CFU_DATA_W));
+    initial ignore(`CHECK_CFU_L0_PARAMS);
     wire _unused_ok = &{1'b0,req_data1,req_func,req_cfu,req_valid,1'b0};
 `ifdef POPCOUNT_CFU_VCD
     initial begin $dumpfile("popcount_cfu.vcd"); $dumpvars(0, popcount_cfu); end
@@ -55,7 +52,7 @@ module adder_tree #(
     output logic [W-1:0]    count
 );
     import common_pkg::*;
-    initial ignore(check_param_2("adder_tree", "W", W, 32, 64));
+    initial ignore(check_param_2("W", W, 32, 64));
     typedef logic [W-1:0] data_t;
 
     logic [W/ 2-1:0][1:0]  c2;
@@ -90,7 +87,7 @@ module compressors #(
     output logic [W-1:0]    count
 );
     import common_pkg::*;
-    initial ignore(check_param_2("compressors", "W", W, 32, 64));
+    initial ignore(check_param_2("W", W, 32, 64));
 
     // 72b popcount regularizes the code for 32b or 64b inputs.
     // Logic optimization trims any constant-0 partial count LUTs.

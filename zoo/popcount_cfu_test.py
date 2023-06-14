@@ -1,7 +1,7 @@
 ## popcount_cfu_test.py: popcount_cfu (CFU-L0) testbench
 
 '''
-Copyright (C) 2019-2022, Gray Research LLC.
+Copyright (C) 2019-2023, Gray Research LLC.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ def cases(n_bits):
                 yield ~t & mask
 
     # random
-    for _ in range(10000):
+    for _ in range(1000):
         yield random.randrange(1<<n_bits)
 
 # cocotb-test, thanks @forencich

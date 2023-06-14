@@ -1,6 +1,6 @@
 // shared.sv: shared modules
 //
-// Copyright (C) 2019-2022, Gray Research LLC.
+// Copyright (C) 2019-2023, Gray Research LLC.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-`include "common.svh"
 `include "cfu.svh"
 
 /* verilator lint_off DECLFILENAME */
@@ -32,8 +31,8 @@ module shift_reg
     output logic [W-1:0]    q
 );
     initial ignore(
-        check_param_pos("shift_reg", "W", W)
-    &&  check_param_nonneg("shift_reg", "N", N));
+        check_param_pos("W", W)
+    &&  check_param_nonneg("N", N));
 
     if (N == 0)
         always_comb q = d;
@@ -75,8 +74,8 @@ module queue
     output logic [W-1:0]    o
 );
     initial ignore(
-        check_param_pos("queue", "W", W)
-    &&  check_param_pos2exp("queue", "N", N));
+        check_param_pos("W", W)
+    &&  check_param_pos2exp("N", N));
 
     typedef logic [$clog2(N)-1:0] ad_t;
     typedef logic [$clog2(N)-1:0] data_t;
