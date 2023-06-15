@@ -1,4 +1,4 @@
-// bnn_cfu.sv: binary neural network dot prodct combinational (CFU-L0) CFU
+// bnn_cfu.sv: binary neural network dot product combinational (CFU-L0) CFU
 //
 // Copyright (C) 2019-2023, Gray Research LLC.
 // 

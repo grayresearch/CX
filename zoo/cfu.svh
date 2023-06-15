@@ -78,6 +78,15 @@
     .CFU_FUNC_ID_W(CFU_FUNC_ID_W),      \
     .CFU_DATA_W(CFU_DATA_W)
 
+`define CFU_L1_PARAMS_MAP               \
+    .CFU_LI_VERSION(CFU_LI_VERSION),    \
+    .CFU_N_CFUS(CFU_N_CFUS),            \
+    .CFU_N_STATES(CFU_N_STATES),        \
+    .CFU_CFU_ID_W(CFU_CFU_ID_W),        \
+    .CFU_STATE_ID_W(CFU_STATE_ID_W),    \
+    .CFU_FUNC_ID_W(CFU_FUNC_ID_W),      \
+    .CFU_DATA_W(CFU_DATA_W)
+
 `define CFU_L2_PARAMS_MAP               \
     .CFU_LI_VERSION(CFU_LI_VERSION),    \
     .CFU_N_CFUS(CFU_N_CFUS),            \
@@ -155,14 +164,14 @@
     `CFU_CLOCK_PORTS,                           \
     `CFU_L3_PORTS(input,output,req,resp)
 
-`define DECLARE_CFU_L0_NETS(prefix)         \
-    logic                prefix``_valid;    \
-    `V(CFU_CFU_ID_W)     prefix``_cfu;      \
-    `V(CFU_FUNC_ID_W)    prefix``_func;     \
-    `V(CFU_DATA_W)       prefix``_data0;    \
-    `V(CFU_DATA_W)       prefix``_data1;    \
-    cfu_status_t         prefix``_status;   \
-    `V(CFU_DATA_W)       prefix``_data
+`define DECLARE_CFU_L0_NETS(req,resp)       \
+    logic                req``_valid;       \
+    `V(CFU_CFU_ID_W)     req``_cfu;         \
+    `V(CFU_FUNC_ID_W)    req``_func;        \
+    `V(CFU_DATA_W)       req``_data0;       \
+    `V(CFU_DATA_W)       req``_data1;       \
+    cfu_status_t         resp``_status;     \
+    `V(CFU_DATA_W)       resp``_data
 
 `define CFU_L0_PORT_MAP(to_req,from_req, to_resp,from_resp) \
     .to_req``_valid  (from_req``_valid),    \
@@ -175,7 +184,18 @@
 
 `define CFU_CLK_PORT_MAP \
     .clk(clk), .rst(rst), .clk_en(clk_en)
-        
+ 
+`define CFU_L1_PORT_MAP(to_req,from_req, to_resp,from_resp) \
+    .to_req``_valid  (from_req``_valid),    \
+    .to_req``_cfu    (from_req``_cfu),      \
+    .to_req``_state  (from_req``_state),    \
+    .to_req``_func   (from_req``_func),     \
+    .to_req``_data0  (from_req``_data0),    \
+    .to_req``_data1  (from_req``_data1),    \
+    .to_resp``_valid (from_resp``_valid),   \
+    .to_resp``_status(from_resp``_status),  \
+    .to_resp``_data  (from_resp``_data)
+ 
 `define CFU_L2_PORT_MAP(to_req,from_req, to_resp,from_resp) \
     .to_req``_valid  (from_req``_valid),    \
     .to_req``_ready  (from_req``_ready),    \
@@ -190,8 +210,11 @@
     .to_resp``_status(from_resp``_status),  \
     .to_resp``_data  (from_resp``_data)
 
+`define CFU_CLK_L1_PORT_MAP(to_req,from_req, to_resp,from_resp) \
+    `CFU_CLK_PORT_MAP, `CFU_L1_PORT_MAP(to_req,from_req, to_resp,from_resp)
+
 `define CFU_CLK_L2_PORT_MAP(to_req,from_req, to_resp,from_resp) \
-    `CFU_CLK_PORT_MAP, `CFU_L2_PORT_MAP_CLK(to_req,from_req, to_resp,from_resp)
+    `CFU_CLK_PORT_MAP, `CFU_L2_PORT_MAP(to_req,from_req, to_resp,from_resp)
 
 package cfu_pkg;
 
