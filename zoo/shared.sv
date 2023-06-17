@@ -51,63 +51,90 @@ module shift_reg
 endmodule
 
 
-// queue:
+// fifo:
 //  * with valid-ready handshake on enqueue and dequeue
-//  * with items in dual-port async LUT-RAM
-//  * outputs current queue head value -- this LUT-RAM output is not registered
-//  * zero latency: item is output immediately following posedge clk that enqueues it into
-//    an empty queue
-module queue
+//  * with items in one register or a dual-port async LUT-RAM
+//  * zero latency: item is output immediately following posedge clk that
+//    enqueues it in an empty fifo
+module fifo
     import common_pkg::*;
 #(
     parameter int W = 1,
     parameter int N = 1
 ) (
-    input  logic            clk,
-    input  logic            rst,
-    input  logic            clk_en,
-    input  logic            i_v,
-    output logic            i_rdy,
-    input  logic [W-1:0]    i,
-    output logic            o_v,
-    input  logic            o_rdy,
-    output logic [W-1:0]    o
+    input  logic    clk,
+    input  logic    rst,
+    input  logic    clk_en,
+    input  logic    i_valid,
+    output logic    i_ready,    // comb (forwards o_ready)
+    input  `V(W)    i,
+    output logic    o_valid,    // reg
+    input  logic    o_ready,
+    output `V(W)    o
 );
     initial ignore(
         check_param_pos("W", W)
     &&  check_param_pos2exp("N", N));
 
-    typedef logic [$clog2(N)-1:0] ad_t;
-    typedef logic [$clog2(N)-1:0] data_t;
-
-    // state
-    (* ram_style="distributed" *)
-    data_t  ram[N];
-    ad_t     rd_ad;         // read from here
-    ad_t     wr_ad;         // write to here
-
-    // comb
-    ad_t     wr_ad_inc;     // wrap(wr_ad + 1)
-
-    always_comb begin
-        wr_ad_inc = wr_ad + 1'b1;
-        i_rdy = !(wr_ad_inc == rd_ad);  // queue is not full (full ::= inc(wr_ad) == rd_ad)
-        o_v = !(wr_ad == rd_ad);        // queue is not empty (empty ::= wr_ad == rd_ad)
-        o = ram[rd_ad];
-    end
-
-    always_ff @(posedge clk) begin
-        if (rst) begin
-            rd_ad <= 0;
-            wr_ad <= 0;
-        end
-        else if (clk_en) begin
-            if (i_v && i_rdy) begin
-                ram[wr_ad] <= i;
-                wr_ad <= wr_ad_inc;
+    if (N == 1) begin : q1      // simple stream register
+        always_comb i_ready = !o_valid || o_ready; // forwards o_ready
+        always_ff @(posedge clk) begin
+            if (rst) begin
+                o_valid <= 0;
+            end else if (clk_en) begin
+                if (i_valid && i_ready) begin
+                    o_valid <= 1;
+                    o <= i;
+                end else if (o_ready) begin
+                    o_valid <= 0;
+                end
             end
-            if (o_v && o_rdy)
-                rd_ad <= rd_ad + 1'b1;
+        end
+    end else begin : qn         // N entry FIFO
+        // state
+        typedef `CNT(N) ad_t;
+        //      o_valid         // not empty?
+        logic   full;           // full?
+        ad_t    rd_ad;          // read  pointer
+        ad_t    wr_ad;          // write pointer
+        `V(W)   items[N];       // circular FIFO
+        // # items = full ? N : (rd_ad != wr_ad) ? [1,N-1] : 0
+
+        // comb
+        ad_t    rd_ad_inc;      // incr'd read  pointer
+        ad_t    wr_ad_inc;      // incr'd write pointer
+        logic   enq;            // enqueue item
+        logic   deq;            // dequeue item
+
+        always_comb begin
+            i_ready = !full || o_ready; // forwards o_ready
+            o = items[rd_ad];
+
+            enq = i_valid && i_ready;
+            deq = o_valid && o_ready;
+            rd_ad_inc = rd_ad + 1'b1;
+            wr_ad_inc = wr_ad + 1'b1;
+        end
+        always_ff @(posedge clk) begin
+            if (rst) begin
+                // empty
+                full  <= 0;
+                rd_ad <= '0;
+                wr_ad <= '0;
+                o_valid <= 0;
+            end
+            else if (clk_en) begin
+                if (enq) begin
+                    items[wr_ad] <= i;
+                    wr_ad <= wr_ad_inc;
+                end
+                if (deq)
+                    rd_ad <= rd_ad_inc;
+                if (enq != deq) begin
+                    full    <= enq && (wr_ad_inc == rd_ad);
+                    o_valid <= enq || (rd_ad_inc != wr_ad);
+                end
+            end
         end
     end
 endmodule

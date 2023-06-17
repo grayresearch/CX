@@ -97,6 +97,11 @@
     .CFU_INSN_W(CFU_INSN_W),            \
     .CFU_DATA_W(CFU_DATA_W)
 
+`define CFU_CLOCK_PORTS                         \
+    input  logic                clk,            \
+    input  logic                rst,            \
+    input  logic                clk_en
+
 `define CFU_L0_PORTS(input,output,req,resp)     \
     input  logic                req``_valid,    \
     input  `V(CFU_CFU_ID_W)     req``_cfu,      \
@@ -105,11 +110,6 @@
     input  `V(CFU_DATA_W)       req``_data1,    \
     output cfu_status_t         resp``_status,  \
     output `V(CFU_DATA_W)       resp``_data
-
-`define CFU_CLOCK_PORTS                         \
-    input  logic                clk,            \
-    input  logic                rst,            \
-    input  logic                clk_en
 
 `define CFU_L1_PORTS(input,output,req,resp)     \
     input  logic                req``_valid,    \
@@ -164,14 +164,8 @@
     `CFU_CLOCK_PORTS,                           \
     `CFU_L3_PORTS(input,output,req,resp)
 
-`define DECLARE_CFU_L0_NETS(req,resp)       \
-    logic                req``_valid;       \
-    `V(CFU_CFU_ID_W)     req``_cfu;         \
-    `V(CFU_FUNC_ID_W)    req``_func;        \
-    `V(CFU_DATA_W)       req``_data0;       \
-    `V(CFU_DATA_W)       req``_data1;       \
-    cfu_status_t         resp``_status;     \
-    `V(CFU_DATA_W)       resp``_data
+`define CFU_CLK_PORT_MAP \
+    .clk(clk), .rst(rst), .clk_en(clk_en)
 
 `define CFU_L0_PORT_MAP(to_req,from_req, to_resp,from_resp) \
     .to_req``_valid  (from_req``_valid),    \
@@ -181,9 +175,6 @@
     .to_req``_data1  (from_req``_data1),    \
     .to_resp``_status(from_resp``_status),  \
     .to_resp``_data  (from_resp``_data)
-
-`define CFU_CLK_PORT_MAP \
-    .clk(clk), .rst(rst), .clk_en(clk_en)
  
 `define CFU_L1_PORT_MAP(to_req,from_req, to_resp,from_resp) \
     .to_req``_valid  (from_req``_valid),    \
@@ -215,6 +206,21 @@
 
 `define CFU_CLK_L2_PORT_MAP(to_req,from_req, to_resp,from_resp) \
     `CFU_CLK_PORT_MAP, `CFU_L2_PORT_MAP(to_req,from_req, to_resp,from_resp)
+
+`define CFU_L0_NETS(req,resp)               \
+    logic                req``_valid;       \
+    `V(CFU_CFU_ID_W)     req``_cfu;         \
+    `V(CFU_FUNC_ID_W)    req``_func;        \
+    `V(CFU_DATA_W)       req``_data0;       \
+    `V(CFU_DATA_W)       req``_data1;       \
+    cfu_status_t         resp``_status;     \
+    `V(CFU_DATA_W)       resp``_data
+
+`define CFU_L1_NETS(req,resp)               \
+    `CFU_L0_NETS(req,resp);                 \
+    logic               req``_ready;        \
+    `V(CFU_STATE_ID_W)  req``_state;        \
+    logic               resp``_valid
 
 package cfu_pkg;
 

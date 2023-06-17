@@ -40,5 +40,5 @@ module bnn_cfu
     popcount_cfu #(.CFU_LI_VERSION(CFU_LI_VERSION), .CFU_N_CFUS(CFU_N_CFUS), .CFU_CFU_ID_W(CFU_CFU_ID_W),
         .CFU_FUNC_ID_W(CFU_FUNC_ID_W), .CFU_DATA_W(CFU_DATA_W))
     count(.req_valid, .req_cfu, .req_func, .req_data0(xnor_),
-        .req_data1('0), .resp_status, .resp_data);
+        .req_data1({CFU_DATA_W{1'b0}}), .resp_status, .resp_data);
 endmodule

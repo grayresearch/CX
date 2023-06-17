@@ -45,7 +45,7 @@
 
 `define V(W)    logic [msb(W):0]            /* parameteric width bit vector constructor */
 `define NV(N,W) logic [(N)-1:0][msb(W):0]   /* parameteric width packed vector of bit vector constructor */
-`define CNT(W)  `V($clog2(W))               /* counter in [0,W) (NOT [0,W]!) */
+`define CNT(N)  `V($clog2(N))               /* counter in [0,N) (NOT [0,N]!) */
 
 /* verilator lint_off DECLFILENAME */
 

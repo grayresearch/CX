@@ -23,7 +23,7 @@
 // parameters (§3.7.1), plus CFU_LATENCY (§ 3.6.1), adapting L2 requests
 // to and responses from a subordinate fixed latency L1 CFU."
 // 
-// "The CFU_QUEUE_SIZE parameter configures the capacity of a response queue
+// "The CFU_FIFO_SIZE parameter configures the capacity of a response FIFO
 // that buffers responses while the requester negates resp_ready.
 // This defaults to CFU_LATENCY (but at least 1)."
 //
@@ -39,28 +39,31 @@ module cvt12_cfu
     import common_pkg::*, cfu_pkg::*;
 #(
     `CFU_L1_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*LAT*/0, /*RESET*/0, /*FUNC_ID_W*/10, /*DATA_W*/32),
-    parameter int CFU_INSN_W = 0    // CFU-L2
-    parameter int CFU_QUEUE_SIZE = max(1,CFU_LATENCY)
+    parameter int CFU_INSN_W = 0,       // CFU-L2
+    parameter int CFU_FIFO_SIZE = max(1,2**$clog2(CFU_LATENCY))
 ) (
-    `CFU_ALL_L2_PORTS(input, output, req, resp),
+    `CFU_CLK_L2_PORTS(input, output, req, resp),
     `CFU_L1_PORTS(output, input, t_req, t_resp)
 );
     initial ignore(
         `CHECK_CFU_L2_PARAMS
     &&  `CHECK_CFU_L1_PARAMS
-    &&  check_param_pos("CFU_QUEUE_SIZE", CFU_QUEUE_SIZE));
+    &&  check_param_pos2exp("CFU_FIFO_SIZE", CFU_FIFO_SIZE)
+    &&  check_param_expr("CFU_FIFO_SIZE", CFU_FIFO_SIZE, CFU_FIFO_SIZE >= CFU_LATENCY,
+                         "CFU_FIFO_SIZE >= CFU_LATENCY"));
 
     wire _unused_ok = &{1'b0,req_insn,1'b0};
 `ifdef CVT12_CFU_VCD
     initial begin $dumpfile("cvt12_cfu.vcd"); $dumpvars(0, cvt12_cfu); end
 `endif
 
-    // suspend new initiator requests (negate req_ready) when pending count reaches CFU_QUEUE_SIZE
-    `CNT(CFU_QUEUE_SIZE+1) count;       // count of pending requests
+    // suspend new initiator requests (negate req_ready) when pending count reaches CFU_FIFO_SIZE
+    typedef `CNT(CFU_FIFO_SIZE+1) count_t;
+    count_t count;                      // count of pending requests
     logic req_hs;                       // initiator request handshake
     logic resp_hs;                      // initiator response handshake
     always_comb begin
-        req_ready = count != CFU_QUEUE_SIZE;
+        req_ready = count != count_t'(CFU_FIFO_SIZE);
         req_hs  = req_valid  && req_ready;
         resp_hs = resp_valid && resp_ready;
     end
@@ -81,8 +84,8 @@ module cvt12_cfu
         t_req_data1 = req_data1;
     end
 
-    // queue as many as CFU_QUEUE_SIZE responses
-    queue #(.W(CFU_STATUS_W+CFU_DATA_W), .N(CFU_QUEUE_SIZE))
-    q(.clk, .rst, .clk_en, .i_v(t_resp_valid), .i_rdy(), .i({t_resp_status,t_resp_data}),
-      .o_v(resp_valid), .o_rdy(resp_ready), .o({resp_status,resp_ready}));
+    // queue as many as CFU_FIFO_SIZE responses
+    fifo #(.W(CFU_STATUS_W+CFU_DATA_W), .N(CFU_FIFO_SIZE))
+    q(.clk, .rst, .clk_en, .i_valid(t_resp_valid), .i_ready(), .i({t_resp_status,t_resp_data}),
+      .o_valid(resp_valid), .o_ready(resp_ready), .o({resp_status,resp_data}));
 endmodule

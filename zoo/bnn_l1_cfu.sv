@@ -28,7 +28,7 @@ module bnn_l1_cfu
     initial begin $dumpfile("bnn_l1_cfu.vcd"); $dumpvars(0, bnn_l1_cfu); end
 `endif
 
-    `DECLARE_CFU_L0_NETS(t_req, t_resp);
+    `CFU_L0_NETS(t_req, t_resp);
     cvt01_cfu #(`CFU_L1_PARAMS_MAP)
         cvt(`CFU_CLK_L1_PORT_MAP(req,req, resp,resp), `CFU_L0_PORT_MAP(t_req,t_req, t_resp,t_resp));
     bnn_cfu #(`CFU_L0_PARAMS_MAP)

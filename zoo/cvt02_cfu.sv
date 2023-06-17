@@ -45,11 +45,7 @@ module cvt02_cfu
 `endif
 
     always_comb begin
-        // "To avoid arbitrary CFU response queuing, yet keep signaling simple
-        // and frugal, the Cvt02 adapter negates req_ready on any cycle that it
-        // has a valid response waiting (asserting resp_valid) and the requester
-        // negates resp_ready."
-        req_ready = !(resp_valid && !resp_ready);
+        req_ready = !resp_valid || resp_ready;  // forward resp_ready to req_ready
 
         // forward request to (combinational) target CFU
         t_req_valid = req_valid;
@@ -62,8 +58,6 @@ module cvt02_cfu
     always_ff @(posedge clk) begin
         if (rst) begin
             resp_valid  <= 0;
-            resp_status <= CFU_OK;
-            resp_data   <= '0;
         end else if (clk_en) begin
             if (req_valid && req_ready) begin
                 // handshaken request => send response
