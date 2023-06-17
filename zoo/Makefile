@@ -29,6 +29,8 @@ all:
 	SIM=icarus    pytest -n auto dotprod_cfu_test.py
 	SIM=verilator pytest -n auto bnn_l1_cfu_test.py
 	SIM=icarus    pytest -n auto bnn_l1_cfu_test.py
+	SIM=verilator pytest -n auto bnn_l2_cfu_test.py
+	SIM=icarus    pytest -n auto bnn_l2_cfu_test.py
 
 clean:
 	cocotb-clean

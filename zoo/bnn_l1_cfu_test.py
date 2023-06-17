@@ -18,12 +18,13 @@ limitations under the License.
 
 import cocotb
 import random
+from cfu_li import *
 from tb import TB
 
 # testbench
 @cocotb.test()
 async def bnn_cfu_tb(dut):
-    tb = TB(dut, 1)
+    tb = TB(dut, Level.l1_pipe)
     await tb.start()
     await sweep(tb)
     await tb.stop()
@@ -84,7 +85,7 @@ def test_bnn_l1(request, latency, width):
         toplevel=dut,
         module=module,
         parameters=parameters,
-        defines=['BNN_CFU_VCD'],
+        defines=['BNN_L1_CFU_VCD'],
         extra_env={ 'CFU_N_STATES':str(0), 'CFU_LATENCY':str(latency), 'CFU_DATA_W':str(width) },
         sim_build=sim_build
     )

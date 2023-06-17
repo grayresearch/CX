@@ -18,12 +18,13 @@ limitations under the License.
 
 import cocotb
 import random
+from cfu_li import *
 from tb import TB
 
 # testbench
 @cocotb.test()
 async def bnn_cfu_tb(dut):
-    tb = TB(dut, 0)
+    tb = TB(dut, Level.l0_comb)
     await tb.start()
     await sweep(tb)
     await tb.stop()

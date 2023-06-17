@@ -27,7 +27,6 @@ import random
 import math
 
 from cfu_li import *
-from monitors import Monitor
 from tb import TB
 
 class IMulAcc(IntEnum): # extends IStateContext
@@ -37,7 +36,7 @@ class IMulAcc(IntEnum): # extends IStateContext
 # testbench
 @cocotb.test()
 async def mulacc_cfu_tb(dut):
-    tb = TB(dut, 1)
+    tb = TB(dut, Level.l1_pipe)
     await tb.start()
     await IStateContext_tests(tb)
     await IMulAcc_tests(tb)

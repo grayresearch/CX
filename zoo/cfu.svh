@@ -69,7 +69,7 @@
 
 `define CHECK_CFU_L2_PARAMS \
     check_cfu_l2_params(CFU_LI_VERSION, CFU_N_CFUS, CFU_CFU_ID_W, CFU_STATE_ID_W, \
-        CFU_FUNC_ID_W, CFU_DATA_W)
+        CFU_FUNC_ID_W, CFU_INSN_W, CFU_DATA_W)
 
 `define CFU_L0_PARAMS_MAP               \
     .CFU_LI_VERSION(CFU_LI_VERSION),    \

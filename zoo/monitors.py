@@ -24,13 +24,14 @@ from cocotb.triggers import RisingEdge, Timer
 from enum import IntEnum
 from typing import Any, Dict
 
-# Monitor: collect bus signals when valid asserted on posedge(clk).
+# Monitor: collect bus signals when valid, and ready (if not None), are asserted on posedge(clk).
 class Monitor:
-    def __init__(self, clk:SimHandleBase, valid: SimHandleBase, datas: Dict[str, SimHandleBase]):
+    def __init__(self, clk:SimHandleBase, valid: SimHandleBase, ready: SimHandleBase, datas: Dict[str, SimHandleBase]):
         self.values = Queue[Dict[str,int]]()
         self._clk = clk
         self._datas = datas
         self._valid = valid
+        self._ready = ready
         self._coro = None
 
     def start(self) -> None:
@@ -47,10 +48,8 @@ class Monitor:
     async def _run(self) -> None:
         while True:
             await RisingEdge(self._clk)
-            if self._valid.value.binstr != "1":
-                await RisingEdge(self._valid)
-                continue
-            self.values.put_nowait(self._sample())
+            if self._valid == 1 and (self._ready is None or self._ready == 1):
+                self.values.put_nowait(self._sample())
 
     def _sample(self) -> Dict[str, Any]:
         return { name: handle.value for name, handle in self._datas.items() }

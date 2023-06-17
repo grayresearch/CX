@@ -22,6 +22,7 @@ from cocotb.handle import SimHandleBase
 from cocotb.queue import Queue
 from cocotb.triggers import FallingEdge, RisingEdge, Timer
 import os
+import random
 
 from cfu_li import *
 from monitors import Monitor
@@ -29,30 +30,49 @@ from monitors import Monitor
 # CFU testbench for CFU -L0, -L1 (so far)
 class TB:
     def __init__(self, dut, level):
-        self.dut = dut
-        self.level = level
-        self.n_bits = int(os.environ.get("CFU_DATA_W")) 
-        self.latency = int(os.environ.get("CFU_LATENCY")) if level == 1 else 0
-        self.n_states = int(os.environ.get("CFU_N_STATES")) if level > 0 else 0
+        self.dut      = dut
+        self.level    = level
+        self.n_bits   = int(os.environ.get("CFU_DATA_W")) 
+        self.latency  = int(os.environ.get("CFU_LATENCY"))  if level == Level.l1_pipe else 0
+        self.n_states = int(os.environ.get("CFU_N_STATES")) if level >  Level.l0_comb else 0
+        self.resp_ready_frac = 1.0
 
         # for combinational CFUs (CFU-L0) tests issue at 1 ns timesteps;
         # for synchronous CFUs (>L0), requests and responses are monitored on posedge(clk)
-        if level > 0:
+        if level >= Level.l1_pipe:
             cocotb.start_soon(Clock(dut.clk, 1, units="ns").start())
-            self.req_mon = Monitor(clk=dut.clk, valid=dut.req_valid, datas=req(dut, level))
-            self.resp_mon = Monitor(clk=dut.clk, valid=dut.resp_valid, datas=resp(dut, level))
+            req_ready  = dut.req_ready  if level >= Level.l2_stream else None
+            resp_ready = dut.resp_ready if level >= Level.l2_stream else None
+            self.req_mon  = Monitor(clk=dut.clk, valid=dut.req_valid,  ready=req_ready,  datas=req(dut, level))
+            self.resp_mon = Monitor(clk=dut.clk, valid=dut.resp_valid, ready=resp_ready, datas=resp(dut, level))
             self.models = Queue[(int,int)]()
             cocotb.start_soon(self.check())
 
+
     async def start(self):
-        if self.level > 0:
+        random.seed(0) # repeatable random numbers
+
+        # setup some default request signals
+        self.dut.req_valid.value = 0
+        self.dut.req_cfu.value = 0
+        if self.level >= Level.l1_pipe:
+            self.dut.req_state.value = 0
+        self.dut.req_func.value = 0
+        if self.level >= Level.l2_stream:
+            self.dut.req_insn.value = 0
+        self.dut.req_data0.value = 0
+        self.dut.req_data1.value = 0
+
+        if self.level > Level.l0_comb:
             # reset dut, start monitoring requests/responses
             await self.reset()
             self.req_mon.start()
             self.resp_mon.start()
-        # setup some default request signals
+
+            if self.level >= Level.l2_stream:
+                cocotb.start_soon(self.resp_flow_control())
+
         self.dut.req_valid.value = 1
-        self.dut.req_cfu.value = 0
 
     async def reset(self):
         self.dut.clk_en.value = 1
@@ -62,12 +82,12 @@ class TB:
         self.dut.rst.value = 0
 
     async def stop(self):
-        if self.level > 0:
+        if self.level > Level.l0_comb:
             await self.idle();
 
     async def idle(self):
         self.dut.req_valid.value = 0
-        for _ in range(self.latency + 1):
+        while not self.models.empty():
             await RisingEdge(self.dut.clk)
 
     # issue one test case; response should match model
@@ -76,16 +96,24 @@ class TB:
         self.dut.req_data0.value = data0
         self.dut.req_data1.value = data1
 
-        if self.level == 0:
+        if self.level == Level.l0_comb:
             # check answer immediately
             await Timer(1, units="ns")
-            assert (self.dut.resp_status == 0 and self.dut.resp_data == model), \
+            assert (self.dut.resp_status == Status.CFU_OK and self.dut.resp_data == model), \
                 "test({0:1d},{1:08x},{2:08x}) => {3:08x} != {4:08x}".format( \
                     func, data0, data1, self.dut.resp_data.integer, model)
         else:
             # monitoring captures request and response, later checked in self.check()
             self.dut.req_state.value = state
             self.models.put_nowait((0, model))
+
+            # CFU-L2+: await req_ready (sampled on negedge clk)
+            if self.level >= Level.l2_stream:
+                while True:
+                    await FallingEdge(self.dut.clk)
+                    if self.dut.req_ready == 1:
+                        break
+
             await RisingEdge(self.dut.clk)
 
     # check actual requests/responses match model responses
@@ -93,10 +121,17 @@ class TB:
         while True:
             req = await self.req_mon.values.get()
             resp = await self.resp_mon.values.get()
-            state = req['state'].integer if self.level > 0 else 0
+            state = req['state'].integer if self.level > Level.l0_comb else 0
             (status,data) = await self.models.get()
 
             assert (resp['status'] == status and resp['data'] == data), \
                 "test({0},{1:2d},{2:08x},{3:08x}) => {4:1d}:{5:08x} != {6:1d}:{6:08x}".format( \
                     state, req['func'].integer, req['data0'].integer, req['data1'].integer, \
                     resp['status'].integer, resp['data'].integer, status, data)
+
+    # CFU-L2+: initiator performs response flow control, randomly adjusting self.dut.resp_ready,
+    # per self.resp_ready_frac
+    async def resp_flow_control(self):
+        while True:
+            self.dut.resp_ready.value = int(random.random() < self.resp_ready_frac)
+            await RisingEdge(self.dut.clk)

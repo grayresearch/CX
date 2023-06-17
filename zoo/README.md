@@ -4,7 +4,8 @@ CFU Zoo
 This work-in-progress directory will provide various example CFUs, standard mux and adapter CFUs,
 CFU-LI compatible CPUs, and composed systems.
 
-The various testbenches require `cocotb` `cocotb-test` `pytest-xdist` `iverilog` `verilator-4.106`.
+The various testbenches require `cocotb` `cocotb-test` `pytest-xdist` `iverilog`
+and `verilator-4.106` or `verilator-5.006+`.
 Planning to automate setup and execution using `tox`.
 
 Until then, any testbench may be run with
@@ -25,8 +26,8 @@ Current CFU examples:
 | cvt01_cfu    | L1    | -        | -         | CFU-L0 to -L1 adapter |
 | cvt02_cfu    | L2    | -        | -         | CFU-L0 to -L2 adapter |
 | cvt12_cfu    | L2    | -        | -         | CFU-L1 to -L2 adapter |
-| cvt12_cfu    | L2    | -        | -         | CFU-L1 to -L2 adapter |
 | bnn_l1_cfu   | L1    | -        | -         | bnn_cfu + cvt01_cfu   |
+| bnn_l2_cfu   | L1    | -        | -         | bnn_cfu + cvt02_cfu   |
 
 * * *
 

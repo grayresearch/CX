@@ -41,7 +41,7 @@ class DotProdTB(TB):
 # testbench
 @cocotb.test()
 async def dotprod_cfu_tb(dut):
-    tb = DotProdTB(dut, 1)
+    tb = DotProdTB(dut, Level.l1_pipe)
     await tb.start()
     await IStateContext_tests(tb)
     await IDotProd_tests(tb)

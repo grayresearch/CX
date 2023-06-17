@@ -34,7 +34,7 @@ module cvt02_cfu
 #(
     `CFU_L2_PARAMS(/*N_CFUS*/1, /*N_STATES*/0, /*FUNC_ID_W*/0, /*INSN_W*/0, /*DATA_W*/32)
 ) (
-    `CFU_ALL_L2_PORTS(input, output, req, resp),
+    `CFU_CLK_L2_PORTS(input, output, req, resp),
     `CFU_L0_PORTS(output, input, t_req, t_resp)
 );
     initial ignore(`CHECK_CFU_L2_PARAMS && check_param("CFU_N_STATES", CFU_N_STATES, 0));

@@ -1,4 +1,4 @@
-## popcount_cfu_test.py: popcount_cfu (CFU-L0) testbench
+## bnn_l2_cfu_test.py: bnn_l2_cfu (CFU-L2) testbench
 
 '''
 Copyright (C) 2019-2023, Gray Research LLC.
@@ -23,36 +23,44 @@ from tb import TB
 
 # testbench
 @cocotb.test()
-async def popcount_cfu_tb(dut):
-    tb = TB(dut, Level.l0_comb)
+async def bnn_cfu_tb(dut):
+    tb = TB(dut, Level.l2_stream)
     await tb.start()
     await sweep(tb)
     await tb.stop()
 
 async def sweep(tb):
-    for case in cases(tb.n_bits):
-        await tb.test(0, 0, case, 0, bin(case).count('1'))
+    mask = (1 << tb.n_bits) - 1
+    for frac in [1.0,0.9,0.1]:
+        tb.resp_ready_frac = frac
+        for (i,j) in cases(tb.n_bits):
+            model = bin(~(i^j) & mask).count('1')
+            await tb.test(0, 0, i, j, model)
 
 # generate test cases
 def cases(n_bits):
     mask = (1<<n_bits) - 1
 
-    # first nonneg integers and complements
-    for i in range(256):
-        yield i
-        yield ~i & mask
+    for i in range(1024):
+        yield (i,0)
+        yield (mask,i)
+        yield (i,i)
+        yield (i,~i & mask)
 
-    # 1,2,3-bit patterns and complements
     for i in range(n_bits):
-        for j in range(i, n_bits):
-            for k in range(j, n_bits):
-                t = (1<<i) | (1<<j) | (1<<k)
-                yield t
-                yield ~t & mask
+        for j in range(n_bits):
+            yield(1<<i,1<<j)
+            yield(1<<i,~(1<<j) & mask)
+
+    # fibonnaci
+    (i,j) = (1,1)
+    for _ in range(1000):
+        yield (i,j)
+        (i,j) = (j,(i+j)&mask)
 
     # random
     for _ in range(1000):
-        yield random.randrange(1<<n_bits)
+        yield (random.randrange(1<<n_bits),random.randrange(1<<n_bits))
 
 # cocotb-test, thanks @forencich
 
@@ -60,25 +68,24 @@ import os
 import pytest
 from cocotb_test.simulator import run
 
-@pytest.mark.parametrize("width", [32, 64])
-@pytest.mark.parametrize("adder_tree", [0, 1])
+@pytest.mark.parametrize("width", [32,64])
 
-def test_popcount(request, width, adder_tree):
-    dut = "popcount_cfu"
+def test_bnn_l2(request, width):
+    dut = "bnn_l2_cfu"
     module = os.path.splitext(os.path.basename(__file__))[0]
     parameters = {}
+    parameters['CFU_N_STATES'] = 0
     parameters['CFU_DATA_W'] = width
-    parameters['ADDER_TREE'] = adder_tree
     sim_build = os.path.join(".", "sim_build",
         request.node.name.replace('[', '-').replace(']', ''))
 
     run(
         includes=["."],
-        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv"],
+        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv", "cvt02_cfu.sv", "shared.sv", "bnn_cfu.sv", "popcount_cfu.sv"],
         toplevel=dut,
         module=module,
         parameters=parameters,
-        defines=['POPCOUNT_CFU_VCD'],
-        extra_env={ 'CFU_DATA_W':str(width) },
+        defines=['BNN_L2_CFU_VCD'],
+        extra_env={ 'CFU_N_STATES':str(0), 'CFU_DATA_W':str(width) },
         sim_build=sim_build
     )

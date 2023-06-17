@@ -20,6 +20,12 @@ limitations under the License.
 
 from enum import IntEnum
 
+class Level(IntEnum):
+    l0_comb         = 0
+    l1_pipe         = 1
+    l2_stream       = 2
+    l3_ooo          = 3
+
 class Status(IntEnum):
     CFU_OK          = 0
     CFU_ERROR_CFU   = 1
@@ -44,15 +50,15 @@ class IStateContext(IntEnum):
 # return a dictionary of the dut's request payload signals at some CFU-LI level
 def req(dut, level):
     req = { 'cfu':dut.req_cfu, 'func':dut.req_func, 'data0':dut.req_data0, 'data1':dut.req_data1 }
-    if level > 0:
+    if level > Level.l0_comb:
         req['state'] = dut.req_state
-    if level == 3:
+    if level == Level.l3_ooo:
         req['id'] = dut.req_id
     return req
 
 # return a dictionary of the dut's response payload signals at some CFU-LI level
 def resp(dut, level):
     resp = { 'status':dut.resp_status, 'data':dut.resp_data }
-    if level == 3:
+    if level == Level.l3_ooo:
         resp['id'] = dut.resp_id
     return resp
