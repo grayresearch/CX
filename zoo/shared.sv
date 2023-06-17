@@ -40,9 +40,7 @@ module shift_reg
         logic [N-1:0][W-1:0] qs;
         always_ff @(posedge clk) begin
             for (int i = 0; i < N; ++i) begin
-                if (rst)
-                    qs[i] <= '0;
-                else if (clk_en)
+                if (clk_en)
                     qs[i] <= (i == 0) ? d : qs[i-1];
             end
         end
