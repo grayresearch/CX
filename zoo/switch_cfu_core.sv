@@ -90,7 +90,7 @@ module switch_cfu_core
     `NV(N_INIS, TGT_W)      i_tgts;     // initiators' latest targets
     `NV(N_TGTS, INI_W)      t_inis;     // targets' latest initiators
 
-    function bit i_eligible(input int i, input int t);
+    function bit i_eligible(int i, int t);
         return (i_n_reqs[i] == n_req_t'(0)) || ((i_n_reqs[i] != n_req_t'(N_REQS-1)) && (i_tgts[i] == tgt_t'(t)));
     endfunction
 
@@ -142,8 +142,8 @@ module switch_cfu_core
 
         for (genvar t = 0; t < N_TGTS; ++t) begin : qs
             queue #(.W(INI_W), .N(N_REQS))
-            q(.clk, .rst, .clk_en, .i_v(t_req_hss[t]), .i_rdy(t_readys[t]), .i(t_inis[t]),
-              .o_v(valids[t]), .o_rdy(t_resp_hss[t]), .o(heads[t]));
+            q(.clk, .rst, .clk_en, .i_valid(t_req_hss[t]), .i_ready(t_readys[t]), .i(t_inis[t]),
+              .o_valid(valids[t]), .o_ready(t_resp_hss[t]), .o(heads[t]));
         end
         always_comb begin
             for (int i = 0; i < N_INIS; ++i)
@@ -156,12 +156,19 @@ module switch_cfu_core
     end
 
     // round robin priority encode first set bit in {vector[last+1..W-1],vector[0..last]}
-    function ini_t i_pri_enc(input ini_mask_t vector, input ini_t last);
-        for (int pass = 0; pass < 2; ++pass)
-            for (int i = 0; i < N_INIS; ++i)
-                if (((i > last) || pass == 1) && vector[i])
-                    return ini_t'(i);
-        return ini_t'(0);
+    function automatic ini_t i_pri_enc(ini_mask_t vector, ini_t last);
+        ini_t ini = 0;
+        bit found = 0;
+        for (int pass = 0; pass < 2; ++pass) begin
+            for (int i = 0; i < N_INIS; ++i) begin
+                if (!found && (((i > last) || pass == 1) && vector[i])) begin
+                    // alas return from here breaks iverilog 12.0 (devel) => vvp error -11
+                    found = 1;
+                    ini = ini_t'(i);
+                end
+            end
+        end
+        return ini;
     endfunction
 
     // downstream: arbitrate initiator requests for target request ports

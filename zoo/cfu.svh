@@ -218,9 +218,14 @@
 
 `define CFU_L1_NETS(req,resp)               \
     `CFU_L0_NETS(req,resp);                 \
-    logic               req``_ready;        \
     `V(CFU_STATE_ID_W)  req``_state;        \
     logic               resp``_valid
+
+`define CFU_L2_NETS(req,resp)               \
+    `CFU_L1_NETS(req,resp);                 \
+    logic               req``_ready;        \
+    `V(CFU_INSN_W)      req``_insn;         \
+    logic               resp``_ready
 
 package cfu_pkg;
 

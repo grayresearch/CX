@@ -49,12 +49,12 @@ module shift_reg
 endmodule
 
 
-// fifo:
+// queue:
 //  * with valid-ready handshake on enqueue and dequeue
 //  * with items in one register or a dual-port async LUT-RAM
 //  * zero latency: item is output immediately following posedge clk that
 //    enqueues it in an empty fifo
-module fifo
+module queue
     import common_pkg::*;
 #(
     parameter int W = 1,

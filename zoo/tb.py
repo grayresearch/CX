@@ -32,6 +32,7 @@ class TB:
     def __init__(self, dut, level):
         self.dut      = dut
         self.level    = level
+        self.n_cfus   = int(os.environ.get("CFU_N_CFUS", 1)) 
         self.n_bits   = int(os.environ.get("CFU_DATA_W")) 
         self.latency  = int(os.environ.get("CFU_LATENCY"))  if level == Level.l1_pipe else 0
         self.n_states = int(os.environ.get("CFU_N_STATES")) if level >  Level.l0_comb else 0
@@ -71,15 +72,16 @@ class TB:
 
             if self.level >= Level.l2_stream:
                 cocotb.start_soon(self.resp_flow_control())
-
         self.dut.req_valid.value = 1
 
     async def reset(self):
+        self.dut.req_valid.value = 0
         self.dut.clk_en.value = 1
         self.dut.rst.value = 1
         for _ in range(2):
             await RisingEdge(self.dut.clk)
         self.dut.rst.value = 0
+        self.dut.req_valid.value = 1
 
     async def stop(self):
         if self.level > Level.l0_comb:
@@ -89,6 +91,11 @@ class TB:
         self.dut.req_valid.value = 0
         while not self.models.empty():
             await RisingEdge(self.dut.clk)
+
+    # issue one test case to a specific CFU; response should match model
+    async def test_cfu(self, cfu, state, func, data0, data1, model):
+        self.dut.req_cfu.value = cfu
+        await self.test(state, func, data0, data1, model)
 
     # issue one test case; response should match model
     async def test(self, state, func, data0, data1, model):
@@ -125,7 +132,7 @@ class TB:
             (status,data) = await self.models.get()
 
             assert (resp['status'] == status and resp['data'] == data), \
-                "test({0},{1:2d},{2:08x},{3:08x}) => {4:1d}:{5:08x} != {6:1d}:{6:08x}".format( \
+                "test({0},{1:2d},{2:08x},{3:08x}) => {4:1d}:{5:08x} != {6:1d}:{7:08x}".format( \
                     state, req['func'].integer, req['data0'].integer, req['data1'].integer, \
                     resp['status'].integer, resp['data'].integer, status, data)
 

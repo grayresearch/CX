@@ -14,25 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Requires cocotb cocotb-test pytest-xdist iverilog verilator-4.106
+# Requires cocotb cocotb-test pytest-xdist iverilog verilator-5.006+
 
 # FIXME. This will be completely replaced shortly.
 
 all:
-	SIM=verilator pytest -n auto popcount_cfu_test.py
-	SIM=verilator pytest -n auto bnn_cfu_test.py
-	SIM=verilator pytest -n auto mulacc_cfu_test.py
-	SIM=verilator pytest -n auto dotprod_cfu_test.py
-	SIM=verilator pytest -n auto bnn_l1_cfu_test.py
-	SIM=verilator pytest -n auto bnn_l2_cfu_test.py
-	SIM=verilator pytest -n auto bnn_l1_l2_cfu_test.py
-	SIM=icarus    pytest -n auto popcount_cfu_test.py
-	SIM=icarus    pytest -n auto bnn_cfu_test.py
-	SIM=icarus    pytest -n auto mulacc_cfu_test.py
-	SIM=icarus    pytest -n auto dotprod_cfu_test.py
-	SIM=icarus    pytest -n auto bnn_l1_cfu_test.py
-	SIM=icarus    pytest -n auto bnn_l2_cfu_test.py
-	SIM=icarus    pytest -n auto bnn_l1_l2_cfu_test.py
+	python3 mux_cfu_gen.py -p 1
+	python3 mux_cfu_gen.py -p 2
+	python3 mux_cfu_gen.py -p 3
+	make SIM=icarus tests
+	make SIM=verilator tests
+
+tests:
+	pytest -n auto popcount_cfu_test.py
+	pytest -n auto bnn_cfu_test.py
+	pytest -n auto mulacc_cfu_test.py
+	pytest -n auto dotprod_cfu_test.py
+	pytest -n auto bnn_l1_cfu_test.py
+	pytest -n auto bnn_l2_cfu_test.py
+	pytest -n auto bnn_l1_l2_cfu_test.py
+	pytest -n auto mulacc_l2_cfu_test.py
+	pytest -n auto mux_macs_cfu_test.py
 
 clean:
 	cocotb-clean

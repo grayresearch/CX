@@ -66,7 +66,7 @@ def generate(ports=2):
 module {{name}}
     import common_pkg::*, cfu_pkg::*;
 #(
-    `CFU_L2_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
+    `CFU_L2_PARAMS(/*N_CFUS*/{{n}}, /*N_STATES*/0, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
     parameter int N_REQS    = 16    // max no. of in-flight requests per initiator and per target
 ) (
     `CFU_CLOCK_PORTS,
@@ -106,7 +106,7 @@ module {{name}}
         .t_req_insns({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_insn{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_data0s({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_data0{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_data1s({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_data1{% if not loop.last %}, {% endif %}{% endfor %} }),
-        .t_resp_valids({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_resp_vaid{% if not loop.last %}, {% endif %}{% endfor %} }),
+        .t_resp_valids({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_resp_valid{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_resp_readys({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_resp_ready{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_resp_statuss({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_resp_status{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_resp_datas({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_resp_data{% if not loop.last %}, {% endif %}{% endfor %} })

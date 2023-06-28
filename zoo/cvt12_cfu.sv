@@ -85,7 +85,7 @@ module cvt12_cfu
     end
 
     // queue as many as CFU_FIFO_SIZE responses
-    fifo #(.W(CFU_STATUS_W+CFU_DATA_W), .N(CFU_FIFO_SIZE))
+    queue #(.W(CFU_STATUS_W+CFU_DATA_W), .N(CFU_FIFO_SIZE))
     q(.clk, .rst, .clk_en, .i_valid(t_resp_valid), .i_ready(), .i({t_resp_status,t_resp_data}),
       .o_valid(resp_valid), .o_ready(resp_ready), .o({resp_status,resp_data}));
 endmodule
