@@ -509,7 +509,7 @@ Composable Extensions are inspired by the Interface system of the Microsoft
 Component Object Model (COM), a ubiquitous architecture for robust
 arms-length composition of independently authored, independently versioned
 software components, at scale, over decades
-cite:[ms-com-extensions].
+cite:[ms-com-interfaces].
 
 [TIP]
 =====
