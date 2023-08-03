@@ -2,15 +2,15 @@
 
 Todo:
 
-* Chapter on CI Runtime (runtime) API
-* How CI and CFU versioning works; how CFU-LI versioning works
+* Chapter on CX Runtime (runtime) API
+* How CX and CXU versioning works; how CXU-LI versioning works
 
 === Open design problems (post 1.0)
 
-* Developing, running accelerated libraries on systems where there is no custom interface / CFU implementation.
+* Developing, running accelerated libraries on systems where there is no composable extension / CXU implementation.
 * Developer tooling recommendations for disassembly, debugging, profiling, perf monitoring.
 
-=== Other CFU-like mechanisms
+=== Other CXU-like mechanisms
 
 * Intel Nios II Custom Instruction User Guide*
 
@@ -22,14 +22,14 @@ Todo:
 
 * PicoRV "Pico Co-Processor Extension" (PCPI)
 
-* Core-V _cv-x-if_ (extension interface) (Tim Callahan's notes)
+* Core-V _cv-x-if_ (extension extension) (Tim Callahan's notes)
 
 === Example: a stateful extended precision ALU
 
 [NOTE]
 ====
-Here write up a fully worked example of a CFU-L1 extended precision ALU,
-its custom interface, CFU, and library code. (A follow up to a discussion
+Here write up a fully worked example of a CXU-L1 extended precision ALU,
+its composable extension, CXU, and library code. (A follow up to a discussion
 on the RISC-V mailing list that didn't go anywhere.)
 ====
 
@@ -37,5 +37,5 @@ on the RISC-V mailing list that didn't go anywhere.)
 
 [NOTE]
 ====
-Here write up a brief estimate of the FPGA area overhead of various -Zicfu and CFU-LI mechanisms and behaviors.
+Here write up a brief estimate of the FPGA area overhead of various -Zicx and CXU-LI mechanisms and behaviors.
 ====

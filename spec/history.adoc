@@ -1,0 +1,19 @@
+== Specification Change History
+
+=== Version 0.91.230803, 08/03/2023: Simplify and improve terminology.
+
+Replace term _Custom Interface (CI)_ with _Composable Extension (CX)_.
+Similarly replace _CFU_ with _CXU_.
+And so forth.
+
+[width="80%",cols="1,1"]
+|===
+|From|To
+
+|Custom Interface (CI) |Composable Extension (CX)
+|Custom Function Unit (CFU) |Composable Extension Unit (CXU)
+|-Zicfu |-Zicx
+|`mcfu_*` and `cfu_*` CSRs |`mcx_*` and `cx_*` CSRs
+|===
+
+=== Version 0.90.220327, 03/27/2022: First complete draft.

@@ -1,9 +1,9 @@
 [[riscv-authoring]]
-= _Draft Proposed_ RISC-V Composable Custom Extensions Specification
-:description: Draft proposed specifications for composable custom extensions: custom interfaces and custom function units
+= _Draft Proposed_ RISC-V Composable Composable Extensions Specification
+:description: Draft proposed specifications for composable composable extensions: composable extensions and composable extension units
 :company:
-:revdate: 03/27/2022
-:revnumber: 0.90.220327
+:revdate: 08/03/2023
+:revnumber: 0.91.230803
 :revremark: Pre-release version
 :url-riscv: http://riscv.org
 :doctype: book
@@ -49,7 +49,8 @@ endif::[]
 include::preface.adoc[]
 include::intro.adoc[]
 include::ci-abi.adoc[]
-include::cfu-li.adoc[]
+include::cxu-li.adoc[]
 include::metadata.adoc[]
 include::todo.adoc[]
+include::history.adoc[]
 include::bib.adoc[]

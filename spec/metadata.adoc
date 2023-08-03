@@ -1,7 +1,7 @@
-== CFU Metadata (CFU-MD)
+== CXU Metadata (CXU-MD)
 
 To help automate system composition, each composable hardware core (each
-CPU and CFU) shall include a metadata file which defines the properties,
+CPU and CXU) shall include a metadata file which defines the properties,
 features, and supported values of its configuration parameters.
 
 For each core, for each configuration parameter, metadata may specify
@@ -22,25 +22,25 @@ parameter3: range       # range, via parameter3_range
 parameter3_range: [5,9] # inclusive range of integer values. Expands to [5,6,7,8,9]
 ....
 
-=== CFU Metadata
+=== CXU Metadata
 
-<<md-format>> specifies the CFU metadata format, in YAML.  Each legal
-configuration parameter range of §<<parameters>> `CFU_PARAM` may be
+<<md-format>> specifies the CXU metadata format, in YAML.  Each legal
+configuration parameter range of §<<parameters>> `CXU_PARAM` may be
 overridden (subsetted) through a YAML parameter line `param:` .
 
-The CFU metadata may also be used to specify `other` custom (non-standard / CFU
+The CXU metadata may also be used to specify `other` custom (non-standard / CXU
 specific) configuration parameter settings.
 
 [[md-format]]
-.CFU metadata format
+.CXU metadata format
 [source,yaml]
 ....
-cfu_name: string
-cfu_li:
+cxu_name: string
+cxu_li:
     feature_level: scalar                   # required.  allowed: 0-3
     state_id_max: scalar | list | 'range'   # level:any. default: any. 0 => stateless
     req_id_w: scalar | list | 'range'       # level:2+.  default: 0
-    cfu_id_w: scalar | list | 'range'       # level:any. default: 0
+    cxu_id_w: scalar | list | 'range'       # level:any. default: 0
     state_id_w: scalar | list | 'range'     # level:1+.  default: 0
     insn_w: scalar | list | 'range'         # level:1+.  default: 0
     func_id_w: scalar | list | 'range'      # level:any. default: 10
@@ -52,30 +52,30 @@ cfu_li:
 
 [NOTE]
 ====
-Need some stronger naming of CFUs and CPUs here. Perhaps a GUID, perhaps a URL.
+Need some stronger naming of CXUs and CPUs here. Perhaps a GUID, perhaps a URL.
 ====
 
 [NOTE]
 ====
-Do we need to specify here which CI_IDs the CFU implements?
+Do we need to specify here which CX_IDs the CXU implements?
 ====
 
-=== Example CFU metadata
+=== Example CXU metadata
 
-<<bobs_bnn_md>> is example CFU metadata for a CFU-L1 CFU which supports
+<<bobs_bnn_md>> is example CXU metadata for a CXU-L1 CXU which supports
 only one state context, requires at least 5-bit CF_IDs, requires XLEN=32,
 and supports a response latency of 2-4 cycles.
 
 [[bobs_bnn_md]]
-.Example CFU metadata (CFU-L1)
+.Example CXU metadata (CXU-L1)
 [source,yaml]
 ....
-cfu_name: bobs_bnn_cfu
-cfu_li:
+cxu_name: bobs_bnn_cxu
+cxu_li:
     feature_level: 1
     state_id_max: 1         # only supports 1 state context
     req_id_w:               # any req_id is fine
-    cfu_id_w: 0             # no req_cfu
+    cxu_id_w: 0             # no req_cxu
     state_id_w: 0           # no req_state_id
     insn_w: 0               # no req_insn
     func_id_w: range        # need >= 5-bit CF_IDs
@@ -90,34 +90,34 @@ other:
 
 === CPU Metadata
 
-As described in §<<cpus>>, CPUs, as CFU requesters, use specific
-CFU-LI feature levels. As with CFUs, CPUs use CFU metadata to override
+As described in §<<cpus>>, CPUs, as CXU requesters, use specific
+CXU-LI feature levels. As with CXUs, CPUs use CXU metadata to override
 configuration parameter defaults, in this case to define what the CPU
-requires or accepts of its CFU (which is, generally, the root of the
-DAG of CFUs).
+requires or accepts of its CXU (which is, generally, the root of the
+DAG of CXUs).
 
 .CPU metadata format
 [source,yaml]
 ....
 cpu_name: string
-cfu_li: # see [Listing 1].
+cxu_li: # see [Listing 1].
 ....
 
 === Example CPU metadata
 
-<<cpu-md>> is example CFU metadata for a CPU that requires and supports
-only 32-bit combinational CFUs.
+<<cpu-md>> is example CXU metadata for a CPU that requires and supports
+only 32-bit combinational CXUs.
 
 [[cpu-md]]
-.Example CPU metadata (requires a CFU-L0 CFU DAG)
+.Example CPU metadata (requires a CXU-L0 CXU DAG)
 [source,yaml]
 ....
 cpu_name: carols_simple_scalar_cpu
-cfu_li:
-    feature_level: 0    # L0 combinational CFUs only
+cxu_li:
+    feature_level: 0    # L0 combinational CXUs only
     state_id_max:       # L0: n/a
     req_id_w:           # L0: n/a
-    cfu_id_w:           # supports arbitrary CFU_IDs
+    cxu_id_w:           # supports arbitrary CXU_IDs
     state_id_w:         # L0: n/a
     insn_w:             # L0: n/a
     func_id_w:          # supports arbitrary CF_IDs
@@ -133,7 +133,7 @@ TODO
 
 [NOTE]
 ====
-Consider CI library metadata too.  "I may use this subset { CF_IDs }
-of the CF_IDs of interface CI_ID."
+Consider CX library metadata too.  "I may use this subset { CF_IDs }
+of the CF_IDs of extension CX_ID."
 ====
 
