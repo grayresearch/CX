@@ -406,8 +406,8 @@ CXU state may change if and only if the response status is one of
 When a response status is `CXU_ERROR_CUSTOM`, the CXU should update
 the specified state context's custom error status as a side effect of
 the request. Otherwise, a CX library may be surprised to observe that the
-custom error bit `cxu_status.CU` is set without observing a corresponding
-error bit upon retrieving (via `cxu_read_status`) its state context's
+custom error bit `cx_status.CU` is set without observing a corresponding
+error bit upon retrieving (via `cx_read_status`) its state context's
 error state.
 ====
 
@@ -1210,16 +1210,16 @@ latencies. Each CPU runs the same code (<<cim3>>):
 .Issue stateful CF instructions `f0` and `f1` to CXU~0~, `f2` and `f3` to CXU~1~, and `f4` to CXU~0~ again.
 [source,asm]
 ....
-csrw mcx_selector,x20  ; select CXU_ID=0 and STATE_ID=HART_ID
-cxu_reg 0,x3,x1,x2      ; u0.f0
-cxu_reg 1,x6,x5,x4      ; u0.f1
+csrw mcx_selector,x20   ; select CXU_ID=0 and STATE_ID=HART_ID
+cx_reg 0,x3,x1,x2       ; u0.f0
+cx_reg 1,x6,x5,x4       ; u0.f1
 
-csrw mcx_selector,x21  ; select CXU_ID=1 and STATE_ID=HART_ID
-cxu_reg 2,x9,x7,x8      ; u1.f2
-cxu_reg 3,x12,x11,x10   ; u1.f3
+csrw mcx_selector,x21   ; select CXU_ID=1 and STATE_ID=HART_ID
+cx_reg 2,x9,x7,x8       ; u1.f2
+cx_reg 3,x12,x11,x10    ; u1.f3
 
-csrw mcx_selector,x20  ; select CXU_ID=0 and STATE_ID=HART_ID again
-cxu_reg 4,x15,x13,x14   ; u0.f4
+csrw mcx_selector,x20   ; select CXU_ID=0 and STATE_ID=HART_ID again
+cx_reg 4,x15,x13,x14    ; u0.f4
 ....
 
 <<switch22-wave>> is an example waveform executing <<cim3>>

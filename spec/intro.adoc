@@ -328,7 +328,7 @@ instructions. For example, using a C++ _RAII_ object cx to represent a
 #include "cx.h"                         // CX Runtime: class use_cx { ... }
 ..
 use_cx cx(CX_ID_IBitmanip);             // csrrw mcx_selector
-uint32_t count = cf(pcnt_cf, data, 0);  // cxu_reg cf_id, rd, rs1, rs2
+uint32_t count = cf(pcnt_cf, data, 0);  // cx_reg cf_id, rd, rs1, rs2
 ....
 
 The provisional CX-ABI defines a _callee-save_ calling convention for
