@@ -320,14 +320,14 @@ hart. However, a CX library should not directly create a CX selector
 value, nor directly access the CSR. Rather a CX library uses the CX
 Runtime to look up the CX selector value for its composable extension's
 CX_ID and to write it to `mcx_selector`, prior to issuing CF
-instructions. For example, using a C++ _RAII_ object ci to represent a
+instructions. For example, using a C++ _RAII_ object cx to represent a
 (scoped) composable extension selection:
 
 [source,C++]
 ....
-#include "ci.h"                         // CX Runtime: class use_ci { ... }
+#include "cx.h"                         // CX Runtime: class use_cx { ... }
 ..
-use_ci ci(CX_ID_IBitmanip);             // csrrw mcx_selector
+use_cx cx(CX_ID_IBitmanip);             // csrrw mcx_selector
 uint32_t count = cf(pcnt_cf, data, 0);  // cxu_reg cf_id, rd, rs1, rs2
 ....
 
@@ -339,21 +339,21 @@ The provisional CX-ABI defines a _callee-save_ calling convention for
 [source,C++]
 ....
 main() { a(); }
-a() { use_ci a_ci(CX_ID_IA); af0; b(); @1 af1; }
-b() { use_ci b_ci(CX_ID_IB); bf0; bf1; }
+a() { use_cx a_cx(CX_ID_IA); af0; b(); @1 af1; }
+b() { use_cx b_cx(CX_ID_IB); bf0; bf1; }
 ....
 
 with execution trace:
 
 [source,C++]
 ....
-main() { a() { a_ci(); af0; b() { b_ci(); bf0; bf1; ~b_ci(); } @1 af1; ~a_ci(); }
+main() { a() { a_cx(); af0; b() { b_cx(); bf0; bf1; ~b_cx(); } @1 af1; ~a_cx(); }
 ....
 
 With a callee-save discipline, at point `@1`, upon return from `b()`, the
-current composable extension must be `IA` again. Thus the `b_ci()` constructor
+current composable extension must be `IA` again. Thus the `b_cx()` constructor
 saves `a()'s` `mcx_selector` value while overwriting it; later its
-`~b_ci()` destructor restores it. This _RAII_ approach also correctly restores
+`~b_cx()` destructor restores it. This _RAII_ approach also correctly restores
 `mcx_selector` in the event of an exception handling stack unwind.
 
 === System composition

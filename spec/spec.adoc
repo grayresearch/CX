@@ -48,7 +48,7 @@ endif::[]
 = Preface
 include::preface.adoc[]
 include::intro.adoc[]
-include::ci-abi.adoc[]
+include::cx-abi.adoc[]
 include::cxu-li.adoc[]
 include::metadata.adoc[]
 include::todo.adoc[]
