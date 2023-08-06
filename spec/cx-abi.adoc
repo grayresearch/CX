@@ -100,7 +100,7 @@ state context.
 [[selector-table]]
 A *CX selector table* is a 4 KB aligned, 4 KB sized table of 1024
 CX selectors. When CX access control (§<<_cx_access_control>>) is
-supported, each hart has a `mcx_selector_table` CSR to address its CX
+supported, each hart has a `mcx_table` CSR to address its CX
 selector table.
 
 A *selector index* is an integer that identifies an entry in a CX selector
@@ -116,7 +116,7 @@ execution.
 When CX access control
 (§<<_cx_access_control>>)
 is supported, a -Zicx compatible CPU
-shall implement the `mcx_selector_table` and `cx_selector_index` CSRs.
+shall implement the `mcx_table` and `cx_index` CSRs.
 
 All CXU CSR fields marked _reserved_ are WPRI, write preserve, read
 ignored, and all other fields are WARL, write any/read legal values. (An
@@ -265,15 +265,15 @@ of a serializable extension may also be obtained using
 custom functions `cf_read_status` and/or `cf_read_state`.
 ====
 
-==== `mcx_selector_table` CSR 0xBC1: CX selector table base
+==== `mcx_table` CSR 0xBC1: CX selector table base
 
 When CX access control (§<<_cx_access_control>>) is supported, the
-`MXLEN`-bit-wide `mcx_selector_table` CSR specifies the base address
+`MXLEN`-bit-wide `mcx_table` CSR specifies the base address
 of the hart's CX selector table. The CSR may be read and written in
 machine level.
 
-.mcx_selector_table CSR 0xBC1 (when MXLEN=32)
-[wavedrom,target="cx_selector_table",svg]
+.mcx_table CSR 0xBC1 (when MXLEN=32)
+[wavedrom,target="cx_table",svg]
 ....
 {reg:[
 {bits: 12, name: '0'},
@@ -283,19 +283,19 @@ config: {lanes: 1, bits: 32},
 }
 ....
 
-CSR-writes to `mcx_selector_table` zero the twelve least significant
+CSR-writes to `mcx_table` zero the twelve least significant
 bits of the table address, so a CX selector table address must be 4
 KB aligned.
 
-==== `cx_selector_index` CSR 0x800: CX selector index
+==== `cx_index` CSR 0x800: CX selector index
 
 When CX access control (§<<_cx_access_control>>)  is supported, the
-`cx_selector_index` CSR selects an entry from the hart's CX selector
+`cx_index` CSR selects an entry from the hart's CX selector
 table entry to write to the `mcx_selector` CSR. The CSR may be read
 and written in all privilege levels.
 
-.cx_selector_index CSR 0x800
-[wavedrom,target="cx_selector_index",svg]
+.cx_index CSR 0x800
+[wavedrom,target="cx_index",svg]
 ....
 {reg:[
 {bits: 10, name: 'index'},
@@ -306,11 +306,11 @@ config: {lanes: 1, bits: 32},
 ....
 
 The 10-bit zero-extended index field specifies which entry in the hart's
-CX selector table (at the hart's `mcx_selector_table`) to use as the
+CX selector table (at the hart's `mcx_table`) to use as the
 hart's current CX selector.
 
-In response to CSR-write of `cx_selector_index`, load the 32-bit CX
-selector at address (`mcx_selector_table + cx_selector_index.index*4`)
+In response to CSR-write of `cx_index`, load the 32-bit CX
+selector at address (`mcx_table + cx_index.index*4`)
 and CSR-write the CX selector to `mcx_selector`, performing the load
 and the CSR-write at the next higher privilege level, as if it were
 a `lw` instruction (and with a `lw` instruction's memory ordering
@@ -885,7 +885,7 @@ different serializations, of different sizes.
 [NOTE]
 ====
 Discuss preemption scenario where following context save, later restore,
-the locus moves to a different STATE_ID of a CXU.  `cx_selector_index`
+the locus moves to a different STATE_ID of a CXU.  `cx_index`
 may (but should not) change.  However, resource manager must change
 `mcx_selector`.
 ====
@@ -934,8 +934,8 @@ Whether `ECALL` or exception handler, a detour into system level
 is prohibitively slow: reconfiguring composable extension multiplexing
 should take, at most, a few clock cycles.
 
-The optional CX access control CSRs `mcx_selector_table` and
-`cx_selector_index` allow less privileged _user code_ to rapidly
+The optional CX access control CSRs `mcx_table` and
+`cx_index` allow less privileged _user code_ to rapidly
 multiplex composable extensions, but only among those extensions and state
 contexts that it is granted access by more privileged _system code_.
 
@@ -948,7 +948,7 @@ table_>>, 4 KB aligned, comprising 1024 32-bit CX selectors, which is
 read/write to system code and inaccessible from user code. Initially
 the table is zero filled, as zero is a valid CX selector ( `.en=0` which
 disables composable extension multiplexing). The system code CSR-writes its
-address to the hart's `mcx_selector_table` CSR. Then in response to
+address to the hart's `mcx_table` CSR. Then in response to
 a system call requesting access to an extension, and one of its state
 contexts, system code determines whether the access is granted. If so,
 it determines the CX selector value for it, allocates an entry for that
@@ -962,7 +962,7 @@ a resource granted by system code.
 ====
 
 To select this CX/CXU and its state, user code CSR-writes its index
-to `cx_selector_index`. In response, the CPU loads from memory (at more
+to `cx_index`. In response, the CPU loads from memory (at more
 privileged level) the CX selector word at that index in the selector table
 and CSR-writes it to `mcx_selector` -- no exception handling detour
 required.

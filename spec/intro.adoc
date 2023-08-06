@@ -1,4 +1,4 @@
-== Introduction: a composable composable extension ecosystem
+== Introduction: a composable extension ecosystem
 
 [TIP]
 ====
@@ -30,7 +30,7 @@ computation, means of discovery, or error reporting regimes. Composition
 is difficult, impairing reuse of hardware and software, and fragmenting
 the RISC-V ecosystem.
 
-The RISC-V Composable Composable Extensions Specification introduces a
+The RISC-V Composable Extensions Specification introduces a
 set of hardware-hardware and hardware-software extensions and metadata
 designed to make it easy to create, compose, reuse, version, program,
 and deploy systems with multiple composable extensions and their libraries,
@@ -51,7 +51,7 @@ In contrast, the extensions defined in this specification allow anyone,
 whether individual, organization, or consortium, to rapidly define,
 develop, and use:
 
-* a _composable extension (CX):_ a composable composable extension consisting of a set of _custom function (CF) instructions;_
+* a _composable extension (CX):_ a composable extension consisting of a set of _custom function (CF) instructions;_
 * a _composable extension unit (CXU):_ a composable hardware core that implements a composable extension;
 * an accelerated _composable extension library_ that issues custom functions of composable extensions;
 * a processor that can use any CXU;
@@ -190,7 +190,7 @@ extension state context.
 
 === Standard extensions and formats
 
-To facilitate an open ecosystem of composable composable extensions, CXUs,
+To facilitate an open ecosystem of composable extensions, CXUs,
 libraries, and tools, the specification defines common interop extensions
 and formats:
 
@@ -237,11 +237,11 @@ custom instructions. The four new CXU CSRs are:
 
 * `mcx_selector`: selects the hart's current <<CXU_ID,CXU_ID>> and <<STATE_ID,STATE_ID>>, for composable extension multiplexing;
 * `cx_status`: accumulates CXU errors;
-* `mcx_selector_table`, `cx_selector_index`: efficient access control to CXUs and CXU state.
+* `mcx_table`, `cx_index`: efficient access control to CXUs and CXU state.
 
 [NOTE]
 ====
-`mcx_selector_table` is insufficient given various M/H/S/U privilege
+`mcx_table` is insufficient given various M/H/S/U privilege
 levels. This corner of the design requires additional work, and additional
 CSRs.
 ====
