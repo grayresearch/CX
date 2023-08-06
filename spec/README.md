@@ -11,8 +11,10 @@ It is a work in progress. We request your feedback.
 
 At present this is not a work product of a RISC-V International Working
 Group, Technical Committee, or subcommittee.  Rather we share this work
-in the hope that it may motivate and inform a hypothetical _Composable
-Custom Extensions_ RISC-V Extension Working Group.
+in the hope that it may motivate and inform two hypothetical
+RISC-V International Task Groups:
+1) ISA: CX-ISA TG: Composable Extensions (-Zicx); and
+2) non-ISA: CXU-LI TG: Composable Extension Unit Logic Interface.
 
 (Pending standardization, implementers might elect to implement the
 present specifications as their own _custom extension_.)
@@ -24,8 +26,8 @@ Olof Kingdren, Maciej Kurc, Guy Lemieux, Charles Papon, Zdenek Prikryl, Tim Vogt
 
 * * *
 
-Copyright (C) 2019-2022, Jan Gray <jan@fpga.org> +
-Copyright (C) 2019-2022, Tim Vogt
+Copyright (C) 2019-2023, Jan Gray <jan@fpga.org> +
+Copyright (C) 2019-2023, Tim Vogt
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may
 not use this file except in compliance with the License.  You may obtain

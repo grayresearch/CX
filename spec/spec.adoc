@@ -1,5 +1,5 @@
 [[riscv-authoring]]
-= _Draft Proposed_ RISC-V Composable Extensions Specification
+= _Draft Proposed_ RISC-V Composable Custom Extensions Specification
 :description: Draft proposed specifications for composable extensions: composable extensions and composable extension units
 :company:
 :revdate: 08/03/2023
