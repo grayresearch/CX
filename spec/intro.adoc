@@ -80,9 +80,9 @@ with <<multiplexing,_composable extension multiplexing_>>, described below.
 
 Alice develops a multicore RISC-V-based FPGA SmartNIC application
 processor subsystem. The software stack includes processes that already
-use a cryptography CX library that issues custom instructions, of a
-cryptography composable extension, that execute on a cryptography custom
-function unit.
+use a cryptography CX library that issues custom instructions, of
+a cryptography composable extension, that execute on a cryptography
+composable extension unit.
 
 Profiling reveals a compute bottleneck in file block data
 compression. Fortunately, the compression library can use a
@@ -217,7 +217,7 @@ identifier (<<CF_ID,CF_ID>>), _state index (<<STATE_ID,STATE_ID>>)_, if any, and
 (operands). The CXU performs the custom function then sends a _CXU
 response_ providing response data and error status.
 
-In a system with multiple CPUs and/or CXUs, mux and adapter CXUs
+In a system with multiple CPUs and/or CXUs, switch and adapter CXUs
 accept and route requests to CXUs and accept and route responses back
 to CPUs. The CXU-LI supports CPUs and CXUs of various _feature levels_
 of capability and complexity, including combinational CXUs, fixed-latency
@@ -262,7 +262,7 @@ extension's `vsetvl` instructions, a CSR-write to `mcx_selector` is a
 prefix that modifies the behavior of CF instructions that follow. With
 each CF instruction issued, the CPU sends a CXU request to the hart's
 current CXU and its current state. This request is routed by standard
-Mux CXU and adapter cores to the hart's _current_ CXU, which performs
+switch and adapter CXUs to the hart's _current_ CXU, which performs
 the custom function using the hart's current state context. Its response
 is routed back to the CPU which writes the destination register and
 updates `cxu_status`.
@@ -373,7 +373,7 @@ A system composer (human or tool) gathers the system manifest metadata and
 the metadata of the manifest-specified CPUs and CXUs, then uses (manual
 or automatic) constraint satisfaction to find feasible, optimal parameter
 settings across these components. The composer may also configure or
-generate mux and adapter CXUs to automatically interconnect the CPU and
+generate switch and adapter CXUs to automatically interconnect the CPU and
 the CXUs.
 
 For example, a system composed from a CPU that supports two or three
@@ -381,7 +381,7 @@ cycle fixed latency CXUs, a CXU~1~ that supports response latency
 of one or more cycles, a CXU~2~ that has a fixed response latency of
 three cycles, and CXU~3~ which is combinational (zero cycles latency),
 overall has a valid configuration with three cycles of CXU latency,
-with the CPU coupled to a mux CXU, coupled to CXU~1~ and CXU~2~ and to
+with the CPU coupled to a switch CXU, coupled to CXU~1~ and CXU~2~ and to
 a _fixed latency adapter CXU_, coupled to CXU~3~.
 
 ==== Diversity of systems and operating systems

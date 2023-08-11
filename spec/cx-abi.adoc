@@ -76,7 +76,7 @@ STATE_ID=0 whenever a STATE_ID is required. A *valid STATE_ID* is a
 value that identifies a state context of a configured extension.
 
 A *custom function instruction (CF instruction)* is a RISC-V custom
-instruction that executes a custom function using a custom function
+instruction that executes a custom function using a composable extension
 unit, sourcing the integer operands from the register file and/or from
 an immediate field of the instruction, writing the integer result to the
 register file, and updating the CX status CSR with the response status.
@@ -111,7 +111,7 @@ table (§<<_cx_access_control>>).
 
 A -Zicx compatible CPU shall implement the `mcx_selector` and
 `cx_status` CSRs for extension multiplexing and custom function
-execution.
+instruction execution.
 
 When CX access control
 (§<<_cx_access_control>>)
