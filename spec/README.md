@@ -4,15 +4,14 @@ _Draft Proposed_ Composable Custom Extensions Specification
 This document comprises draft proposed specifications for
 hardware-software and hardware-hardware interfaces, formats, and metadata,
 enabling independent, efficient, and robust composition of diverse
-custom instruction set extensions, hardware custom function units,
-and software libraries.
+composable custom instruction set extensions, composable extension units
+hardware, and composable extension libraries software.
 
 It is a work in progress. We request your feedback.
 
-At present this is not a work product of a RISC-V International Working
-Group, Technical Committee, or subcommittee.  Rather we share this work
-in the hope that it may motivate and inform two hypothetical
-RISC-V International Task Groups:
+At present this is not a work product of a RISC-V International SIG, Task
+Group, or subcommittee.  Rather we share this work in the hope that it
+may motivate and inform two hypothetical RISC-V International Task Groups:
 1) ISA: CX-ISA TG: Composable Extensions (-Zicx); and
 2) non-ISA: CXU-LI TG: Composable Extension Unit Logic Interface.
 

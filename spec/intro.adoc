@@ -204,7 +204,7 @@ and formats:
 image::composition-layers.png[image,width=400]
 
 The hardware-software extensions stack (<<layers>>) shows how these
-extensions and formats work together to compose user-defined custom
+extensions and formats work together to compose user-defined composable
 extensions CX~0~ and CX~1~, their libraries, and their CXUs into a system.
 
 ==== CXU Logic Interface (CXU-LI)

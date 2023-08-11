@@ -8,16 +8,15 @@ hardware composable extension units (CXUs), and software libraries.
 Eventually the work will include specifications, hardware packages,
 and software libraries. Presently the repo includes only the 
 [Draft Proposed RISC-V Composable Custom Extensions Specification](spec/spec.pdf)
-[(PDF)](https://raw.githubusercontent.com/grayresearch/CFU/main/spec/spec.pdf),
+[(PDF)](https://raw.githubusercontent.com/grayresearch/CX/main/spec/spec.pdf),
 with hardware CXU core packages, software libraries, tests, and other
 collateral to come.
 
 It is a work in progress. We request your feedback.
 
-At present this is not a work product of a RISC-V International Working
-Group, Technical Committee, or subcommittee.  Rather we share this work
-in the hope that it may motivate and inform two hypothetical
-RISC-V International Task Groups:
+At present this is not a work product of a RISC-V International SIG, Task
+Group, or subcommittee.  Rather we share this work in the hope that it
+may motivate and inform two hypothetical RISC-V International Task Groups:
 1) ISA: CX-ISA TG: Composable Extensions (-Zicx); and
 2) non-ISA: CXU-LI TG: Composable Extension Unit Logic Interface.
 

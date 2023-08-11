@@ -34,18 +34,18 @@ versioning of the CFs or the behavior of an extension necessarily defines
 a new extension. _Named:_ has a composable extension identifier.
 
 A *composable extension identifier (CX_ID)* is a 128-bit globally unique ID
-(_GUID_) [see RFC-4122], unique in history, identifying a custom
+(_GUID_) [see RFC-4122], unique in history, identifying a composable
 extension__.__
 
 A *stateless composable extension* is a fixed named set of set of stateless
 custom functions.
 
 A *stateful composable extension* is a fixed named set of custom functions,
-at least one of which is a stateful custom function, plus a custom
+at least one of which is a stateful custom function, plus a composable
 extension state context.
 
 A *composable extension state context (state context, state, context)*
-is an isolated collection of state associated with a stateful custom
+is an isolated collection of state associated with a stateful composable
 extension. Isolated: stateful custom functions of the extension may read
 and write the state context, but no other element or operation of the
 system may read or write the state context.
