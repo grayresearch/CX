@@ -1,4 +1,4 @@
-## bnn_cfu_test.py: bnn_cfu (CFU-L0) testbench
+## bnn_cxu_test.py: bnn_cxu (CXU-L0) testbench
 
 '''
 Copyright (C) 2019-2023, Gray Research LLC.
@@ -18,12 +18,12 @@ limitations under the License.
 
 import cocotb
 import random
-from cfu_li import *
+from cxu_li import *
 from tb import TB
 
 # testbench
 @cocotb.test()
-async def bnn_cfu_tb(dut):
+async def bnn_cxu_tb(dut):
     tb = TB(dut, Level.l0_comb)
     await tb.start()
     await sweep(tb)
@@ -69,20 +69,20 @@ from cocotb_test.simulator import run
 @pytest.mark.parametrize("width", [32, 64])
 
 def test_bnn(request, width):
-    dut = "bnn_cfu"
+    dut = "bnn_cxu"
     module = os.path.splitext(os.path.basename(__file__))[0]
     parameters = {}
-    parameters['CFU_DATA_W'] = width
+    parameters['CXU_DATA_W'] = width
     sim_build = os.path.join(".", "sim_build",
         request.node.name.replace('[', '-').replace(']', ''))
 
     run(
         includes=["."],
-        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv", "popcount_cfu.sv"],
+        verilog_sources=["common.svh", "cxu.svh", f"{dut}.sv", "popcount_cxu.sv"],
         toplevel=dut,
         module=module,
         parameters=parameters,
-        defines=['BNN_CFU_VCD'],
-        extra_env={ 'CFU_DATA_W':str(width) },
+        defines=['BNN_CXU_VCD'],
+        extra_env={ 'CXU_DATA_W':str(width) },
         sim_build=sim_build
     )

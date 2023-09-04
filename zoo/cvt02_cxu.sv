@@ -1,4 +1,4 @@
-// cvt02_cfu.sv: CFU-L0 to CFU-L2 feature level adapter CFU
+// cvt02_cxu.sv: CXU-L0 to CXU-L2 feature level adapter CXU
 //
 // Copyright (C) 2019-2023, Gray Research LLC.
 // 
@@ -15,41 +15,41 @@
 // limitations under the License.
 
 // [Draft Proposed RISC-V Composable Custom Extensions Specification %3.9.2:]
-// "A CFU feature level adapter is an intermediary CFU that receives requests and
-// sends responses at one CFU-LI feature level and adapts them for and forwards them
-// to a subordinate CFU at a lower CFU-LI feature level."
+// "A CXU feature level adapter is an intermediary CXU that receives requests and
+// sends responses at one CXU-LI feature level and adapts them for and forwards them
+// to a subordinate CXU at a lower CXU-LI feature level."
 //
-// "A Cvt02 adapter CFU implements CFU-L2, including its configuration parameters,
-// adapting L2 requests to and responses from a subordinate combinational L0 CFU.
+// "A Cvt02 adapter CXU implements CXU-L2, including its configuration parameters,
+// adapting L2 requests to and responses from a subordinate combinational L0 CXU.
 // The adapter has a fixed latency of one cycle — a response is sent one cycle after
 // a request is received."
 
-`include "cfu.svh"
+`include "cxu.svh"
 
 /* verilator lint_off DECLFILENAME */
 
-// cvt02_cfu: CFU-L0 to CFU-L2 feature level adapter CFU
-module cvt02_cfu
-    import common_pkg::*, cfu_pkg::*;
+// cvt02_cxu: CXU-L0 to CXU-L2 feature level adapter CXU
+module cvt02_cxu
+    import common_pkg::*, cxu_pkg::*;
 #(
-    `CFU_L2_PARAMS(/*N_CFUS*/1, /*N_STATES*/0, /*FUNC_ID_W*/0, /*INSN_W*/0, /*DATA_W*/32)
+    `CXU_L2_PARAMS(/*N_CXUS*/1, /*N_STATES*/0, /*FUNC_ID_W*/0, /*INSN_W*/0, /*DATA_W*/32)
 ) (
-    `CFU_CLK_L2_PORTS(input, output, req, resp),
-    `CFU_L0_PORTS(output, input, t_req, t_resp)
+    `CXU_CLK_L2_PORTS(input, output, req, resp),
+    `CXU_L0_PORTS(output, input, t_req, t_resp)
 );
-    initial ignore(`CHECK_CFU_L2_PARAMS && check_param("CFU_N_STATES", CFU_N_STATES, 0));
+    initial ignore(`CHECK_CXU_L2_PARAMS && check_param("CXU_N_STATES", CXU_N_STATES, 0));
 
     wire _unused_ok = &{1'b0,req_state,req_insn,1'b0};
-`ifdef CVT02_CFU_VCD
-    initial begin $dumpfile("cvt02_cfu.vcd"); $dumpvars(0, cvt02_cfu); end
+`ifdef CVT02_CXU_VCD
+    initial begin $dumpfile("cvt02_cxu.vcd"); $dumpvars(0, cvt02_cxu); end
 `endif
 
     always_comb begin
         req_ready = !resp_valid || resp_ready;  // forward resp_ready to req_ready
 
-        // forward request to (combinational) target CFU
+        // forward request to (combinational) target CXU
         t_req_valid = req_valid;
-        t_req_cfu   = req_cfu;
+        t_req_cxu   = req_cxu;
         t_req_func  = req_func;
         t_req_data0 = req_data0;
         t_req_data1 = req_data1;

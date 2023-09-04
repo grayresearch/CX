@@ -1,4 +1,4 @@
-## popcount_cfu_test.py: popcount_cfu (CFU-L0) testbench
+## popcount_cxu_test.py: popcount_cxu (CXU-L0) testbench
 
 '''
 Copyright (C) 2019-2023, Gray Research LLC.
@@ -18,12 +18,12 @@ limitations under the License.
 
 import cocotb
 import random
-from cfu_li import *
+from cxu_li import *
 from tb import TB
 
 # testbench
 @cocotb.test()
-async def popcount_cfu_tb(dut):
+async def popcount_cxu_tb(dut):
     tb = TB(dut, Level.l0_comb)
     await tb.start()
     await sweep(tb)
@@ -64,21 +64,21 @@ from cocotb_test.simulator import run
 @pytest.mark.parametrize("adder_tree", [0, 1])
 
 def test_popcount(request, width, adder_tree):
-    dut = "popcount_cfu"
+    dut = "popcount_cxu"
     module = os.path.splitext(os.path.basename(__file__))[0]
     parameters = {}
-    parameters['CFU_DATA_W'] = width
+    parameters['CXU_DATA_W'] = width
     parameters['ADDER_TREE'] = adder_tree
     sim_build = os.path.join(".", "sim_build",
         request.node.name.replace('[', '-').replace(']', ''))
 
     run(
         includes=["."],
-        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv"],
+        verilog_sources=["common.svh", "cxu.svh", f"{dut}.sv"],
         toplevel=dut,
         module=module,
         parameters=parameters,
-        defines=['POPCOUNT_CFU_VCD'],
-        extra_env={ 'CFU_DATA_W':str(width) },
+        defines=['POPCOUNT_CXU_VCD'],
+        extra_env={ 'CXU_DATA_W':str(width) },
         sim_build=sim_build
     )

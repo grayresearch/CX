@@ -26,7 +26,7 @@ from enum import IntEnum
 import random
 import math
 
-from cfu_li import *
+from cxu_li import *
 from tb import TB
 
 class IMulAcc(IntEnum): # extends IStateContext
@@ -36,98 +36,98 @@ class IMulAcc(IntEnum): # extends IStateContext
 # For each state context, test IStateContext standard custom functions
 # {read,write}_{status,state}() and operation of state context status states
 # { off, init, clean, dirty }.
-async def IStateContext_tests(tb, cfu = 0):
+async def IStateContext_tests(tb, cxu = 0):
     # test IStateContext functions, interleaving amongst the n_states' contexts
-    await IStateContext_state_tests(tb, cfu, 0, tb.n_states)
+    await IStateContext_state_tests(tb, cxu, 0, tb.n_states)
 
     # test IStateContext functions again, not interleaved, i.e. one state at a time
     for state in range(tb.n_states):
-        await IStateContext_state_tests(tb, cfu, state, state + 1)
+        await IStateContext_state_tests(tb, cxu, state, state + 1)
 
 # for each state context in [start,stop-1], test IStateContext standard custom functions
-async def IStateContext_state_tests(tb, cfu, start, stop):
+async def IStateContext_state_tests(tb, cxu, start, stop):
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_status, 0, 0, csw(CS.init))
+        await tb.test_cxu(cxu, state, IStateContext.read_status, 0, 0, csw(CS.init))
 
     # each state's accum should be 0
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_state, 0, 0, 0)
+        await tb.test_cxu(cxu, state, IStateContext.read_state, 0, 0, 0)
 
     # dirty each state context
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IMulAcc.mul, state, 1, state)
+        await tb.test_cxu(cxu, state, IMulAcc.mul, state, 1, state)
 
     # each state context should be dirty
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_status, 0, 0, csw(CS.dirty))
+        await tb.test_cxu(cxu, state, IStateContext.read_status, 0, 0, csw(CS.dirty))
 
     # each state's accum should be different
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_state, 0, 0, state)
+        await tb.test_cxu(cxu, state, IStateContext.read_state, 0, 0, state)
 
     # clean each state context
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.write_status, CS.clean, 0, csw(CS.dirty))
+        await tb.test_cxu(cxu, state, IStateContext.write_status, CS.clean, 0, csw(CS.dirty))
 
     # check each is clean
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_status, 0, 0, csw(CS.clean))
+        await tb.test_cxu(cxu, state, IStateContext.read_status, 0, 0, csw(CS.clean))
 
     # but accums unchanged, not reinitialized
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_state, 0, 0, state)
+        await tb.test_cxu(cxu, state, IStateContext.read_state, 0, 0, state)
 
     # write different accum to each state context
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.write_state, state*2, 0, state*2)
+        await tb.test_cxu(cxu, state, IStateContext.write_state, state*2, 0, state*2)
 
     # each state context should be dirty
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_status, 0, 0, csw(CS.dirty))
+        await tb.test_cxu(cxu, state, IStateContext.read_status, 0, 0, csw(CS.dirty))
 
     # further change each accum
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IMulAcc.mulacc, state, 1, state*3)
+        await tb.test_cxu(cxu, state, IMulAcc.mulacc, state, 1, state*3)
 
     # init each state context
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.write_status, CS.init, 0, csw(CS.dirty))
+        await tb.test_cxu(cxu, state, IStateContext.write_status, CS.init, 0, csw(CS.dirty))
 
     # each state's accum should be 0
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_state, 0, 0, 0)
+        await tb.test_cxu(cxu, state, IStateContext.read_state, 0, 0, 0)
 
     # dirty each state context
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.write_status, CS.dirty, 0, csw(CS.init))
+        await tb.test_cxu(cxu, state, IStateContext.write_status, CS.dirty, 0, csw(CS.init))
 
     # each state's accum should be 0
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.read_state, 0, 0, 0)
+        await tb.test_cxu(cxu, state, IStateContext.read_state, 0, 0, 0)
 
     # check another way
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IMulAcc.mulacc, 0, 0, 0)
+        await tb.test_cxu(cxu, state, IMulAcc.mulacc, 0, 0, 0)
 
     # turn off each state
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.write_status, CS.off, 0, csw(CS.dirty))
+        await tb.test_cxu(cxu, state, IStateContext.write_status, CS.off, 0, csw(CS.dirty))
 
     # turn on each state, to init state
     for state in range(start, stop):
-        await tb.test_cfu(cfu, state, IStateContext.write_status, CS.init, 0, csw(CS.off))
+        await tb.test_cxu(cxu, state, IStateContext.write_status, CS.init, 0, csw(CS.off))
 
 # IStateContext's context status word, from context status indicator cs
 def csw(cs):
     return (1<<2) | cs   # (IMulAcc:) always 1 word of state, no custom error
 
 # test IMulAcc custom functions .mul() and .mulacc(), interleaved across random state contexts
-async def IMulAcc_tests(tb, cfu = 0):
+async def IMulAcc_tests(tb, cxu = 0):
     mask = (1 << tb.n_bits) - 1
     model = [0] * tb.n_states
     for (zero,state,a,b) in cases(tb.n_states, tb.n_bits):
         model[state] = ((a*b) + (0 if zero else model[state])) & mask
-        await tb.test_cfu(cfu, state, IMulAcc.mul if zero else IMulAcc.mulacc, a, b, model[state])
+        await tb.test_cxu(cxu, state, IMulAcc.mul if zero else IMulAcc.mulacc, a, b, model[state])
 
 # generate test cases; yields (zero,a,b)
 def cases(n_states, n_bits):

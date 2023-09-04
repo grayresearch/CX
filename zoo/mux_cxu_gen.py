@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-generate an n-target mux_cfu
+generate an n-target mux_cxu
 
 Copyright (C) 2019-2023, Gray Research LLC.
 
@@ -42,11 +42,11 @@ def generate(ports=2):
     else:
         n = ports[0]
 
-    name = f"mux{n}_cfu"
+    name = f"mux{n}_cxu"
     output = f"{name}.sv"
 
     t = Template(
-"""// {{name}}.sv: multiplex {{n}} target CFUs (CFU-L2)
+"""// {{name}}.sv: multiplex {{n}} target CXUs (CXU-L2)
 //
 // Copyright (C) 2019-2023, Gray Research LLC.
 // 
@@ -62,32 +62,32 @@ def generate(ports=2):
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// {{name}}: multiplex {{n}} target CFUs (CFU-L2)
+// {{name}}: multiplex {{n}} target CXUs (CXU-L2)
 module {{name}}
-    import common_pkg::*, cfu_pkg::*;
+    import common_pkg::*, cxu_pkg::*;
 #(
-    `CFU_L2_PARAMS(/*N_CFUS*/{{n}}, /*N_STATES*/0, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
+    `CXU_L2_PARAMS(/*N_CXUS*/{{n}}, /*N_STATES*/0, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
     parameter int N_REQS    = 16    // max no. of in-flight requests per initiator and per target
 ) (
-    `CFU_CLOCK_PORTS,
-    `CFU_L2_PORTS(input, output, req, resp),
+    `CXU_CLOCK_PORTS,
+    `CXU_L2_PORTS(input, output, req, resp),
 {%- for p in range(n) %}
-    `CFU_L2_PORTS(output, input, t{{'%1d'%p}}_req, t{{'%1d'%p}}_resp){% if not loop.last %},{% endif %} {% endfor %}
+    `CXU_L2_PORTS(output, input, t{{'%1d'%p}}_req, t{{'%1d'%p}}_resp){% if not loop.last %},{% endif %} {% endfor %}
 );
     initial ignore(
-        `CHECK_CFU_L2_PARAMS
-    &&  check_param("CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t)));
-`ifdef MUX_CFU_VCD
+        `CHECK_CXU_L2_PARAMS
+    &&  check_param("CXU_FUNC_ID_W", CXU_FUNC_ID_W, $bits(cfid_t)));
+`ifdef MUX_CXU_VCD
     initial begin $dumpfile("{{name}}.vcd"); $dumpvars(0, {{name}}); end
 `endif
 
-    switch_cfu_core #(`CFU_L2_PARAMS_MAP, .N_INIS(1), .N_TGTS({{n}}), .N_REQS(N_REQS))
+    switch_cxu_core #(`CXU_L2_PARAMS_MAP, .N_INIS(1), .N_TGTS({{n}}), .N_REQS(N_REQS))
     core(
         .clk, .rst, .clk_en,
         // initiator
         .i_req_valids(req_valid),
         .i_req_readys(req_ready),
-        .i_req_cfus(req_cfu),
+        .i_req_cxus(req_cxu),
         .i_req_states(req_state),
         .i_req_funcs(req_func),
         .i_req_insns(req_insn),
@@ -100,7 +100,7 @@ module {{name}}
         // targets
         .t_req_valids({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_valid{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_readys({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_ready{% if not loop.last %}, {% endif %}{% endfor %} }),
-        .t_req_cfus({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_cfu{% if not loop.last %}, {% endif %}{% endfor %} }),
+        .t_req_cxus({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_cxu{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_states({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_state{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_funcs({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_func{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_insns({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_insn{% if not loop.last %}, {% endif %}{% endfor %} }),

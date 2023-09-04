@@ -1,4 +1,4 @@
-## tb.py: CFU testbench class
+## tb.py: CXU testbench class
 
 '''
 Copyright (C) 2019-2023, Gray Research LLC.
@@ -24,22 +24,22 @@ from cocotb.triggers import FallingEdge, RisingEdge, Timer
 import os
 import random
 
-from cfu_li import *
+from cxu_li import *
 from monitors import Monitor
 
-# CFU testbench for CFU -L0, -L1 (so far)
+# CXU testbench for CXU -L0, -L1 (so far)
 class TB:
     def __init__(self, dut, level):
         self.dut      = dut
         self.level    = level
-        self.n_cfus   = int(os.environ.get("CFU_N_CFUS", 1)) 
-        self.n_bits   = int(os.environ.get("CFU_DATA_W")) 
-        self.latency  = int(os.environ.get("CFU_LATENCY"))  if level == Level.l1_pipe else 0
-        self.n_states = int(os.environ.get("CFU_N_STATES")) if level >  Level.l0_comb else 0
+        self.n_cxus   = int(os.environ.get("CXU_N_CXUS", 1)) 
+        self.n_bits   = int(os.environ.get("CXU_DATA_W")) 
+        self.latency  = int(os.environ.get("CXU_LATENCY"))  if level == Level.l1_pipe else 0
+        self.n_states = int(os.environ.get("CXU_N_STATES")) if level >  Level.l0_comb else 0
         self.resp_ready_frac = 1.0
 
-        # for combinational CFUs (CFU-L0) tests issue at 1 ns timesteps;
-        # for synchronous CFUs (>L0), requests and responses are monitored on posedge(clk)
+        # for combinational CXUs (CXU-L0) tests issue at 1 ns timesteps;
+        # for synchronous CXUs (>L0), requests and responses are monitored on posedge(clk)
         if level >= Level.l1_pipe:
             cocotb.start_soon(Clock(dut.clk, 1, units="ns").start())
             req_ready  = dut.req_ready  if level >= Level.l2_stream else None
@@ -55,7 +55,7 @@ class TB:
 
         # setup some default request signals
         self.dut.req_valid.value = 0
-        self.dut.req_cfu.value = 0
+        self.dut.req_cxu.value = 0
         if self.level >= Level.l1_pipe:
             self.dut.req_state.value = 0
         self.dut.req_func.value = 0
@@ -92,9 +92,9 @@ class TB:
         while not self.models.empty():
             await RisingEdge(self.dut.clk)
 
-    # issue one test case to a specific CFU; response should match model
-    async def test_cfu(self, cfu, state, func, data0, data1, model):
-        self.dut.req_cfu.value = cfu
+    # issue one test case to a specific CXU; response should match model
+    async def test_cxu(self, cxu, state, func, data0, data1, model):
+        self.dut.req_cxu.value = cxu
         await self.test(state, func, data0, data1, model)
 
     # issue one test case; response should match model
@@ -106,7 +106,7 @@ class TB:
         if self.level == Level.l0_comb:
             # check answer immediately
             await Timer(1, units="ns")
-            assert (self.dut.resp_status == Status.CFU_OK and self.dut.resp_data == model), \
+            assert (self.dut.resp_status == Status.CXU_OK and self.dut.resp_data == model), \
                 "test({0:1d},{1:08x},{2:08x}) => {3:08x} != {4:08x}".format( \
                     func, data0, data1, self.dut.resp_data.integer, model)
         else:
@@ -114,7 +114,7 @@ class TB:
             self.dut.req_state.value = state
             self.models.put_nowait((0, model))
 
-            # CFU-L2+: await req_ready (sampled on negedge clk)
+            # CXU-L2+: await req_ready (sampled on negedge clk)
             if self.level >= Level.l2_stream:
                 while True:
                     await FallingEdge(self.dut.clk)
@@ -136,7 +136,7 @@ class TB:
                     state, req['func'].integer, req['data0'].integer, req['data1'].integer, \
                     resp['status'].integer, resp['data'].integer, status, data)
 
-    # CFU-L2+: initiator performs response flow control, randomly adjusting self.dut.resp_ready,
+    # CXU-L2+: initiator performs response flow control, randomly adjusting self.dut.resp_ready,
     # per self.resp_ready_frac
     async def resp_flow_control(self):
         while True:

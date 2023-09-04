@@ -1,4 +1,4 @@
-## bnn_l1_cfu_test.py: bnn_l1_cfu (CFU-L1) testbench
+## bnn_l1_cxu_test.py: bnn_l1_cxu (CXU-L1) testbench
 
 '''
 Copyright (C) 2019-2023, Gray Research LLC.
@@ -18,12 +18,12 @@ limitations under the License.
 
 import cocotb
 import random
-from cfu_li import *
+from cxu_li import *
 from tb import TB
 
 # testbench
 @cocotb.test()
-async def bnn_cfu_tb(dut):
+async def bnn_cxu_tb(dut):
     tb = TB(dut, Level.l1_pipe)
     await tb.start()
     await sweep(tb)
@@ -70,22 +70,22 @@ from cocotb_test.simulator import run
 @pytest.mark.parametrize("width", [32,64])
 
 def test_bnn_l1(request, latency, width):
-    dut = "bnn_l1_cfu"
+    dut = "bnn_l1_cxu"
     module = os.path.splitext(os.path.basename(__file__))[0]
     parameters = {}
-    parameters['CFU_LATENCY'] = latency
-    parameters['CFU_N_STATES'] = 0
-    parameters['CFU_DATA_W'] = width
+    parameters['CXU_LATENCY'] = latency
+    parameters['CXU_N_STATES'] = 0
+    parameters['CXU_DATA_W'] = width
     sim_build = os.path.join(".", "sim_build",
         request.node.name.replace('[', '-').replace(']', ''))
 
     run(
         includes=["."],
-        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv", "cvt01_cfu.sv", "shared.sv", "bnn_cfu.sv", "popcount_cfu.sv"],
+        verilog_sources=["common.svh", "cxu.svh", f"{dut}.sv", "cvt01_cxu.sv", "shared.sv", "bnn_cxu.sv", "popcount_cxu.sv"],
         toplevel=dut,
         module=module,
         parameters=parameters,
-        defines=['BNN_L1_CFU_VCD'],
-        extra_env={ 'CFU_N_STATES':str(0), 'CFU_LATENCY':str(latency), 'CFU_DATA_W':str(width) },
+        defines=['BNN_L1_CXU_VCD'],
+        extra_env={ 'CXU_N_STATES':str(0), 'CXU_LATENCY':str(latency), 'CXU_DATA_W':str(width) },
         sim_build=sim_build
     )

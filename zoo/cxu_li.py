@@ -1,4 +1,4 @@
-## cfu_li.py: CFU-LI test bench support
+## cxu_li.py: CXU-LI test bench support
 
 '''
 Copyright (C) 2019-2023, Gray Research LLC.
@@ -27,13 +27,13 @@ class Level(IntEnum):
     l3_ooo          = 3
 
 class Status(IntEnum):
-    CFU_OK          = 0
-    CFU_ERROR_CFU   = 1
-    CFU_ERROR_STATE = 2
-    CFU_ERROR_OFF   = 3
-    CFU_ERROR_FUNC  = 4
-    CFU_ERROR_OP    = 5
-    CFU_ERROR_CUSTOM= 6
+    CXU_OK          = 0
+    CXU_ERROR_CXU   = 1
+    CXU_ERROR_STATE = 2
+    CXU_ERROR_OFF   = 3
+    CXU_ERROR_FUNC  = 4
+    CXU_ERROR_OP    = 5
+    CXU_ERROR_CUSTOM= 6
 
 class CS(IntEnum):
     off             = 0
@@ -47,16 +47,16 @@ class IStateContext(IntEnum):
     write_status    = 1022
     read_status     = 1023
 
-# return a dictionary of the dut's request payload signals at some CFU-LI level
+# return a dictionary of the dut's request payload signals at some CXU-LI level
 def req(dut, level):
-    req = { 'cfu':dut.req_cfu, 'func':dut.req_func, 'data0':dut.req_data0, 'data1':dut.req_data1 }
+    req = { 'cxu':dut.req_cxu, 'func':dut.req_func, 'data0':dut.req_data0, 'data1':dut.req_data1 }
     if level > Level.l0_comb:
         req['state'] = dut.req_state
     if level == Level.l3_ooo:
         req['id'] = dut.req_id
     return req
 
-# return a dictionary of the dut's response payload signals at some CFU-LI level
+# return a dictionary of the dut's response payload signals at some CXU-LI level
 def resp(dut, level):
     resp = { 'status':dut.resp_status, 'data':dut.resp_data }
     if level == Level.l3_ooo:

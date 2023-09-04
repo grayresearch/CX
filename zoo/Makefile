@@ -19,22 +19,22 @@
 # FIXME. This will be completely replaced shortly.
 
 all:
-	python3 mux_cfu_gen.py -p 1
-	python3 mux_cfu_gen.py -p 2
-	python3 mux_cfu_gen.py -p 3
+	python3 mux_cxu_gen.py -p 1
+	python3 mux_cxu_gen.py -p 2
+	python3 mux_cxu_gen.py -p 3
 	make SIM=icarus tests
 	make SIM=verilator tests
 
 tests:
-	pytest -n auto popcount_cfu_test.py
-	pytest -n auto bnn_cfu_test.py
-	pytest -n auto mulacc_cfu_test.py
-	pytest -n auto dotprod_cfu_test.py
-	pytest -n auto bnn_l1_cfu_test.py
-	pytest -n auto bnn_l2_cfu_test.py
-	pytest -n auto bnn_l1_l2_cfu_test.py
-	pytest -n auto mulacc_l2_cfu_test.py
-	pytest -n auto mux_macs_cfu_test.py
+	pytest -n auto popcount_cxu_test.py
+	pytest -n auto bnn_cxu_test.py
+	pytest -n auto mulacc_cxu_test.py
+	pytest -n auto dotprod_cxu_test.py
+	pytest -n auto bnn_l1_cxu_test.py
+	pytest -n auto bnn_l2_cxu_test.py
+	pytest -n auto bnn_l1_l2_cxu_test.py
+	pytest -n auto mulacc_l2_cxu_test.py
+	pytest -n auto mux_macs_cxu_test.py
 
 clean:
 	cocotb-clean

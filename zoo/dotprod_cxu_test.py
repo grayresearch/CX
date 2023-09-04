@@ -1,4 +1,4 @@
-## dotprod_cfu_l1_test.py: dotprod_cfu_l1 (stateful serializable L1 CFU) testbench
+## dotprod_cxu_l1_test.py: dotprod_cxu_l1 (stateful serializable L1 CXU) testbench
 
 '''
 Copyright (C) 2019-2023, Gray Research LLC.
@@ -26,7 +26,7 @@ from enum import IntEnum
 import random
 import math
 
-from cfu_li import *
+from cxu_li import *
 from tb import TB
 
 class IDotProd(IntEnum): # extends IDotProd
@@ -40,7 +40,7 @@ class DotProdTB(TB):
 
 # testbench
 @cocotb.test()
-async def dotprod_cfu_tb(dut):
+async def dotprod_cxu_tb(dut):
     tb = DotProdTB(dut, Level.l1_pipe)
     await tb.start()
     await IStateContext_tests(tb)
@@ -210,24 +210,24 @@ from cocotb_test.simulator import run
 @pytest.mark.parametrize("elem_w", [4,8,16,32])
 
 def test_dotprod(request, latency, states, width, elem_w):
-    dut = "dotprod_cfu"
+    dut = "dotprod_cxu"
     module = os.path.splitext(os.path.basename(__file__))[0]
     parameters = {}
-    parameters['CFU_LATENCY'] = latency
-    parameters['CFU_N_STATES'] = states
-    parameters['CFU_STATE_ID_W'] = (states-1).bit_length()
-    parameters['CFU_DATA_W'] = width
+    parameters['CXU_LATENCY'] = latency
+    parameters['CXU_N_STATES'] = states
+    parameters['CXU_STATE_ID_W'] = (states-1).bit_length()
+    parameters['CXU_DATA_W'] = width
     parameters['ELEM_W'] = elem_w
     sim_build = os.path.join(".", "sim_build",
         request.node.name.replace('[', '-').replace(']', ''))
 
     run(
         includes=["."],
-        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv", "shared.sv"],
+        verilog_sources=["common.svh", "cxu.svh", f"{dut}.sv", "shared.sv"],
         toplevel=dut,
         module=module,
         parameters=parameters,
-        defines=['DOTPROD_CFU_VCD'],
-        extra_env={ 'CFU_N_STATES':str(states), 'CFU_LATENCY':str(latency), 'CFU_DATA_W':str(width), 'ELEM_W':str(elem_w) },
+        defines=['DOTPROD_CXU_VCD'],
+        extra_env={ 'CXU_N_STATES':str(states), 'CXU_LATENCY':str(latency), 'CXU_DATA_W':str(width), 'ELEM_W':str(elem_w) },
         sim_build=sim_build
     )

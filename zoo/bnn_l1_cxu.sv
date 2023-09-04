@@ -1,4 +1,4 @@
-// bnn_l1_cfu.sv: 32/64-bit binary neural net dot product CFU-L1 pipelined CFU
+// bnn_l1_cxu.sv: 32/64-bit binary neural net dot product CXU-L1 pipelined CXU
 //
 // Copyright (C) 2019-2023, Gray Research LLC.
 // 
@@ -14,23 +14,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// bnn_l1_cfu: 32/64-bit population count CFU-L1 pipelined CFU,
-// via composing a cvt01_cfu with a CFU-L0 bnn_cfu
-module bnn_l1_cfu
-    import common_pkg::*, cfu_pkg::*;
+// bnn_l1_cxu: 32/64-bit population count CXU-L1 pipelined CXU,
+// via composing a cvt01_cxu with a CXU-L0 bnn_cxu
+module bnn_l1_cxu
+    import common_pkg::*, cxu_pkg::*;
 #(
-    `CFU_L1_PARAMS(/*N_CFUS*/1, /*N_STATES*/0, /*LAT*/0, /*RESET*/0, /*FUNC_ID_W*/0, /*DATA_W*/32)
+    `CXU_L1_PARAMS(/*N_CXUS*/1, /*N_STATES*/0, /*LAT*/0, /*RESET*/0, /*FUNC_ID_W*/0, /*DATA_W*/32)
 ) (
-    `CFU_CLK_L1_PORTS(input, output, req, resp)
+    `CXU_CLK_L1_PORTS(input, output, req, resp)
 );
-    initial ignore(`CHECK_CFU_L1_PARAMS && check_param("CFU_N_STATES", CFU_N_STATES, 0));
-`ifdef BNN_L1_CFU_VCD
-    initial begin $dumpfile("bnn_l1_cfu.vcd"); $dumpvars(0, bnn_l1_cfu); end
+    initial ignore(`CHECK_CXU_L1_PARAMS && check_param("CXU_N_STATES", CXU_N_STATES, 0));
+`ifdef BNN_L1_CXU_VCD
+    initial begin $dumpfile("bnn_l1_cxu.vcd"); $dumpvars(0, bnn_l1_cxu); end
 `endif
 
-    `CFU_L0_NETS(t_req, t_resp);
-    cvt01_cfu #(`CFU_L1_PARAMS_MAP)
-        cvt(`CFU_CLK_L1_PORT_MAP(req,req, resp,resp), `CFU_L0_PORT_MAP(t_req,t_req, t_resp,t_resp));
-    bnn_cfu #(`CFU_L0_PARAMS_MAP)
-        bnn(`CFU_L0_PORT_MAP(req,t_req, resp,t_resp)); 
+    `CXU_L0_NETS(t_req, t_resp);
+    cvt01_cxu #(`CXU_L1_PARAMS_MAP)
+        cvt(`CXU_CLK_L1_PORT_MAP(req,req, resp,resp), `CXU_L0_PORT_MAP(t_req,t_req, t_resp,t_resp));
+    bnn_cxu #(`CXU_L0_PARAMS_MAP)
+        bnn(`CXU_L0_PORT_MAP(req,t_req, resp,t_resp)); 
 endmodule

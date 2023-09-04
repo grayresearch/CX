@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-generate an m-initiator n-target switch_cfu
+generate an m-initiator n-target switch_cxu
 
 Copyright (C) 2019-2023, Gray Research LLC.
 
@@ -44,11 +44,11 @@ def generate(ports = 2):
     else:
         m, n = ports
 
-    name = "switch{0}x{1}_cfu".format(m, n)
+    name = "switch{0}x{1}_cxu".format(m, n)
     output = f"{name}.sv"
 
     t = Template(
-"""// {{name}}.sv: connect {{m}} initiator(s) to {{n}} target CFUs (CFU-L2)
+"""// {{name}}.sv: connect {{m}} initiator(s) to {{n}} target CXUs (CXU-L2)
 //
 // Copyright (C) 2019-2023, Gray Research LLC.
 // 
@@ -64,33 +64,33 @@ def generate(ports = 2):
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// {{name}}: connect {{m}} initiator(s) to {{n}} target CFUs (CFU-L2)
+// {{name}}: connect {{m}} initiator(s) to {{n}} target CXUs (CXU-L2)
 module {{name}}
-    import common_pkg::*, cfu_pkg::*;
+    import common_pkg::*, cxu_pkg::*;
 #(
-    `CFU_L2_PARAMS(/*N_CFUS*/1, /*N_STATES*/1, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
+    `CXU_L2_PARAMS(/*N_CXUS*/1, /*N_STATES*/1, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
     parameter int N_REQS    = 16    // max no. of in-flight requests per initiator and per target
 ) (
-    `CFU_CLOCK_PORTS,
+    `CXU_CLOCK_PORTS,
 {%- for p in range(m) %}
-    `CFU_L2_PORTS(input, output, i{{'%01d'%p}}_req, i{{'%01d'%p}}_resp), {% endfor %}
+    `CXU_L2_PORTS(input, output, i{{'%01d'%p}}_req, i{{'%01d'%p}}_resp), {% endfor %}
 {%- for p in range(n) %}
-    `CFU_L2_PORTS(output, input, t{{'%01d'%p}}_req, t{{'%01d'%p}}_resp){% if not loop.last %},{% endif %} {% endfor %}
+    `CXU_L2_PORTS(output, input, t{{'%01d'%p}}_req, t{{'%01d'%p}}_resp){% if not loop.last %},{% endif %} {% endfor %}
 );
     initial ignore(
-        `CHECK_CFU_L2_PARAMS
-    &&  check_param("CFU_FUNC_ID_W", CFU_FUNC_ID_W, $bits(cfid_t)));
-`ifdef SWITCH_CFU_VCD
+        `CHECK_CXU_L2_PARAMS
+    &&  check_param("CXU_FUNC_ID_W", CXU_FUNC_ID_W, $bits(cfid_t)));
+`ifdef SWITCH_CXU_VCD
     initial begin $dumpfile("{{name}}.vcd"); $dumpvars(0, {{name}}); end
 `endif
 
-    switch_cfu_core #(`CFU_L2_PARAMS_MAP, .N_INIS(N_INIS), .N_TGTS(N_TGTS), .N_REQS(N_REQS))
+    switch_cxu_core #(`CXU_L2_PARAMS_MAP, .N_INIS(N_INIS), .N_TGTS(N_TGTS), .N_REQS(N_REQS))
     core(
         .clk, .rst, .clk_en,
         // initiators
         .i_req_valids({ {% for p in range(m-1,-1,-1) %}i{{'%1d'%p}}_req_valid{% if not loop.last %}, {% endif %}{% endfor %} }),
         .i_req_readys({ {% for p in range(m-1,-1,-1) %}i{{'%1d'%p}}_req_ready{% if not loop.last %}, {% endif %}{% endfor %} }),
-        .i_req_cfus({ {% for p in range(m-1,-1,-1) %}i{{'%1d'%p}}_req_cfu{% if not loop.last %}, {% endif %}{% endfor %} }),
+        .i_req_cxus({ {% for p in range(m-1,-1,-1) %}i{{'%1d'%p}}_req_cxu{% if not loop.last %}, {% endif %}{% endfor %} }),
         .i_req_states({ {% for p in range(m-1,-1,-1) %}i{{'%1d'%p}}_req_state{% if not loop.last %}, {% endif %}{% endfor %} }),
         .i_req_funcs({ {% for p in range(m-1,-1,-1) %}i{{'%1d'%p}}_req_func{% if not loop.last %}, {% endif %}{% endfor %} }),
         .i_req_insns({ {% for p in range(m-1,-1,-1) %}i{{'%1d'%p}}_req_insn{% if not loop.last %}, {% endif %}{% endfor %} }),
@@ -103,7 +103,7 @@ module {{name}}
         // targets
         .t_req_valids({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_valid{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_readys({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_ready{% if not loop.last %}, {% endif %}{% endfor %} }),
-        .t_req_cfus({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_cfu{% if not loop.last %}, {% endif %}{% endfor %} }),
+        .t_req_cxus({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_cxu{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_states({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_state{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_funcs({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_func{% if not loop.last %}, {% endif %}{% endfor %} }),
         .t_req_insns({ {% for p in range(n-1,-1,-1) %}t{{'%1d'%p}}_req_insn{% if not loop.last %}, {% endif %}{% endfor %} }),

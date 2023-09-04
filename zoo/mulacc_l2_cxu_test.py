@@ -1,4 +1,4 @@
-## mulacc_l2_cfu_test.py: mulacc_l2_cfu (stateful serializable streaming L2 CFU) testbench
+## mulacc_l2_cxu_test.py: mulacc_l2_cxu (stateful serializable streaming L2 CXU) testbench
 
 '''
 Copyright (C) 2019-2023, Gray Research LLC.
@@ -26,13 +26,13 @@ from enum import IntEnum
 import random
 import math
 
-from cfu_li import *
+from cxu_li import *
 from tb import TB
 from imulacc import *
 
 # testbench
 @cocotb.test()
-async def mulacc_l2_cfu_tb(dut):
+async def mulacc_l2_cxu_tb(dut):
     for frac in [1.0,0.9,0.1]:
         tb = TB(dut, Level.l2_stream)
         tb.resp_ready_frac = frac
@@ -53,23 +53,23 @@ from cocotb_test.simulator import run
 @pytest.mark.parametrize("width", [32,64])
 
 def test_mulacc_l2(request, latency, states, width):
-    dut = "mulacc_l2_cfu"
+    dut = "mulacc_l2_cxu"
     module = os.path.splitext(os.path.basename(__file__))[0]
     parameters = {}
-    parameters['CFU_LATENCY'] = latency
-    parameters['CFU_N_STATES'] = states
-    parameters['CFU_STATE_ID_W'] = (states-1).bit_length()
-    parameters['CFU_DATA_W'] = width
+    parameters['CXU_LATENCY'] = latency
+    parameters['CXU_N_STATES'] = states
+    parameters['CXU_STATE_ID_W'] = (states-1).bit_length()
+    parameters['CXU_DATA_W'] = width
     sim_build = os.path.join(".", "sim_build",
         request.node.name.replace('[', '-').replace(']', ''))
 
     run(
         includes=["."],
-        verilog_sources=["common.svh", "cfu.svh", f"{dut}.sv", "cvt12_cfu.sv", "mulacc_cfu.sv", "shared.sv"],
+        verilog_sources=["common.svh", "cxu.svh", f"{dut}.sv", "cvt12_cxu.sv", "mulacc_cxu.sv", "shared.sv"],
         toplevel=dut,
         module=module,
         parameters=parameters,
-        defines=['MULACC_L2_CFU_VCD'],
-        extra_env={ 'CFU_N_STATES':str(states), 'CFU_LATENCY':str(latency), 'CFU_DATA_W':str(width) },
+        defines=['MULACC_L2_CXU_VCD'],
+        extra_env={ 'CXU_N_STATES':str(states), 'CXU_LATENCY':str(latency), 'CXU_DATA_W':str(width) },
         sim_build=sim_build
     )

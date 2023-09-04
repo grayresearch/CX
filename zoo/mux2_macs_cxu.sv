@@ -1,5 +1,5 @@
-// mux2_macs_cfu.sv: composition of two stateful mulacc CFU-L2 streaming CFUs
-// using a 2-1 mux2_cfu
+// mux2_macs_cxu.sv: composition of two stateful mulacc CXU-L2 streaming CXUs
+// using a 2-1 mux2_cxu
 //
 // Copyright (C) 2019-2023, Gray Research LLC.
 // 
@@ -15,32 +15,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// mux2_macs_cfu composes a mux2_cfu, cvt12_cfu, mulacc_cfu, cvt12_cfu, mulacc_cfu.
-module mux2_macs_cfu
-    import common_pkg::*, cfu_pkg::*;
+// mux2_macs_cxu composes a mux2_cxu, cvt12_cxu, mulacc_cxu, cvt12_cxu, mulacc_cxu.
+module mux2_macs_cxu
+    import common_pkg::*, cxu_pkg::*;
 #(
-    `CFU_L2_PARAMS(/*N_CFUS*/2, /*N_STATES*/1, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
+    `CXU_L2_PARAMS(/*N_CXUS*/2, /*N_STATES*/1, /*FUNC_ID_W*/$bits(cfid_t), /*INSN_W*/0, /*DATA_W*/32),
     parameter int MAC0_LATENCY = 1,
     parameter int MAC1_LATENCY = 5
 ) (
-    `CFU_CLK_L2_PORTS(input, output, req, resp)
+    `CXU_CLK_L2_PORTS(input, output, req, resp)
 );
-    initial ignore(`CHECK_CFU_L2_PARAMS);
-`ifdef MUX2_MACS_CFU_VCD
-    initial begin $dumpfile("mux2_macs_cfu.vcd"); $dumpvars(0, mux2_macs_cfu); end
+    initial ignore(`CHECK_CXU_L2_PARAMS);
+`ifdef MUX2_MACS_CXU_VCD
+    initial begin $dumpfile("mux2_macs_cxu.vcd"); $dumpvars(0, mux2_macs_cxu); end
 `endif
 
-    `CFU_L2_NETS(t0_req, t0_resp);
-    `CFU_L2_NETS(t1_req, t1_resp);
+    `CXU_L2_NETS(t0_req, t0_resp);
+    `CXU_L2_NETS(t1_req, t1_resp);
 
-    mux2_cfu #(`CFU_L2_PARAMS_MAP)
-        mux(`CFU_CLK_L2_PORT_MAP(req,req, resp,resp),
-            `CFU_L2_PORT_MAP(t0_req,t0_req, t0_resp,t0_resp),
-            `CFU_L2_PORT_MAP(t1_req,t1_req, t1_resp,t1_resp));
+    mux2_cxu #(`CXU_L2_PARAMS_MAP)
+        mux(`CXU_CLK_L2_PORT_MAP(req,req, resp,resp),
+            `CXU_L2_PORT_MAP(t0_req,t0_req, t0_resp,t0_resp),
+            `CXU_L2_PORT_MAP(t1_req,t1_req, t1_resp,t1_resp));
 
-    mulacc_l2_cfu #(`CFU_L2_PARAMS_MAP, .CFU_LATENCY(MAC0_LATENCY))
-        mac0(`CFU_CLK_L2_PORT_MAP(req,t0_req, resp,t0_resp));
+    mulacc_l2_cxu #(`CXU_L2_PARAMS_MAP, .CXU_LATENCY(MAC0_LATENCY))
+        mac0(`CXU_CLK_L2_PORT_MAP(req,t0_req, resp,t0_resp));
 
-    mulacc_l2_cfu #(`CFU_L2_PARAMS_MAP, .CFU_LATENCY(MAC1_LATENCY))
-        mac1(`CFU_CLK_L2_PORT_MAP(req,t1_req, resp,t1_resp));
+    mulacc_l2_cxu #(`CXU_L2_PARAMS_MAP, .CXU_LATENCY(MAC1_LATENCY))
+        mac1(`CXU_CLK_L2_PORT_MAP(req,t1_req, resp,t1_resp));
 endmodule

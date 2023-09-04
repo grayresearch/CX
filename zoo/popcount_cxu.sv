@@ -1,4 +1,4 @@
-// popcount_cfu.sv: 32/64-bit population count CFU-L0 combinational CFU
+// popcount_cxu.sv: 32/64-bit population count CXU-L0 combinational CXU
 //
 // Copyright (C) 2019-2023, Gray Research LLC.
 // 
@@ -17,30 +17,30 @@
 // IPopcount custom functions:
 //     *:   popcount
 
-`include "cfu.svh"
+`include "cxu.svh"
 
 /* verilator lint_off DECLFILENAME */
 
-// popcount_cfu: 32/64-bit population count CFU-L0 combinational CFU
-module popcount_cfu
-    import common_pkg::*, cfu_pkg::*;
+// popcount_cxu: 32/64-bit population count CXU-L0 combinational CXU
+module popcount_cxu
+    import common_pkg::*, cxu_pkg::*;
 #(
-    `CFU_L0_PARAMS(/*N_CFUS*/1, /*FUNC_ID_W*/0, /*DATA_W*/32),
+    `CXU_L0_PARAMS(/*N_CXUS*/1, /*FUNC_ID_W*/0, /*DATA_W*/32),
     parameter int ADDER_TREE = 0
 ) (
-    `CFU_L0_PORTS(input, output, req, resp)
+    `CXU_L0_PORTS(input, output, req, resp)
 );
-    initial ignore(`CHECK_CFU_L0_PARAMS);
-    wire _unused_ok = &{1'b0,req_data1,req_func,req_cfu,req_valid,1'b0};
-`ifdef POPCOUNT_CFU_VCD
-    initial begin $dumpfile("popcount_cfu.vcd"); $dumpvars(0, popcount_cfu); end
+    initial ignore(`CHECK_CXU_L0_PARAMS);
+    wire _unused_ok = &{1'b0,req_data1,req_func,req_cxu,req_valid,1'b0};
+`ifdef POPCOUNT_CXU_VCD
+    initial begin $dumpfile("popcount_cxu.vcd"); $dumpvars(0, popcount_cxu); end
 `endif
 
     if (ADDER_TREE != 0)
-        adder_tree #(.W(CFU_DATA_W)) adders(.in(req_data0), .count(resp_data));
+        adder_tree #(.W(CXU_DATA_W)) adders(.in(req_data0), .count(resp_data));
     else
-        compressors #(.W(CFU_DATA_W)) comps(.in(req_data0), .count(resp_data));
-    always_comb resp_status = CFU_OK;
+        compressors #(.W(CXU_DATA_W)) comps(.in(req_data0), .count(resp_data));
+    always_comb resp_status = CXU_OK;
 endmodule
 
 
