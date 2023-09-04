@@ -12,7 +12,16 @@ and software libraries. Presently the repo includes only the
 with hardware CXU core packages, software libraries, tests, and other
 collateral to come.
 
-It is a work in progress. We request your feedback.
+This new [talk video](https://www.youtube.com/watch?v=7daY_E2itpo)
+accompanies the spec, presenting the *Design and Rationale* of the Specification
+([slides PDF](https://raw.githubusercontent.com/grayresearch/CFU/main/collateral/design-rationale-CX-CXU-spec.pdf))
+which explains why RISC-V needs standards-based composable extensions
+to bring order and reuse to the custom extensions Wild West. The talk
+details the design of the various interop interface standards proposed
+in the spec, and importantly, it
+[explains why they are they way they are](https://www.youtube.com/watch?v=7daY_E2itpo&t=415s).
+
+This is all a work in progress. We request your feedback.
 
 At present this is not a work product of a RISC-V International SIG, Task
 Group, or subcommittee.  Rather we share this work in the hope that it
