@@ -84,6 +84,8 @@ and their libraries.
 
 ## Deliverables, Division of TG responsibilities
 
+![stack layers diagram](/spec/images/composition-layers.png)
+
 1. *CX-ISA TG* defines the Composable Extensions standard extension *-Zicx* implementing access controlled CX multiplexing and error signaling. This comprises:
 
 	a. New CSRs, new instructions, or other new mechanisms to enable, select, and access-control CX and CX state multiplexing; and
@@ -92,9 +94,9 @@ and their libraries.
 
 2. *CX-SW TG* defines:
 
-	a. The CX-Runtime API for uniform CX naming, discovery, version management, uniform extension state context management, and uniform access control;
+	a. CX-RT: The CX-Runtime API for uniform CX naming, discovery, version management, uniform extension state context management, and uniform access control;
 
-	b. The CX-ABI for disciplined possibly nested CX selection multiplexing; and
+	b. CX-ABI: The application binary interface specifying disciplined use of -Zicx CX multiplexing.
 
 	c. Standard custom instructions that stateful CXs implement for uniform per-CX CSRs, per-CX extended error signaling, and per-CX state context management.
 
