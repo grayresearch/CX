@@ -1,6 +1,6 @@
 # Composable Extensions ISA, Software, and Hardware Task Groups' Charters
 
-## Introduction / Problem Statement
+## Introduction / problem statement
 
 RISC-V reserves the custom-\* opcode space, enabling anyone to create
 new custom extensions and extension-aware software libraries. But RISC-V
@@ -82,7 +82,7 @@ interfaces version over decades, providing best possible forwards and
 backwards compatibility to mixes of old and new composable extensions
 and their libraries.
 
-## Deliverables, Division of TG responsibilities
+## Deliverables, division of TG responsibilities
 
 1. *CX-ISA TG* defines the Composable Extensions standard extension *-Zicx* implementing access controlled CX multiplexing and error signaling. This comprises:
 
@@ -115,6 +115,25 @@ example, an implementation might implement the -Zicx extension and the
 CX-Runtime API, hosting CX libraries obeying the CX-ABI, but *not*
 adopt CXU-LI or CXU-MD, employing other means to implement the various
 composable extensions in hardware.
+
+## Acceptance criteria
+
+Each TG work product must be implemented and proven in nontrivial interop
+scenarios. Therefore a prerequisite for ratification of any CX TG spec
+is a plug-fest demonstration of 3+ different processors, each with 3+
+CXs, 2+ stateful, running a multithreaded Linux workload, each such
+thread using all of the composable extensions' libraries.
+
+## Non-goals and future work
+
+The -Zicx extension will specify what *kinds* of custom instructions are valid within a *composable* extension.
+Not every arbitrary custom extension can be a composable extension.
+
+The present TGs focus on *enabling* composition of extensions and
+software. Later, additional TG standards work may be helpful, e.g. to
+debug and profiling of such systems, formal specification of composable
+extensions' interface contracts, CX library metadata, CXU compliance
+with CXs, automatic system composition tools.
 
 ## History
 
