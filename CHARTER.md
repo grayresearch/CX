@@ -43,7 +43,7 @@ security, and longevity. In particular:
 
 1. *Composability:* The behavior of a CX or CX library does not change
 when combined together with other CXs, ordinary *non-composable* custom
-extensions (NCXs), or extension library in one system.
+extensions (NCXs), or extension libraries in one system.
 
 2. *Conflict-freedom:* Any CX may use any of the custom-\* opcode
 instructions, without conflict with other CXs or NCXs.
