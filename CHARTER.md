@@ -61,7 +61,7 @@ without resort to recompilation or relinking.
 *naming, discovery, versioning:* CX software has a uniform means to discover if specific CX / version
 is available;
 *error signaling:* common means to signal any CX error; and
-*state management:* common means to select and manage CX state contexts.
+*state management:* common means to manage CX state contexts.
 
 6. *Performance:* A single instruction suffices to select the CX and
 CX state context of CX instructions that follow.
