@@ -35,6 +35,15 @@ also discover a second CX, separately authored, separately versioned,
 is available, select it, and issue its custom instructions. The various
 CXs' state contexts are managed by CX-agnostic software.
 
+The hardware standards enable reuse of CX unit RTL modules. They specify
+interoperable module port signaling and function, enabling automatic
+glueless composition of a DAG of CPUs and CX Units (CXUs) into a composed
+system. Then in response to issuing a CX instruction, a CPU issues a
+CXU request to the selected CXU, which sends its response back to the
+CPU. CX-HW accomodates a diversity of signaling disciplins including
+combinational, pipelined fixed latency, and pipelined variable latency
+with valid/ready handshaking.
+
 The ISA extensions, API, ABI, and logic interface, will fulfil these
 requirements: composability, conflict-freedom, decentralization, stable
 binaries, uniformity (of scope, naming, discovery, versioning, error
@@ -73,8 +82,9 @@ All other CX services are provided by a software API specified by CX-SW TG.
 8. *Security:* Privileged software may grant or deny unprivileged
 software access to a CX or its state. Once again, a single instruction
 suffices to select the CX and CX state context without a detour
-into privileged software. Unpriv software CX selection via opaque,
-priv-managed CX indices precludes certain side channel attacks.
+into privileged software. Certain side channel attacks are defeated by
+using (privileged software managed) CX indices to select a hart's
+current CX.
 
 9. *Longevity:* The TG standards explicitly document how specified
 interfaces version over decades, providing best possible forwards and
