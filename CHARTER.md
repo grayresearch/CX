@@ -35,11 +35,11 @@ second CX, separately authored, separately versioned, is available,
 select it, and issue its custom instructions. The various CXs' state
 contexts are managed by CX-agnostic software.
 
-The ISA extensions, API, and ABI must fulfil these requirements:
-composability, conflict-freedom, decentralization, stable binaries,
-uniformity (of scope, naming, discovery, versioning, error signaling,
-state management, access control), performance, frugality, security,
-and longevity. In particular:
+The ISA extensions, API, ABI, and logic interface, will fulfil these
+requirements: composability, conflict-freedom, decentralization, stable
+binaries, uniformity (of scope, naming, discovery, versioning, error
+signaling, state management, access control), performance, frugality,
+security, and longevity. In particular:
 
 1. *Composability:* The behavior of a CX or CX library does not change
 when combined together with other CXs, ordinary *non-composable* custom
@@ -110,11 +110,11 @@ The interrelationship of these three separate task group abstraction layers are 
 
 <img src="/spec/images/composition-layers.png" width="500">
 
-The three TGs' specifications may be used separately, or together. For
+The three TGs' specifications may be applied separately, or together. For
 example, an implementation might implement the -Zicx extension and the
 CX-Runtime API, hosting CX libraries obeying the CX-ABI, but *not*
-adopt CXU-LI or CXU-MD, employing other means to compose or implement
-the various composable extensions in hardware.
+adopt CXU-LI or CXU-MD, employing other means to implement the various
+composable extensions in hardware.
 
 ## History
 
