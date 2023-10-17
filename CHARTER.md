@@ -96,7 +96,7 @@ and their libraries.
 
 	b. CX-ABI: The application binary interface specifying disciplined use of -Zicx CX multiplexing.
 
-	c. Standard custom instructions that stateful CXs implement for uniform per-CX CSRs, per-CX extended error signaling, and per-CX state context management.
+	c. Required CX behaviors (e.g., state isolation) and features (e.g., standard custom instructions for uniform access to state contexts) so that CXs and CX software are compositional.
 
 3. *CX-HW TG* defines:
 
