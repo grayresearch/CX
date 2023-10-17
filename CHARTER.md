@@ -1,4 +1,4 @@
-# Composable Extensions ISA (CX-ISA) TG, Software (CX-SW) TG, and Hardware (CX-HW) Charters
+# Composable Extensions ISA *CX-ISA* TG, Software *CX-SW* TG, and Hardware *CX-HW* TG Charters
 
 ## Introduction / Problem Statement
 
