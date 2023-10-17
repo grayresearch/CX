@@ -13,8 +13,8 @@ versioning, computation, state, error handling, etc.
 This leads to disjoint solution silos and fragmentation of the RISC-V
 ecosystem.
 
-To address this composable extensions interop standards gap, the CX-ISA
-and CX-SW TGs will define HW-SW interop standards enabling development
+To address this custom extensions' reuse problem / standards gap, the
+CX-ISA and CX-SW TGs will define interop standards enabling development
 and reuse of multiple *composable* custom extensions and their libraries,
 together in one system.
 
