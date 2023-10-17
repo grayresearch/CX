@@ -106,7 +106,7 @@ and their libraries.
 
 Together enabling automatic glueless composition of configurable CPU and CXU cores into processor complexes.
 
-<img src="/spec/images/composition-layers.png" width="200">
+<img src="/spec/images/composition-layers.png" width="500">
 
 ## History
 
