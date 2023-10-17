@@ -2,10 +2,10 @@
 
 ## Introduction / Problem Statement
 
-RISC-V reserves the custom-\* opcode space, enabling everyone to create
+RISC-V reserves the custom-\* opcode space, enabling anyone to create
 new custom extensions and extension-aware software libraries. But RISC-V
 custom extensions are an unmanaged wild west, lacking uniformity,
-conventions, standards. This impairs extension reuse. Use of one
+conventions, or standards. This impairs extension reuse. Use of one
 extension in a system may preclude use of another, because the two
 extensions may have conflicting custom instructions, or may have
 incompable means of extension discovery, versioning, computation,
@@ -28,10 +28,10 @@ software libraries to harmoniously coexist within one RISC-V system.
 Operationally, these standards will enable extension-aware software to
 *discover* that a CX is available, to *select* it as the hart's current
 CX, and to *issue* its custom instructions. *Stateful* CX instructions
-may access the hart's current CX state. Then software may discover a
-second CX, separately authored or versioned, is available, select it,
-and issue its custom instructions. The various CXs' state contexts are
-managed by CX-agnostic software.
+may access the hart's current CX state. Software may also discover a
+second CX, separately authored, separately versioned, is available,
+select it, and issue its custom instructions. The various CXs' state
+contexts are managed by CX-agnostic software.
 
 The ISA extensions, API, and ABI must fulfil these requirements:
 composability, conflict-freedom, decentralization, stable binaries,
