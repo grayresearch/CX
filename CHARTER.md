@@ -119,7 +119,7 @@ composable extensions in hardware.
 ### Acceptance criteria
 
 Each TG work product must be implemented and proven in nontrivial interop
-scenarios. Therefore a prerequisite for ratification of any CX TG spec
+scenarios. Therefore, a prerequisite for ratification of any CX TG spec
 is a plug-fest demonstration of 3+ different processors, each with 3+
 CXs, 2+ stateful, running a multithreaded Linux workload, each such
 thread using all of the composable extensions' libraries.
@@ -130,7 +130,7 @@ The -Zicx extension will specify what *kinds* of custom instructions are valid w
 Not every arbitrary custom extension can be a composable extension.
 
 The present TGs focus on *enabling* composition of extensions and
-software. Later, additional TG standards work may be helpful, e.g. tools
+software. Later, additional TG standards work may be helpful, e.g., tools
 support including debugging and profiling, formal specification of
 CXs' interface contracts, CX library metadata, and automatic system
 composition and composition tools.
@@ -146,9 +146,9 @@ to advance RISC-V as the preeminent ecosystem for FPGA processor and SoC
 designs, started to work on their Charter goal to "Propose extensions
 ... to enable interoperable RISC-V FPGA platforms and applications".
 
-RISC-V provisions for custom extensions dovetails with existing practice
-of *configurable* FPGA soft processors. But dissatisfied with past
-incompatible soft CPU tech stack silos, the members opted to pursue
+The RISC-V provision for custom extensions dovetails with existing
+practice of *configurable* FPGA soft processors. But dissatisfied with
+past incompatible soft CPU tech stack silos, the members opted to pursue
 standards by which various reusable cores that implement various custom
 extensions might be reused across various RISC-V soft CPUs.
 
