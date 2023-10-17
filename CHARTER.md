@@ -130,10 +130,10 @@ The -Zicx extension will specify what *kinds* of custom instructions are valid w
 Not every arbitrary custom extension can be a composable extension.
 
 The present TGs focus on *enabling* composition of extensions and
-software. Later, additional TG standards work may be helpful, e.g. to
-debug and profiling of such systems, formal specification of composable
-extensions' interface contracts, CX library metadata, CXU compliance
-with CXs, automatic system composition tools.
+software. Later, additional TG standards work may be helpful, e.g. tools
+support including debugging and profiling, formal specification of
+CXs' interface contracts, CX library metadata, and automatic system
+composition and composition tools.
 
 ## History
 
