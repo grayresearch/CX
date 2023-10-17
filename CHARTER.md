@@ -106,7 +106,7 @@ and their libraries.
 
     Together CXU-LI and CXU-MD enable automatic glueless composition of configurable CPU and CXU cores into processor complexes.
 
-The interrelationship of these three separate task group abstraction layers are illustrated in this hardware-software stack diagram.
+The interrelationship of these three separate task group abstraction layers is illustrated in this hardware-software stack diagram.
 
 <img src="/spec/images/composition-layers.png" width="500">
 
