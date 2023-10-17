@@ -37,12 +37,12 @@ CXs' state contexts are managed by CX-agnostic software.
 
 The hardware standards enable reuse of composable extension
 *implementations* (RTL modules). They specify interoperable module port
-signaling and function, enabling automatic glueless composition of a DAG
-of CPUs and CX Units (CXUs) into a composed system. Then in response to
-issuing a CX instruction, a CPU issues a CXU request to the selected CXU,
-which sends its response back to the CPU. CX-HW accomodates a diversity
-of signaling disciplins including combinational, pipelined fixed latency,
-and pipelined variable latency with valid/ready handshaking.
+signaling and function, supporting combinational or pipelined fixed-
+or variable-latency signaling, enabling automatic glueless composition of
+a DAG of CPUs and CX Units (CXUs) into a composed system. A single CXU
+may implement multiple CXs. Then in response to issuing a CX instruction,
+a CPU issues a CXU request, routed to the selected CXU, and its response
+is routed back to the CPU.
 
 The ISA extensions, API, ABI, and logic interface, will fulfil these
 requirements: composability, conflict-freedom, decentralization, stable
