@@ -84,8 +84,6 @@ and their libraries.
 
 ## Deliverables, Division of TG responsibilities
 
-![stack layers diagram](/spec/images/composition-layers.png)
-
 1. *CX-ISA TG* defines the Composable Extensions standard extension *-Zicx* implementing access controlled CX multiplexing and error signaling. This comprises:
 
 	a. New CSRs, new instructions, or other new mechanisms to enable, select, and access-control CX and CX state multiplexing; and
@@ -107,6 +105,8 @@ and their libraries.
 	b. CXU-MD, CPU/CXU core metadata formats specifying these configurable cores' constraints and parameters.
 
 Together enabling automatic glueless composition of configurable CPU and CXU cores into processor complexes.
+
+<img src="/spec/images/composition-layers.png" width="200">
 
 ## History
 
