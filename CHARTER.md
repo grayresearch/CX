@@ -10,13 +10,13 @@ This impairs extension reuse. Use of one extension in a system may
 preclude use of another, because the two extensions may have conflicting
 custom instructions, or may have incompable means of extension discovery,
 versioning, computation, state, error handling, etc.
-
 This leads to disjoint solution silos and fragmentation of the RISC-V
 ecosystem.
 
-The CX-ISA and CX-SW TGs will define HW-SW interop standards enabling
-development and reuse of multiple *composable* custom extensions and
-their libraries, together in one system.
+To address this composable extensions interop standards gap, the CX-ISA
+and CX-SW TGs will define HW-SW interop standards enabling development
+and reuse of multiple *composable* custom extensions and their libraries,
+together in one system.
 
 ## Charters
 
