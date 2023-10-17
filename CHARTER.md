@@ -163,7 +163,6 @@ CX multiplexing, uniform state context management, access control, etc.,
 culminating in the
 [Draft Proposed RISC-V Composable Custom Extensions Specification](spec/spec.pdf)
 [(PDF)](https://raw.githubusercontent.com/grayresearch/CX/main/spec/spec.pdf),
-which we propose as a basis / starting point for the TGs work.
-
-In 2023, the SIG has rebooted, moved to RISC-V International's Tech HC,
-and now proposes to undertake the CX-ISA, CX-SW, and CX-HW task groups.
+proposed as a basis / starting point for the TGs work. In 2023, the SIG
+moved to RISC-V International's Tech HC, and now proposes to undertake
+the CX-ISA, CX-SW, and CX-HW task groups.
