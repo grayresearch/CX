@@ -100,7 +100,7 @@ and their libraries.
 
 3. *CX-HW TG* defines:
 
-	a. CXU-LI, the composable extension unit (CXU) logic interface, a HW-HW interface specification to exchange uniform CXU requests and response, and
+	a. CXU-LI, the composable extension unit (CXU) logic interface, a HW-HW interface specification to exchange uniform CXU requests and responses, and
 
 	b. CXU-MD, CPU/CXU core metadata format, specifying cores' CXU-LI constraints and parameters.
 
