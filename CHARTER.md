@@ -111,9 +111,10 @@ Members knew that a vibrant ecosystem of mix-and-match reusable
 extensions, libraries, their hardware cores, requires routine,
 robust composition of multiple such extensions into one system.
 
-Over 2019-2022, the effort to define the *MVP* of new standards to enable
-practical composition of extensions grew to include CX multiplexing,
-uniform state context management, access control, etc., culminating in the
+Over 2019-2022, the effort to define the *minimum viable product* of new
+standards to enable practical composition of extensions grew to include
+CX multiplexing, uniform state context management, access control, etc.,
+culminating in the
 [Draft Proposed RISC-V Composable Custom Extensions Specification](spec/spec.pdf)
 [(PDF)](https://raw.githubusercontent.com/grayresearch/CX/main/spec/spec.pdf),
 which we propose as a basis / starting point for the TGs work.
