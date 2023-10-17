@@ -106,7 +106,13 @@ and their libraries.
 
     Together enabling automatic glueless composition of configurable CPU and CXU cores into processor complexes.
 
+The interrelationship of these three separate TG absraction layers are illustrated in this hardware-software stack diagram:
 <img src="/spec/images/composition-layers.png" width="500">
+
+The three TGs' specifications may be used separately, or together. For
+example, an implementation may adopt CX-SW and CX-ISA but not CX-HW,
+employing other means to compose or implement the various composable
+extensions in hardware.
 
 ## History
 
