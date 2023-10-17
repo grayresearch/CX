@@ -2,15 +2,15 @@
 
 ## Introduction 
 
-RISC-V reserves the custom-\* opcode space, enabling anyone to create
-new custom extensions and extension-aware software libraries. But RISC-V
-custom extensions are an unmanaged wild west, lacking uniformity,
-conventions, or standards. This impairs extension reuse. Use of one
-extension in a system may preclude use of another, because the two
-extensions may have conflicting custom instructions, or may have
-incompatible means of extension discovery, versioning, computation,
-state, error handling, etc. This leads to disjoint solution silos and
-fragmentation of the RISC-V ecosystem.
+RISC-V reserves the custom-\* opcode space, enabling anyone to create new
+custom extensions and extension-aware software libraries. But RISC-V
+custom extensions are unmanaged, lacking uniformity, conventions,
+or standards. This impairs extension reuse. Use of one extension in
+a system may preclude use of another, because the two extensions may
+have conflicting custom instructions, or may have incompatible means of
+extension discovery, versioning, computation, state, error handling,
+etc. This leads to disjoint solution silos and fragmentation of the
+RISC-V ecosystem.
 
 To overcome this custom extensions' reuse problem / standards gap, the
 CX-ISA, CX-SW, and CX-HW TGs will define interop standards enabling
@@ -73,8 +73,8 @@ All other CX services are provided by a software API specified by CX-SW TG.
 8. *Security:* Privileged software may grant or deny unprivileged
 software access to a CX or its state. Once again, a single instruction
 suffices to select the CX and CX state context without a detour
-into privileged software. The use of a CX or its state on one
-hart is not visible to other harts (except for instruction latencies).
+into privileged software. Unpriv software CX selection via opaque,
+priv-managed CX indices precludes certain side channel attacks.
 
 9. *Longevity:* The TG standards explicitly document how specified
 interfaces version over decades, providing best possible forwards and
@@ -95,13 +95,13 @@ and their libraries.
 
 	b. CX-ABI: The application binary interface specifying disciplined use of -Zicx CX multiplexing.
 
-	c. Required CX behaviors (e.g., state isolation) and features (e.g., standard custom instructions for uniform access to state contexts) so that CXs and CX software are truly composable.
+	c. Standard CX behaviors (e.g., state isolation) and instructions (e.g., for uniform access to state contexts) so that CXs and CX software are truly composable.
 
 3. *CX-HW TG* defines:
 
-	a. CXU-LI, the composable extension unit (CXU) logic interface, a HW-HW interface specification to exchange uniform CXU requests and responses, and
+	a. CXU-LI: the composable extension unit (CXU) logic interface, a HW-HW interface specification to exchange uniform CXU requests and responses, and
 
-	b. CXU-MD, CPU/CXU core metadata format, specifying cores' CXU-LI constraints and parameters.
+	b. CXU-MD: the system manifest and CPU/CXU core metadata format, specifying system and cores' CXU-LI constraints and parameters.
 
     Together CXU-LI and CXU-MD enable automatic glueless composition of configurable CPU and CXU cores into processor complexes.
 
