@@ -29,7 +29,7 @@ reusable hardware cores, to harmoniously coexist within one RISC-V system.
 
 Operationally, these standards will enable extension-aware software to
 *discover* that a CX is available, to *select* it as the hart's current
-CX, to *issue* its custom instructions, to *signal* any errors. *Stateful*
+CX, to *issue* its custom instructions, and to *signal* any errors. *Stateful*
 CX instructions may read and write the hart's current CX state. Software may
 also discover a second CX, separately authored, separately versioned,
 is available, select it, and issue its custom instructions. The various
