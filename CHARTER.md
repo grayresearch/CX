@@ -1,4 +1,4 @@
-# Composable Extensions ISA (CX-ISA) TG and Software (CX-SW) TG Charters
+# Composable Extensions ISA (CX-ISA) TG, Software (CX-SW) TG, and Hardware (CX-HW) Charters
 
 ## Introduction / Problem Statement
 
@@ -13,17 +13,19 @@ state, error handling, etc. This leads to disjoint solution silos and
 fragmentation of the RISC-V ecosystem.
 
 To overcome this custom extensions' reuse problem / standards gap, the
-CX-ISA and CX-SW TGs will define interop standards enabling development
-and reuse of multiple *composable* custom extensions and their libraries,
-together in one system.
+CX-ISA, CX-SW, and CX-HW TGs will define interop standards enabling
+development and reuse of multiple *composable* custom extensions and
+their libraries, together in one system.
 
 ## Charters
 
-The Composable Extensions ISA (CX-ISA) Task Group, and concurrently,
-the Composable Extensions Software (CX-SW) Task Group, together will
-specify a RISC-V ISA standard extension, a runtime library API, and an
-ABI, enabling any number of *composable extensions* (CXs) and their
-software libraries to harmoniously coexist within one RISC-V system.
+Together the Composable Extensions ISA (CX-ISA) Task Group, Composable
+Extensions Software (CX-SW) Task Group, and Composable Extensions Hardware
+(CX-HW) Task Group, underway concurrently, will specify *CX-ISA:* a RISC-V
+ISA standard extension, *CX-SW:* a runtime library API and an ABI, and
+*CX-HW:* a CX unit logic interface, enabling any number of *composable
+extensions* (CXs), their software libraries, and reusable hardware cores,
+to harmoniously coexist within one RISC-V system.
 
 Operationally, these standards will enable extension-aware software to
 *discover* that a CX is available, to *select* it as the hart's current
@@ -90,11 +92,19 @@ and their libraries.
 
 2. *CX-SW TG* defines:
 
-	a. The CX-Runtime API for uniform CX naming, discovery, version management; uniform extension state context management; and uniform access control;
+	a. The CX-Runtime API for uniform CX naming, discovery, version management, uniform extension state context management, and uniform access control;
 
 	b. The CX-ABI for disciplined possibly nested CX selection multiplexing; and
 
 	c. Standard custom instructions that stateful CXs implement for uniform per-CX CSRs, per-CX extended error signaling, and per-CX state context management.
+
+3. *CX-HW TG* defines:
+
+	a. CXU-LI, the composable extension unit (CXU) logic interface, a HW-HW interface specification to exchange uniform CXU requests and response, and
+
+	b. CXU-MD, CPU/CXU core metadata formats specifying these configurable cores' constraints and parameters.
+
+Together enabling automatic glueless composition of configurable CPU and CXU cores into processor complexes.
 
 ## History
 
@@ -123,4 +133,4 @@ culminating in the
 which we propose as a basis / starting point for the TGs work.
 
 In 2023, the SIG has rebooted, moved to RISC-V International's Tech HC,
-and now proposes to undertake the CX-ISA TG and the CX-SW TG.
+and now proposes to undertake the CX-ISA, CX-SW, and CX-HW task groups.
