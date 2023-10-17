@@ -82,17 +82,17 @@ and their libraries.
 
 1. *CX-ISA TG* defines the Composable Extensions standard extension *-Zicx* implementing access controlled CX multiplexing and error signaling. This comprises:
 
-	a. new CSRs, new instructions, or other new mechanisms to enable, select, and access-control CX and CX state multiplexing; and
+	a. New CSRs, new instructions, or other new mechanisms to enable, select, and access-control CX and CX state multiplexing; and
 
-	b. new CSRs, new instructions, or other new mechanisms to uniformly signal errors arising during CX instruction execution.
+	b. New CSRs, new instructions, or other new mechanisms to uniformly signal errors arising during CX instruction execution.
 
 2. *CX-SW TG* defines:
 
-	a. the CX-Runtime API for uniform CX naming, discovery, version management; uniform extension state context management; and uniform access control;
+	a. The CX-Runtime API for uniform CX naming, discovery, version management; uniform extension state context management; and uniform access control;
 
-	b. the CX-ABI for disciplined possibly nested CX selection multiplexing; and
+	b. The CX-ABI for disciplined possibly nested CX selection multiplexing; and
 
-	c. standard custom instructions that stateful CXs implement for uniform per-CX CSRs, per-CX extended error signaling, and per-CX state context management.
+	c. Standard custom instructions that stateful CXs implement for uniform per-CX CSRs, per-CX extended error signaling, and per-CX state context management.
 
 ## History
 
