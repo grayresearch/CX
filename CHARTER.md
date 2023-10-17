@@ -111,9 +111,10 @@ The interrelationship of these three separate task group abstraction layers are 
 <img src="/spec/images/composition-layers.png" width="500">
 
 The three TGs' specifications may be used separately, or together. For
-example, an implementation may adopt CX-SW and CX-ISA but not CX-HW,
-employing other means to compose or implement the various composable
-extensions in hardware.
+example, an implementation might implement the -Zicx extension and the
+CX-Runtime API, hosting CX libraries obeying the CX-ABI, but *not*
+adopt CXU-LI or CXU-MD, employing other means to compose or implement
+the various composable extensions in hardware.
 
 ## History
 
