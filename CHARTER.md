@@ -21,19 +21,19 @@ their libraries, together in one system.
 
 Together the Composable Extensions ISA (CX-ISA) Task Group, Composable
 Extensions Software (CX-SW) Task Group, and Composable Extensions Hardware
-(CX-HW) Task Group, underway concurrently, will specify *CX-ISA:* a RISC-V
-ISA standard extension, *CX-SW:* a runtime library API and an ABI, and
-*CX-HW:* a CX unit logic interface, enabling any number of *composable
-extensions* (CXs), their software libraries, and reusable hardware cores,
-to harmoniously coexist within one RISC-V system.
+(CX-HW) Task Group, operating concurrently, and coordinating work, will
+specify *CX-ISA:* a RISC-V ISA standard extension, *CX-SW:* a runtime
+library API and an ABI, and *CX-HW:* a CX unit logic interface, enabling
+any number of *composable extensions* (CXs), their software libraries, and
+reusable hardware cores, to harmoniously coexist within one RISC-V system.
 
 Operationally, these standards will enable extension-aware software to
 *discover* that a CX is available, to *select* it as the hart's current
-CX, and to *issue* its custom instructions. *Stateful* CX instructions
-may access the hart's current CX state. Software may also discover a
-second CX, separately authored, separately versioned, is available,
-select it, and issue its custom instructions. The various CXs' state
-contexts are managed by CX-agnostic software.
+CX, to *issue* its custom instructions, to *signal* any errors. *Stateful*
+CX instructions may access the hart's current CX state. Software may
+also discover a second CX, separately authored, separately versioned,
+is available, select it, and issue its custom instructions. The various
+CXs' state contexts are managed by CX-agnostic software.
 
 The ISA extensions, API, ABI, and logic interface, will fulfil these
 requirements: composability, conflict-freedom, decentralization, stable
