@@ -35,9 +35,9 @@ also discover a second CX, separately authored, separately versioned,
 is available, select it, and issue its custom instructions. The various
 CXs' state contexts are managed by CX-agnostic software.
 
-The hardware standards enable reuse of composable extension
-*implementations* (RTL modules). They specify interoperable module port
-signaling and function, supporting combinational or pipelined fixed-
+The hardware standards enable reuse of composable extension unit (CXU)
+*implementations* (e.g., RTL modules). They specify interoperable module port names,
+signaling, and function, including support for combinational or pipelined fixed-
 or variable-latency signaling, enabling automatic glueless composition of
 a DAG of CPUs and CX Units (CXUs) into a composed system. A single CXU
 may implement multiple CXs. Then in response to issuing a CX instruction,
@@ -61,9 +61,7 @@ instructions, without conflict with other CXs or NCXs.
 without coordination with others, and without resort to a central naming
 or numbering authority.
 
-4. *Stable binaries:* Compiled software that issues CX instructions
-safely coexists with other software that use different CXs or NCXs,
-without resort to recompilation or relinking.
+4. *Stable binaries:* CX library *binaries* compose without recompilation or relinking.
 
 5. *Uniformity:*
 *Scope:* instructions may access int registers, may be stateful;
