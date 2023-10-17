@@ -8,7 +8,7 @@ custom extensions are an unmanaged wild west, lacking uniformity,
 conventions, or standards. This impairs extension reuse. Use of one
 extension in a system may preclude use of another, because the two
 extensions may have conflicting custom instructions, or may have
-incompable means of extension discovery, versioning, computation,
+incompatible means of extension discovery, versioning, computation,
 state, error handling, etc. This leads to disjoint solution silos and
 fragmentation of the RISC-V ecosystem.
 
@@ -102,11 +102,12 @@ and their libraries.
 
 	a. CXU-LI, the composable extension unit (CXU) logic interface, a HW-HW interface specification to exchange uniform CXU requests and response, and
 
-	b. CXU-MD, CPU/CXU core metadata formats specifying these configurable cores' constraints and parameters.
+	b. CXU-MD, CPU/CXU core metadata format, specifying cores' CXU-LI constraints and parameters.
 
-    Together enabling automatic glueless composition of configurable CPU and CXU cores into processor complexes.
+    Together CXU-LI and CXU-MD enable automatic glueless composition of configurable CPU and CXU cores into processor complexes.
 
-The interrelationship of these three separate TG absraction layers are illustrated in this hardware-software stack diagram:
+The interrelationship of these three separate task group abstraction layers are illustrated in this hardware-software stack diagram.
+
 <img src="/spec/images/composition-layers.png" width="500">
 
 The three TGs' specifications may be used separately, or together. For
