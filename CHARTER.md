@@ -123,7 +123,7 @@ to advance RISC-V as the preeminent ecosystem for FPGA processor and SoC
 designs, started to work on their Charter goal to "Propose extensions
 ... to enable interoperable RISC-V FPGA platforms and applications".
 
-RISC-V provision for custom extensions dovetails with existing practice
+RISC-V provisions for custom extensions dovetails with existing practice
 of *configurable* FPGA soft processors. But dissatisfied with past
 incompatible soft CPU tech stack silos, the members opted to pursue
 standards by which various reusable cores that implement various custom
