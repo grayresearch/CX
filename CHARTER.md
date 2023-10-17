@@ -57,12 +57,11 @@ safely coexists with other software that use different CXs or NCXs,
 without resort to recompilation or relinking.
 
 5. *Uniformity:*
-*Scope:* CX instructions may access integer registers, and may be stateless or stateful;
-*naming, discovery, versioning:* CX library software employs a common CX identifier,
-and common means for software to dynamically discover if a specific CX or
-CX version is available in this system;
-*error signaling:* with a common means to signal any CX error to software; and
-*state management:* with a common means for software to select and manage CX state contexts.
+*Scope:* instructions may access int registers, may be stateful;
+*naming, discovery, versioning:* CX software has a uniform means to discover if specific CX / version
+is available;
+*error signaling:* common means to signal any CX error; and
+*state management:* common means to select and manage CX state contexts.
 
 6. *Performance:* A single instruction suffices to select the CX and
 CX state context of CX instructions that follow.
