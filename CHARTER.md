@@ -2,18 +2,17 @@
 
 ## Introduction / Problem Statement
 
-RISC-V reserves the custom-\* opcode space, enabling domain specific
-custom extensions, and its software. But RISC-V custom extensions are
-an unmanaged wild west, sans conventions, standards, or commonality.
+RISC-V reserves the custom-\* opcode space, enabling everyone to create
+new custom extensions and extension-aware software libraries. But RISC-V
+custom extensions are an unmanaged wild west, lacking uniformity,
+conventions, standards. This impairs extension reuse. Use of one
+extension in a system may preclude use of another, because the two
+extensions may have conflicting custom instructions, or may have
+incompable means of extension discovery, versioning, computation,
+state, error handling, etc. This leads to disjoint solution silos and
+fragmentation of the RISC-V ecosystem.
 
-This impairs extension reuse. Use of one extension in a system may
-preclude use of another, because the two extensions may have conflicting
-custom instructions, or may have incompable means of extension discovery,
-versioning, computation, state, error handling, etc.
-This leads to disjoint solution silos and fragmentation of the RISC-V
-ecosystem.
-
-To address this custom extensions' reuse problem / standards gap, the
+To overcome this custom extensions' reuse problem / standards gap, the
 CX-ISA and CX-SW TGs will define interop standards enabling development
 and reuse of multiple *composable* custom extensions and their libraries,
 together in one system.
@@ -24,18 +23,21 @@ The Composable Extensions ISA (CX-ISA) Task Group, and concurrently,
 the Composable Extensions Software (CX-SW) Task Group, together will
 specify a RISC-V ISA standard extension, a runtime library API, and an
 ABI, enabling any number of *composable extensions* (CXs) and their
-software libraries to harmoniously coexist within one RISC-V system,
-subject to these requirements:
-composability,
-conflict-freedom,
-decentralization,
-stable binaries,
-uniformity (of scope, naming, discovery, versioning, error signaling, state management, access control),
-performance,
-frugality,
-security, and
-longevity.
-In particular:
+software libraries to harmoniously coexist within one RISC-V system.
+
+Operationally, these standards will enable extension-aware software to
+*discover* that a CX is available, to *select* it as the hart's current
+CX, and to *issue* its custom instructions. *Stateful* CX instructions
+may access the hart's current CX state. Then software may discover a
+second CX, separately authored or versioned, is available, select it,
+and issue its custom instructions. The various CXs' state contexts are
+managed by CX-agnostic software.
+
+The ISA extensions, API, and ABI must fulfil these requirements:
+composability, conflict-freedom, decentralization, stable binaries,
+uniformity (of scope, naming, discovery, versioning, error signaling,
+state management, access control), performance, frugality, security,
+and longevity. In particular:
 
 1. *Composability:* The behavior of a CX or CX library does not change
 when combined together with other CXs, ordinary *non-composable* custom
@@ -96,22 +98,23 @@ and their libraries.
 
 ## History
 
-In 2019, the new RISC-V FPGA soft processor SIG, determined to "advance
-RISC-V as the preeminent ecosystem for FPGA processor and SoC designs",
-started to work on their Charter goal to "Propose extensions ... to
-enable interoperable RISC-V FPGA platforms and applications".
+In 2019, the RISC-V Foundation FPGA soft processor SIG members, determined
+to advance RISC-V as the preeminent ecosystem for FPGA processor and SoC
+designs, started to work on their Charter goal to "Propose extensions
+... to enable interoperable RISC-V FPGA platforms and applications".
 
-RISC-V support for custom extensions dovetails well with *configurable*
-FPGA soft processors. Dissatisfied with past incompatible soft CPU tech
-stack silos, the SIG members opted to pursue a standard HW-HW interface
-by which a *custom function unit* core that implements a custom extension,
-might be reused across various RISC-V soft CPUs.
+RISC-V provision for custom extensions dovetails with existing practice
+of *configurable* FPGA soft processors. But dissatisfied with past
+incompatible soft CPU tech stack silos, the members opted to pursue
+standards by which various reusable cores that implement various custom
+extensions might be reused across various RISC-V soft CPUs.
 
-Members knew that a vibrant ecosystem of mix-and-match reusable
-extensions, libraries, their hardware cores, requires routine,
-robust composition of multiple such extensions into one system.
+Members also felt that a vibrant ecosystem of mix-and-match reusable
+custom extensions, libraries, and cores, requires new interop interface
+standards to achieve routine, robust composition of *multiple* such
+extensions within one system.
 
-Over 2019-2022, the effort to define the *minimum viable product* of new
+Through 2019-2022, the effort to define the *minimum viable set* of
 standards to enable practical composition of extensions grew to include
 CX multiplexing, uniform state context management, access control, etc.,
 culminating in the
@@ -119,5 +122,5 @@ culminating in the
 [(PDF)](https://raw.githubusercontent.com/grayresearch/CX/main/spec/spec.pdf),
 which we propose as a basis / starting point for the TGs work.
 
-In 2023, the SIG has rebooted, moved into the RISC-V International Tech HC,
+In 2023, the SIG has rebooted, moved to RISC-V International's Tech HC,
 and now proposes to undertake the CX-ISA TG and the CX-SW TG.
