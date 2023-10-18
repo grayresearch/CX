@@ -99,7 +99,7 @@ and their libraries.
 
 2. *CX-SW TG* defines:
 
-	a. CX-RT: The CX-Runtime API for uniform CX naming, discovery, version management, uniform extension state context management, and uniform access control;
+	a. CX-RT: The CX Runtime API for uniform CX naming, discovery, version management, uniform extension state context management, and uniform access control;
 
 	b. CX-ABI: The application binary interface specifying disciplined use of -Zicx CX multiplexing.
 
@@ -119,7 +119,7 @@ The interrelationship of these three separate task group abstraction layers is i
 
 The three TGs' specifications may be applied separately, or together. For
 example, an implementation might implement the -Zicx extension and the
-CX-Runtime API, hosting CX libraries obeying the CX-ABI, but *not*
+CX Runtime API, hosting CX libraries obeying the CX-ABI, but *not*
 adopt CXU-LI or CXU-MD, employing other means to implement the various
 composable extensions in hardware.
 

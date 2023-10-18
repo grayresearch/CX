@@ -25,9 +25,10 @@ This is all a work in progress. We request your feedback.
 
 At present this is not a work product of a RISC-V International SIG, Task
 Group, or subcommittee.  Rather we share this work in the hope that it
-may motivate and inform two hypothetical RISC-V International Task Groups:
+motivates and informs three new hypothetical RISC-V International Task Groups:
 1) ISA: CX-ISA TG: Composable Extensions (-Zicx); and
-2) non-ISA: CXU-LI TG: Composable Extension Unit Logic Interface.
+2) software: CX-SW TG: CX Runtime and CX ABI; and
+3) hardware: CX-HW TG: Composable Extension Unit (CXU) Logic Interface (CXU-LI) and CXU metadata (CXU-MD).
 
 This work summarizes years of ongoing discussions and prototyping by
 (alphabetical order): Tim Ansell, Tim Callahan, Jan Gray, Karol Gugala,
