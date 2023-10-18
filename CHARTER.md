@@ -30,19 +30,21 @@ reusable hardware cores, to harmoniously coexist within one RISC-V system.
 Operationally, these standards will enable extension-aware software to
 *discover* that a CX is available, to *select* it as the hart's current
 CX, to *issue* its custom instructions, and to *signal* any errors. *Stateful*
-CX instructions may read and write the hart's current CX state. Software may
-also discover a second CX, separately authored, separately versioned,
-is available, select it, and issue its custom instructions. The various
-CXs' state contexts are managed by CX-agnostic software.
+CX instructions may read and write the hart's current CX state. Software
+may discover a second (separately authored) CX is available, select it,
+and issue its custom instructions. CXs' state contexts are managed by
+CX-agnostic software. There may be any number of state contexts per CX
+per system; multiple harts may issue instructions to one context; and
+one hart may issue work to multiple contexts of one CX over time.
 
 The hardware standards enable reuse of composable extension unit (CXU)
-*implementations* (e.g., RTL modules). They specify interoperable module port names,
-signaling, and function, including support for combinational or pipelined fixed-
-or variable-latency signaling, enabling automatic glueless composition of
-a DAG of CPUs and CX Units (CXUs) into a composed system. A single CXU
-may implement multiple CXs. Then in response to issuing a CX instruction,
-a CPU issues a CXU request, routed to the selected CXU, and its response
-is routed back to the CPU.
+*implementations* (e.g., RTL modules). They specify interoperable module
+port names, signaling, and function, including support for combinational
+or pipelined fixed- or variable-latency signaling, enabling automatic
+glueless composition of a DAG of 1+ CPUs and 0+ CXUs into a composed
+system; each CXU implements 1+ CXs. Then in response to issuing a CX
+instruction, a CPU issues a CXU request, routed to the selected CXU,
+and its response is routed back to the CPU.
 
 The ISA extensions, API, ABI, and logic interface, will fulfil these
 requirements: composability, conflict-freedom, decentralization, stable
@@ -51,8 +53,8 @@ signaling, state management, access control), performance, frugality,
 security, and longevity. In particular:
 
 1. *Composability:* The behavior of a CX or CX library does not change
-when combined together with other CXs, ordinary *non-composable* custom
-extensions (NCXs), or extension libraries in one system.
+when combined together with other CXs or ordinary *non-composable* custom
+extensions (NCXs), or their libraries, in one system.
 
 2. *Conflict-freedom:* Any CX may use any of the custom-\* opcode
 instructions, without conflict with other CXs or NCXs.
@@ -63,11 +65,11 @@ or numbering authority.
 
 4. *Stable binaries:* CX library *binaries* compose without recompilation or relinking.
 
-5. *Uniformity:*
-*Scope:* instructions may access int registers, may be stateful;
+5. *Uniformity of*
+*scope:* at least: instructions may access int registers, may be stateful;
 *naming, discovery, versioning:* CX software has a uniform means to discover if specific CX / version
 is available;
-*error signaling:* common means to signal any CX error; and
+*error signaling:* common means to signal a CX instruction error; and
 *state management:* common means to manage CX state contexts.
 
 6. *Performance:* A single instruction suffices to select the CX and
@@ -80,9 +82,9 @@ All other CX services are provided by a software API specified by CX-SW TG.
 8. *Security:* Privileged software may grant or deny unprivileged
 software access to a CX or its state. Once again, a single instruction
 suffices to select the CX and CX state context without a detour
-into privileged software. Certain side channel attacks are defeated by
-using (privileged software managed) CX indices to select a hart's
-current CX.
+into privileged software. The specification includes a threat model.
+It precludes side channel attacks where practical, e.g., using
+opaque CX indices to untrusted code.
 
 9. *Longevity:* The TG standards explicitly document how specified
 interfaces version over decades, providing best possible forwards and
@@ -133,8 +135,9 @@ thread using all of the composable extensions' libraries.
 
 ## Exclusions
 
-The -Zicx extension will specify what *kinds* of custom instructions are valid within a *composable* extension.
-Not every arbitrary custom extension can be a composable extension.
+The -Zicx extension will specify what *kinds* of custom instructions
+are valid within a *composable* extension. Not every arbitrary custom
+extension can be a composable extension.
 
 The present TGs focus on *enabling* composition of extensions and
 software. Later, additional TG standards work may be helpful, e.g., tools
