@@ -224,16 +224,17 @@ of capability and complexity, including combinational CXUs, fixed-latency
 CXUs, and variable latency CXUs with flow control.
 
 [[intro-CSRs]]
-==== CXU hardware-software extension
+==== -Zicx: composable extensions extension
 
-The CXU hardware-software extension, -Zicx, repurposes three custom
-function instruction formats and adds four CSRs. The three instruction
+The -Zicx "composable extensions" extension, repurposes three custom
+function instruction formats and adds four CSRs, to provide
+access-controlled composable extension multiplexing and error signaling. The three instruction
 formats reuse the _custom-0_, _custom-1_, and _custom-2_ formats /
 major opcodes
 cite:[risc-v-unpriv(143)]
-but (via composable extension multiplexing) compose correctly with any
-preexisting vendor-defined CPU-specific composable extensions and their
-custom instructions. The four new CXU CSRs are:
+but (via CX multiplexing) compose correctly with any preexisting
+vendor-defined CPU-specific composable extensions and their custom
+instructions. The four new CXU CSRs are:
 
 * `mcx_selector`: selects the hart's current <<CXU_ID,CXU_ID>> and <<STATE_ID,STATE_ID>>, for composable extension multiplexing;
 * `cx_status`: accumulates CXU errors;
@@ -241,9 +242,9 @@ custom instructions. The four new CXU CSRs are:
 
 [NOTE]
 ====
-`mcx_table` is insufficient given various M/H/S/U privilege
-levels. This corner of the design requires additional work, and additional
-CSRs.
+A machine mode `mcx_table` CSR is probably insufficient given various
+M/H/S/U privilege levels. This requires additional design work and
+additional CSRs.
 ====
 
 [[Intro-CXM]]
