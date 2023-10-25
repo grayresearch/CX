@@ -126,9 +126,7 @@ signaling. This comprises:
 	specifying system and cores' CXU-LI constraints and parameters.
 
     Together CXU-LI and CXU-MD enable automated glueless composition of
-    configurable CPU and CXU cores into processor complexes as shown here:
-
-<img src="/spec/images/composed-system.png" width="500">
+    configurable CPU and CXU cores into processor complexes.
 
 The interrelationship of these three subgroups' abstraction
 layers is illustrated in this hardware-software stack diagram.
