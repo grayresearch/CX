@@ -18,7 +18,7 @@ The Composable Extensions (CX) Task Group(s) will specify an ISA
 extension, and specify standard software (API, ABI) and hardware
 (logic interface, metadata) interfaces enabling independent creation
 of extensible processors, composable extensions, extension libraries,
-and extension hardware, that compose readily and coexist harmoniously.
+and extension hardware, that compose readily and coexist harmoniously
 
 Operationally, the interfaces enable software to *discover* that a CX
 is available, to *select* it as the hart's current CX, to *select* the
@@ -126,7 +126,9 @@ signaling. This comprises:
 	specifying system and cores' CXU-LI constraints and parameters.
 
     Together CXU-LI and CXU-MD enable automated glueless composition of
-    configurable CPU and CXU cores into processor complexes.
+    configurable CPU and CXU cores into processor complexes as shown here:
+
+<img src="/spec/images/composed-system.png" width="500">
 
 The interrelationship of these three subgroups' abstraction
 layers is illustrated in this hardware-software stack diagram.
