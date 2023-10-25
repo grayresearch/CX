@@ -195,4 +195,4 @@ culminating in the
 [Draft Proposed RISC-V Composable Custom Extensions Specification](https://raw.githubusercontent.com/grayresearch/CX/main/spec/spec.pdf),
 proposed as a basis / starting point for the TGs work. In 2023, the SIG
 moved to RISC-V International's Tech HC, and now proposes to undertake
-the CX-ISA, CX-SW, and CX-HW task groups.
+to standardize the work as one or more RVI TGs.
