@@ -15,14 +15,14 @@ RISC-V ecosystem.
 ## Objectives
 
 The Composable Extensions (CX) Task Group(s) will specify an ISA
-extension, and standard software (API, ABI) and hardware (logic interface,
-metadata) interfaces enabling independent creation of extensible
-processors, composable extensions, extension libraries, and extension
-hardware, that compose readily and coexist harmoniously.
+extension, and specify standard software (API, ABI) and hardware
+(logic interface, metadata) interfaces enabling independent creation
+of extensible processors, composable extensions, extension libraries,
+and extension hardware, that compose readily and coexist harmoniously.
 
-Operationally, the interfaces enable software to *discover* that a
-CX is available, to *select* it as the hart's current CX and *select*
-hart's CX's current state context, to *issue* its custom instructions,
+Operationally, the interfaces enable software to *discover* that a CX
+is available, to *select* it as the hart's current CX, to *select* the
+hart's current CX *state context*, to *issue* its custom instructions,
 and to *signal* errors; and then discover that a second CX is available,
 select it, and issue its custom instructions. And so forth.
 
@@ -64,30 +64,32 @@ or numbering authority.
 4. *Stable binaries:* CX library *binaries* compose without rewriting,
 recompilation or relinking.
 
-5. *Composable hardware:* adding CXUs to a system does not require
-modifications to other CPUs or CXUs. The CXU logic interface is such
-that it is straightforward to implement a CXU in System Verilog.
+5. *Composable hardware:* adding CX hardware units (CXUs) to a system
+does not require modifications to other CPUs or CXUs. The CXU logic
+interface is sufficiently nonproprietary that it is straightforward
+to implement a CXU in System Verilog.
 
-6. *Uniformity of* *scope:* at least: instructions may access integer
-registers and may be stateful; and *naming, discovery, versioning:*
-CX software has a uniform means to discover if specific CX / version
+6. *Uniformity:* of *scope:* at least: instructions may access integer
+registers and may be stateful; of *naming, discovery, versioning:*
+CX software has a uniform means to discover if specific CX or CX version
 is available.
 
 7. *Performance:* A single non-privileged instruction suffices to select
 the CX and CX state context of CX instructions that follow.
 
-8. *Frugality:* To reduce hardware complexity, the ISA extension supports
-CX multiplexing and error signaling, while other CX services may be
-provided by a software API.
+8. *Frugality:* To reduce processor hardware complexity, the ISA extension
+supports CX multiplexing and error signaling, while other CX services may
+be provided by a software API, or by a small standard set of CX state
+context instructions implemented by each stateful CXU.
 
-9. *Security:* The specification includes a threat model. Side channel
+9. *Security:* The specifications include a threat model. Side channel
 attacks are mitigated. Privileged software may grant or deny unprivileged
 software access to a CX or its state.
 
-10. *Longevity:* The TG standards explicitly document how specified
-interfaces version over decades, providing best possible forwards and
-backwards compatibility to mixes of old and new composable extensions
-and their libraries.
+10. *Longevity:* The specifications define how the specified interfaces
+are versioned over decades, providing best possible forwards and backwards
+compatibility to mixes of old and new composable extensions, libraries,
+and CXUs.
 
 ### Deliverables, separation of TG responsibilities
 
