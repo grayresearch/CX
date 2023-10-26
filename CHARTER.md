@@ -1,5 +1,16 @@
 # Composable Extensions (CX) Task Group Charter
 
+## Executive Summary
+
+This Charter governs the TG for a new Composable Extensions (CX)
+extension. CX is a framework that will enable robust composition of multiple
+independently authored custom ISA extensions, including legacy custom extensions,
+so they may be assembled in a conflict-free way into a target RISC-V implementation.
+By multiplexing the custom opcode space, CX will provide features such as
+naming and versioning, discovery, hardware module reuse, state context
+management, and stable software binaries that don't need recompilation
+for each target system -- all without a central management authority.
+
 ## Introduction - the custom extensions reuse problem
 
 RISC-V reserves the custom-\* opcode space, enabling anyone to create new
