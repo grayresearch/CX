@@ -31,7 +31,7 @@ The Composable Extensions (CX) Task Group(s) will specify an ISA
 extension, and specify standard software (API, ABI) and hardware
 (logic interface, metadata) interfaces enabling independent creation
 of extensible processors, composable extensions, extension libraries,
-and extension hardware, that compose readily and coexist harmoniously
+and extension hardware, that compose readily and coexist harmoniously.
 
 Operationally, the interfaces enable software to *discover* that a CX
 is available, to *select* it as the hart's current CX, to *select* the
