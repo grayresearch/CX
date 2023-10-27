@@ -95,9 +95,9 @@ supports CX multiplexing and error signaling, while other CX services may
 be provided by a software API, or by a small standard set of CX state
 context instructions.
 
-9. *Security:* The specifications include a threat model. Side channel
-attacks are mitigated. Privileged software may grant or deny unprivileged
-software access to a CX or its state.
+9. *Security:* The specifications include a threat model, and they do
+not facilitate new side channel attacks. Privileged software may grant
+or deny unprivileged software access to a CX or its state.
 
 10. *Longevity:* The specifications define how the specified interfaces
 are versioned over decades, providing best possible forwards and backwards
