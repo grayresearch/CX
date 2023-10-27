@@ -93,7 +93,7 @@ the CX and CX state context of CX instructions that follow.
 8. *Frugality:* To reduce processor hardware complexity, the ISA extension
 supports CX multiplexing and error signaling, while other CX services may
 be provided by a software API, or by a small standard set of CX state
-context instructions implemented by each stateful CXU.
+context instructions.
 
 9. *Security:* The specifications include a threat model. Side channel
 attacks are mitigated. Privileged software may grant or deny unprivileged
