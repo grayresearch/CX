@@ -47,14 +47,14 @@ to one state context, and one hart may access *n* different contexts
 over time. Uniform means of CX state context access allows a CX-aware
 operating system to manage/save/restore any CX state context, unmodified.
 
-The (separate, optional) hardware interfaces simplify reuse of
-composable extension unit (CXU) *implementations* (e.g., RTL modules).
-They enable gluess automated composition of a DAG of CPUs and CXUs into
-one system. Each CXU implements one or more CXs. In response to a CX
-instruction, a CPU issues a CXU request, routed to the hart's selected
-CX's CXU, and its response is routed back to the CPU. The interfaces
-specify CXU ports and function. They support at least combinational,
-pipelined, and flow-controlled signaling.
+The (separate, optional) hardware interfaces simplify reuse of composable
+extension unit (CXU) *implementations* (e.g., RTL modules).  They enable
+automated composition of a DAG of CPUs and CXUs into one system. Each
+CXU implements one or more CXs. In response to a CX instruction,
+a CPU issues a CXU request, routed to the hart's selected CX's CXU,
+and its response is routed back to the CPU. The interfaces specify CXU
+ports and function. They support at least combinational, pipelined,
+and flow-controlled signaling.
 
 The extension and interfaces must fulfil these requirements:
 composability, conflict-freedom, decentralization, stable binaries,
@@ -138,7 +138,7 @@ signaling. This comprises:
 	b. CXU-MD: the system manifest and CPU/CXU core metadata format,
 	specifying system and cores' CXU-LI constraints and parameters.
 
-    Together CXU-LI and CXU-MD enable automated glueless composition of
+    Together CXU-LI and CXU-MD enable automated composition of
     configurable CPU and CXU cores into processor complexes.
 
 The interrelationship of these three subgroups' abstraction
