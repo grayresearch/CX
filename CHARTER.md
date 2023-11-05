@@ -188,9 +188,9 @@ uniform forward compatibility strategy.
 Since composable extensions consume no opcode space and introduce no
 new (conventional) CSRs, each such extension comes at negligible cost
 to the enduring complexity of the core RISC-V ISA specs, or to the many
-dozens of extant RISC-V processor core instruction decoders, while also
-extending the useful life and reach of the 32b RISC-V ISA without resort
-to 48b or 64b encodings.
+dozens of extant RISC-V processor core instruction decoders and CSR
+datapaths, while also extending the useful life and reach of the 32b
+RISC-V ISA without resort to 48b or 64b encodings.
 
 ### Overlaps (probably many, more TBD)
 
