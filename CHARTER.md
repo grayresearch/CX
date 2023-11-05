@@ -222,6 +222,7 @@ standards to enable practical composition of extensions grew to include
 CX multiplexing, uniform state context management, access control, etc.,
 culminating in the
 [Draft Proposed RISC-V Composable Custom Extensions Specification](https://raw.githubusercontent.com/grayresearch/CX/main/spec/spec.pdf),
-proposed as a basis / starting point for the TGs work. In 2023, the SIG
-moved to RISC-V International's Technology Horizontal Committee, and
-now proposes to undertake to standardize the work as one or more RVI TGs.
+proposed as a basis / starting point for the TGs work. In 2023,
+[the SIG moved to RISC-V International's Technology Horizontal Committee](https://lists.riscv.org/g/tech-announce/message/277),
+and now proposes to undertake to standardize the work as one or more
+RVI TGs.
