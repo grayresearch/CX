@@ -27,7 +27,7 @@ RISC-V ecosystem.
 ## Objectives
 
 The Composable Extensions (CX) Task Group(s) will specify ISA extensions
-standard and software (API, ABI) and hardware (logic interface, metadata)
+and software (API, ABI) and hardware (logic interface, metadata)
 interfaces enabling independent creation of extensible processors,
 composable extensions, extension libraries, and extension hardware,
 that compose readily and coexist harmoniously.
