@@ -26,26 +26,28 @@ RISC-V ecosystem.
 
 ## Objectives
 
-The Composable Extensions (CX) Task Group(s) will specify an ISA
-extension, and specify standard software (API, ABI) and hardware
-(logic interface, metadata) interfaces enabling independent creation
-of extensible processors, composable extensions, extension libraries,
-and extension hardware, that compose readily and coexist harmoniously.
+The Composable Extensions (CX) Task Group(s) will specify ISA extensions
+standard and software (API, ABI) and hardware (logic interface, metadata)
+interfaces enabling independent creation of extensible processors,
+composable extensions, extension libraries, and extension hardware,
+that compose readily and coexist harmoniously.
 
-Operationally, the interfaces enable software to *discover* that a CX
-is available, to *select* it as the hart's current CX, to *select* the
-hart's current CX *state context*, to *issue* its custom instructions,
-and to *signal* errors; and then discover that a second CX is available,
-select it, and issue its custom instructions. And so forth.
+Operationally, the *CX Mux* extension, API, and ABI enable software to
+*discover* that a CX is available, to *select* it as the hart's current
+CX, to *select* the hart's current CX *state context*, to *issue* its
+custom instructions, and to *signal* errors; and then discover that a
+second CX is available, select it, and issue its custom instructions. And
+so forth.
 
-CX instructions may access a hart's current CX's current state context.
-CX instructions are the only means to access CX state, providing CX
-isolation, providing composition invariance. A CX state context may
-include *CX-scoped* CSRs. There may be any number of state contexts,
-per CX, per system, with an arbitary, dynamic, software managed
-hart-to-CX-context mapping. Uniform means of CX state context access
-enables a CX-aware operating system to manage/save/restore any CX state
-context, unmodified.
+*Stateful extensions:* CX instructions may access a hart's current CX's
+current state context. CX instructions are the only means to access CX
+state, providing CX isolation, providing composition invariance. A CX
+state context may include *CX-scoped* CSRs. There may be any number of
+state contexts, per CX, per system, with an arbitary, dynamic, software
+managed hart-to-CX-context mapping. All stateful CX extensions implement
+(extend) the *CX State* extension, providing uniform means of CX-scoped
+CSR access, and state context management, enabling a CX-aware operating
+system to initialize, save, and reload *any* CX state context.
 
 The optional hardware interfaces provide reuse of composable extension
 unit (CXU) *implementations* (which may be RTL modules). They support
@@ -104,7 +106,7 @@ and CXUs.
 
 ### Deliverables, separation of TG responsibilities
 
-1. *CX-ISA sub-TG* defines the Composable Extensions standard extension
+1. *CX-Mux-ISA sub-TG* defines the Composable Extensions standard extension
 *-Zicx* implementing access controlled CX multiplexing and error
 signaling. This comprises:
 
@@ -114,7 +116,11 @@ signaling. This comprises:
     b. New CSRs, instructions, or other mechanisms to uniformly
     signal errors during CX instruction execution.
 
-2. *CX-SW sub-TG* defines:
+2. *CX-State-ISA sub-TG* defines the CX State standard extension,
+which must be incorporated into and implemented by every stateful CX,
+providing uniform CX scoped CSRs and uniform CX state context management.
+
+3. *CX-SW sub-TG* defines:
 
     a. CX-RT: The CX Runtime API for uniform CX naming, discovery,
     version management, uniform extension state context management,
@@ -123,11 +129,7 @@ signaling. This comprises:
     b. CX-ABI: The application binary interface governing disciplined
     use of -Zicx CX multiplexing.
 
-    c. Standard CX behaviors (e.g., state isolation) and instructions
-    (e.g., for uniform access to state contexts) so that CXs and CX
-    software are truly composable.
-
-3. *CX-HW sub-TG* defines:
+4. *CX-HW sub-TG* defines:
 
     a. CXU-LI: the composable extension unit logic interface, a
     HW-HW interface specification to exchange uniform CXU requests
@@ -142,7 +144,7 @@ signaling. This comprises:
 The interrelationship of these three subgroups' abstraction
 layers is illustrated in this hardware-software stack diagram.
 
-<img src="/spec/images/composition-layers.png" width="500">
+<img src="https://github.com/grayresearch/CX/blob/main/spec/images/composition-layers.png" width="500">
 
 The three sub-specifications may be applied separately, or together. For
 example, an implementation might implement the -Zicx extension and
