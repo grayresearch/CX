@@ -117,8 +117,9 @@ signaling. This comprises:
     signal errors during CX instruction execution.
 
 2. *CX-State-ISA sub-TG* defines the CX State standard extension,
-which must be incorporated into and implemented by every stateful CX,
-providing uniform CX scoped CSRs and uniform CX state context management.
+standard CX instructions which must be incorporated into and implemented
+by every stateful CX, providing uniform CX scoped CSRs and uniform CX
+state context management.
 
 3. *CX-SW sub-TG* defines:
 
