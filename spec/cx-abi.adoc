@@ -150,8 +150,8 @@ are required and what access permissions should they have?
 {reg:[
 {bits: 8, name: 'cxu_id'},
 {bits: 8, name: 'reserved', type:1, vspace:88},
-{bits: 10, name: 'state_id'},
-{bits: 2, name: 'rsvd', type:1},
+{bits: 8, name: 'state_id'},
+{bits: 4, name: 'reserved', type:1},
 {bits: 4, name: 'mode'},
 ],
 config: {lanes: 1, bits: 32}
