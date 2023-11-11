@@ -4,34 +4,12 @@ Todo:
 
 * Chapter on CX Runtime (runtime) API
 * How CX and CXU versioning works; how CXU-LI versioning works
+* A place for miscellaneous design notes
 
 === Open design problems (post 1.0)
 
 * Developing, running accelerated libraries on systems where there is no composable extension / CXU implementation.
 * Developer tooling recommendations for disassembly, debugging, profiling, perf monitoring.
-
-=== Other CXU-like mechanisms
-
-* Intel Nios II Custom Instruction User Guide*
-
-* Xilinx LogiCORE IP Fast Simplex Link Bus*
-
-* Xilinx Connecting Customized IP to the MicroBlaze Soft Processor Using the Fast Simplex Link*
-
-* Rocket Custom Coprocessor (RoCC) Extension*
-
-* PicoRV "Pico Co-Processor Extension" (PCPI)
-
-* Core-V _cv-x-if_ (extension extension) (Tim Callahan's notes)
-
-=== Example: a stateful extended precision ALU
-
-[NOTE]
-====
-Here write up a fully worked example of a CXU-L1 extended precision ALU,
-its composable extension, CXU, and library code. (A follow up to a discussion
-on the RISC-V mailing list that didn't go anywhere.)
-====
 
 === Cost model
 

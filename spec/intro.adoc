@@ -398,7 +398,7 @@ CXU state.
 [[versioning]]
 === Versioning
 
-Interoperation specifications live for decades.  Meanwhile "the only
+Interoperation specifications live for decades. Meanwhile "the only
 constant is change".  This specification anticipates various axes of
 versioning.
 
@@ -424,15 +424,23 @@ CXU-LI versioning: A CXU module configuration parameter `CXU_LI_VERSION`
 indicates to the CXU the version of the CXU-LI signals and semantics
 in effect.
 
-Interface versioning: A composable extension is immutable. To change or add
-any custom functions or their behaviors, a new composable extension must
-be minted. (Consider the many AVX vector extensions variants have been
-introduced over many years.)  With Microsoft COM software components, an
-extension `IFoo` might evolve to become `IFoo2`. The original `IFoo` remains
-and `IFoo` clients are unaffected.  But every component implements
-`IUnknown::QueryInterface()`, to determine if the component implements
-a given extension. A component might implement both extensions, giving
-its client a choice.
+Versioning of the extension multiplexing mechanism:
+The `mcx_selector.mode` field determines the current extension
+multiplexing mode. It provides backwards compatibility with legacy custom
+instructions (i.e., multiplexing _off_) and forwards compatibility with
+future extension multiplexing schemes, anticipating future layouts and
+interpretations of other selector fields and future means of decoding
+`custom-[0123]` instructions into CXU requests.
+
+Composable extension versioning: A composable extension is immutable. To
+change or add any custom functions or their behaviors, a new composable
+extension must be minted. (Consider the many AVX vector extensions
+variants have been introduced over many years.) With Microsoft
+COM software components, an extension `IFoo` might evolve to become
+`IFoo2`. The original `IFoo` remains and `IFoo` clients are unaffected.
+But every component implements `IUnknown::QueryInterface()`, to determine
+if the component implements a given extension. A component might implement
+both extensions, giving its client a choice.
 
 Similarly a CXU might implement two composable extensions, e.g. `IPosit`, and
 `IPosit2`, an enhanced version of `IPosit` introduced later.  In that case,

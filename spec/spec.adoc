@@ -2,9 +2,9 @@
 = _Draft Proposed_ RISC-V Composable Custom Extensions Specification
 :description: Draft proposed specifications for composable extensions: composable extensions and composable extension units
 :company:
-:revdate: 08/11/2023
-:revnumber: 0.91.230811
-:revremark: Pre-release version
+:revdate: 2023-11-11
+:revnumber: 0.92.231111
+:revremark: Draft
 :url-riscv: http://riscv.org
 :doctype: book
 :preface-title: Preface

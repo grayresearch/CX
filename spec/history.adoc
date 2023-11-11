@@ -1,6 +1,10 @@
 == Specification Change History
 
-=== Version 0.91.230803, 08/03/2023: Simplify and improve terminology.
+=== Version 0.92.231111, 2023-11-11: Add extension multiplexing _mode_.
+
+Introduce _CX mode_, improving CX forward compatibility. Replace `mcx_selector.en` with `mcx_selector.mode`.
+
+=== Version 0.91.230803, 2023-08-03: Simplify and improve terminology.
 
 Replace term _Custom Interface (CI)_ with _Composable Extension (CX)_.
 Similarly replace _CFU_ with _CXU_.
@@ -16,4 +20,4 @@ And so forth.
 |`mcfu_*` and `cfu_*` CSRs |`mcx_*` and `cx_*` CSRs
 |===
 
-=== Version 0.90.220327, 03/27/2022: First complete draft.
+=== Version 0.90.220327, 2022-03-27: First complete draft.

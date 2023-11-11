@@ -92,10 +92,10 @@ multiple configured extensions, different CXU_IDs identify the configured
 extensions. A *valid CXU_ID* is a CXU_ID value that identifies a
 configured extension.
 
-A *composable extension selector (CX selector, selector)* is a 32-bit value
-written to `mcx_selector` CSR to enable composable extension multiplexing
-and specify the hart's current configured extension / CXU and current
-state context.
+A *composable extension selector (CX selector, selector)* is a 32-bit
+value written to `mcx_selector` CSR to select the hart's current extension
+multiplexing mode, (e.g., _off_, _on_, or some future mode), and specify
+the hart's current configured extension / CXU and current state context.
 
 [[selector-table]]
 A *CX selector table* is a 4 KB aligned, 4 KB sized table of 1024
@@ -150,9 +150,9 @@ are required and what access permissions should they have?
 {reg:[
 {bits: 8, name: 'cxu_id'},
 {bits: 8, name: 'reserved', type:1, vspace:88},
-{bits: 8, name: 'state_id'},
-{bits: 7, name: 'reserved', type:1},
-{bits: 8, name: 'en'},
+{bits: 10, name: 'state_id'},
+{bits: 2, name: 'rsvd', type:1},
+{bits: 4, name: 'mode'},
 ],
 config: {lanes: 1, bits: 32}
 }
@@ -160,17 +160,18 @@ config: {lanes: 1, bits: 32}
 
 The `mcx_selector` CSR has the following fields:
 
-`.en`: enable composable extension multiplexing
+`.mode`: extension multiplexing mode
 
-* When `en=0`, disable composable extension multiplexing. The `cxu_id`
-and `state_id` fields are ignored. No CXU is selected. `Custom-0`,
-`custom-1`, or `custom-2` instructions execute the CPU's built-in
-custom instructions.
+* When `mode=0`, disable composable extension multiplexing. The rest
+of `mcx_selector` is ignored. No CXU is selected. `Custom-[0123]`
+instructions execute the CPU's built-in custom instructions.
 
-* When `en=1`, enable composable extension multiplexing. The
+* When `mode=1`, enable *mode 1* composable extension multiplexing. The
 `cxu_id` and `state_id` fields select the current CXU and state
 context. `Custom-0`/`-1`/`-2` instructions issue CXU requests to the CXU
 identified by `cxu_id` and to the state context identified by `state_id`.
+
+* `mode` values 2-15 are reserved.
 
 `.cxu_id`: select the hart's current CXU
 
@@ -194,6 +195,28 @@ No error occurs when `mcx_selector` is CSR-written with an invalid
 CX selector, i.e., when `.cxu_id` or `.state_id` are invalid. Rather,
 subsequently executing a CF instruction may cause a CXU_ID or STATE_ID
 error.
+
+[TIP]
+====
+The hardware that detects these two errors lies not in the extensible
+processor but in the CXU interconnect (bad `.cxu_id`) or in the selected
+CXU iteself (bad `.state_id`).
+====
+
+[TIP]
+====
+The `mode` field provides backwards compatibility with legacy
+custom extensions, and forwards compatibility with future CX modes.
+In future a new CX mode may be added, with a new layout and interpretation
+of selector fields and a new means of decoding custom instruction fields
+into CXU requests.
+====
+
+[NOTE]
+====
+TBD: What must happen upon a CSR-write of an unsupported mode to
+`mcx_selector.mode`? Set a new error flag in `cx_status`? Exception?
+====
 
 [[cx_status]]
 ==== `cx_status` CSR 0x801: CX status
@@ -265,6 +288,38 @@ of a serializable extension may also be obtained using
 custom functions `cf_read_status` and/or `cf_read_state`.
 ====
 
+[NOTE]
+====
+Should writing mcx_selector automatically zero `cx_status`? This shortens
+the code path to use an extension by one instruction but it precludes
+the use case of clearing errors, issuing a series of custom function
+instructions across multiple extensions, *then* checking for errors.
+
+For simplicity we do not adopt this option.
+====
+
+[NOTE]
+====
+How to best anticipate future changes to `cx_version`?
+One option: fields and behavior determined by hart's current CX mode (`mcx_selector.mode`).
+This becomes unwieldy when multiplexing between extensions switches different modes.
+One option: add a `cx_version.type` field, selecting an interpretation of `cx_status` CSR fields.
+Both options may lead to _unnecessarily complicated_ error handling in software.
+Best option: only _add_ new fields to it.
+Here simplest seems best.
+====
+
+[NOTE]
+====
+How to best anticipate future changes to `cx_version`?
+One option: fields and behavior determined by hart's current CX mode (`mcx_selector.mode`).
+This becomes unwieldy when multiplexing between extensions switches different modes.
+One option: add a `cx_version.type` field, selecting an interpretation of `cx_status` CSR fields.
+Both options may lead to _unnecessarily complicated_ error handling in software.
+Best option: only _add_ new fields to it.
+Here simplest seems best.
+====
+
 ==== `mcx_table` CSR 0xBC1: CX selector table base
 
 When CX access control (§<<_cx_access_control>>) is supported, the
@@ -289,7 +344,7 @@ KB aligned.
 
 ==== `cx_index` CSR 0x800: CX selector index
 
-When CX access control (§<<_cx_access_control>>)  is supported, the
+When CX access control (§<<_cx_access_control>>) is supported, the
 `cx_index` CSR selects an entry from the hart's CX selector
 table entry to write to the `mcx_selector` CSR. The CSR may be read
 and written in all privilege levels.
@@ -585,7 +640,7 @@ A hardware-defined approach could add to the request and response streams
 defined in <<cxu-li,CXU-LI>>, a third stream, called the _commit stream_.
 This enables a CPU to speculatively issue any CF instruction and issue
 its CXU request, then later, when speculation is resolved, issue its
-commit token or cancel token.  A stateful CXU, receiving and performing a
+commit token or cancel token. A stateful CXU, receiving and performing a
 CXU request, would defer from updating any CXU state until the request's
 corresponding commit token arrives.
 ====
@@ -885,8 +940,8 @@ different serializations, of different sizes.
 [NOTE]
 ====
 Discuss preemption scenario where following context save, later restore,
-the locus moves to a different STATE_ID of a CXU.  `cx_index`
-may (but should not) change.  However, resource manager must change
+the locus moves to a different STATE_ID of a CXU. `cx_index`
+may (but should not) change. However, resource manager must change
 `mcx_selector`.
 ====
 
