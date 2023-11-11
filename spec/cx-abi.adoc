@@ -212,12 +212,6 @@ of selector fields and a new means of decoding custom instruction fields
 into CXU requests.
 ====
 
-[NOTE]
-====
-TBD: What must happen upon a CSR-write of an unsupported mode to
-`mcx_selector.mode`? Set a new error flag in `cx_status`? Exception?
-====
-
 [[cx_status]]
 ==== `cx_status` CSR 0x801: CX status
 
