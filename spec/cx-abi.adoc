@@ -166,7 +166,7 @@ The `mcx_selector` CSR has the following fields:
 of `mcx_selector` is ignored. No CXU is selected. `Custom-[0123]`
 instructions execute the CPU's built-in custom instructions.
 
-* When `mode=1`, enable *mode 1* composable extension multiplexing. The
+* When `mode=1`, enable _mode 1_ composable extension multiplexing. The
 `cxu_id` and `state_id` fields select the current CXU and state
 context. `Custom-0`/`-1`/`-2` instructions issue CXU requests to the CXU
 identified by `cxu_id` and to the state context identified by `state_id`.
@@ -232,13 +232,14 @@ write 0 to `cx_status`, execute some CF instructions, and read
 [wavedrom,target="`cx_status`",svg]
 ....
 {reg:[
+{bits:1, name:'MD'},
 {bits:1, name:'CI'},
 {bits:1, name:'SI'},
-{bits:1, name:'OF'},
-{bits:1, name:'FI', attr:'accrued errors'},
+{bits:1, name:'OF', attr:'accrued errors'},
+{bits:1, name:'FI'},
 {bits:1, name:'OP'},
 {bits:1, name:'CU'},
-{bits: 26, name: 'reserved', type:1},
+{bits: 25, name: 'reserved', type:1},
 ],
 config: {lanes: 1, bits: 32},
 }
@@ -246,7 +247,11 @@ config: {lanes: 1, bits: 32},
 
 The `cx_status` CSR has the following fields:
 
-`.CX`: invalid CXU_ID error
+`.MD`: invalid CX mode error
+
+* Set by a CSR-write to `mcx_selector`, or by a CF instruction, when `mcx_selector.mode` is invalid.
+
+`.CI`: invalid CXU_ID error
 
 * Set by a CF instruction when `mcx_selector.cxu_id` is invalid.
 
@@ -300,21 +305,10 @@ For simplicity we do not adopt this option.
 
 [NOTE]
 ====
-How to best anticipate future changes to `cx_version`?
+How to best anticipate future changes to `cx_status`?
 One option: fields and behavior determined by hart's current CX mode (`mcx_selector.mode`).
 This becomes unwieldy when multiplexing between extensions switches different modes.
-One option: add a `cx_version.type` field, selecting an interpretation of `cx_status` CSR fields.
-Both options may lead to _unnecessarily complicated_ error handling in software.
-Best option: only _add_ new fields to it.
-Here simplest seems best.
-====
-
-[NOTE]
-====
-How to best anticipate future changes to `cx_version`?
-One option: fields and behavior determined by hart's current CX mode (`mcx_selector.mode`).
-This becomes unwieldy when multiplexing between extensions switches different modes.
-One option: add a `cx_version.type` field, selecting an interpretation of `cx_status` CSR fields.
+One option: add a `cx_status.type` field, selecting an interpretation of `cx_status` CSR fields.
 Both options may lead to _unnecessarily complicated_ error handling in software.
 Best option: only _add_ new fields to it.
 Here simplest seems best.
