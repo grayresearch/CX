@@ -144,7 +144,18 @@ In a privileged architecture with M/S/U levels, for example, what CSRs
 are required and what access permissions should they have?
 ====
 
-.`mcx_selector` CSR 0xBC0
+.`mcx_selector` CSR 0xBC0 (type 0: legacy custom instructions))
+[wavedrom,target="`mcx_selector_0`",svg]
+....
+{reg:[
+{bits: 28, name: 'reserved', type:1, vspace:88},
+{bits: 4, name: 0, attr:'type'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+.`mcx_selector` CSR 0xBC0 (type 1: extension multiplexing)
 [wavedrom,target="`mcx_selector`",svg]
 ....
 {reg:[
@@ -152,7 +163,7 @@ are required and what access permissions should they have?
 {bits: 8, name: 'reserved', type:1, vspace:88},
 {bits: 8, name: 'state_id'},
 {bits: 4, name: 'reserved', type:1},
-{bits: 4, name: 'type'},
+{bits: 4, name: 1, attr:'type'},
 ],
 config: {lanes: 1, bits: 32}
 }

@@ -2,7 +2,7 @@
 
 === Version 0.92.231111, 2023-11-11: Add extension multiplexing _type_.
 
-Introduce _CX mode_, improving CX forward compatibility. Replace
+Introduce _CX type_, improving CX forward compatibility. Replace
 `mcx_selector.en` with `mcx_selector.type_`. Add `cx_status.tp` error
 field.
 
