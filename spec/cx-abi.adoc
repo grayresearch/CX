@@ -199,7 +199,7 @@ is zeroed.
 
 * When enabled, when `cxu_id` is valid, but `state_id` does not identify
 a state context of the current CXU, executing a CF instruction causes
-an invalid STATE_ID error. The `cx_status.SI` error bit is set and the
+an invalid STATE_ID error. The `cx_status.IS` error bit is set and the
 CF instruction's destination register, if any, is zeroed.
 
 No error occurs when `mcx_selector` is CSR-written with an invalid
@@ -237,11 +237,11 @@ write 0 to `cx_status`, execute some CF instructions, and read
 [wavedrom,target="`cx_status`",svg]
 ....
 {reg:[
-{bits:1, name:'VR'},
-{bits:1, name:'CI'},
-{bits:1, name:'SI'},
+{bits:1, name:'IV'},
+{bits:1, name:'IC'},
+{bits:1, name:'IS'},
 {bits:1, name:'OF', attr:'accrued errors'},
-{bits:1, name:'FI'},
+{bits:1, name:'IF'},
 {bits:1, name:'OP'},
 {bits:1, name:'CU'},
 {bits: 25, name: 'reserved', type:1},
@@ -252,16 +252,16 @@ config: {lanes: 1, bits: 32},
 
 The `cx_status` CSR has the following fields:
 
-`.VR`: invalid CX version error
+`.IV`: invalid CX version error
 
 * Set by a CSR-write to `mcx_selector`, or by a CF instruction, when `mcx_selector.version` is invalid.
 (For example, when new software writes a new selector type that old hardware does not implement.)
 
-`.CI`: invalid CXU_ID error
+`.IC`: invalid CXU_ID error
 
 * Set by a CF instruction when `mcx_selector.cxu_id` is invalid.
 
-`.SI`: invalid STATE_ID error
+`.IS`: invalid STATE_ID error
 
 * Set by a CF instruction when `mcx_selector.cxu_id` is valid but
 `mcx_selector`.state_id is invalid.
@@ -272,7 +272,7 @@ The `cx_status` CSR has the following fields:
 `mcx_selector.state_id` are valid but the selected state context is in
 the <<off-state,_off_>> state.
 
-`.FI`: invalid CF_ID error
+`.IF`: invalid CF_ID error
 
 * Set by a CF instruction when `mcx_selector.cxu_id` and
 `mcx_selector.state_id` are valid but the instruction's CF_ID is invalid.

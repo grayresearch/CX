@@ -3,8 +3,8 @@
 === Version 0.92.231111, 2023-11-11: Add extension multiplexing _type_.
 
 Introduce _CX type_, improving CX forward compatibility. Replace
-`mcx_selector.en` with `mcx_selector.type_`. Add `cx_status.tp` error
-field.
+`mcx_selector.en` with `mcx_selector.version`. Add `cx_status.iv` error
+field. Replace `cs_status` field names CI/SI/FI with IC/IS/IF.
 
 === Version 0.91.230803, 2023-08-03: Simplify and improve terminology.
 
