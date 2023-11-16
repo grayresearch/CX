@@ -94,7 +94,7 @@ configured extension.
 
 A *composable extension selector (CX selector, selector)* is a 32-bit
 value written to `mcx_selector` CSR to select the hart's current extension
-multiplexing type, (e.g., _off_, _type-1_, ...) and specify the
+multiplexing version, (e.g., _off_, _version-1_, ...) and specify the
 hart's current configured extension / CXU and current state context.
 
 [[selector-table]]
@@ -144,18 +144,18 @@ In a privileged architecture with M/S/U levels, for example, what CSRs
 are required and what access permissions should they have?
 ====
 
-.`mcx_selector` CSR 0xBC0 (type 0: legacy custom instructions))
+.`mcx_selector` CSR 0xBC0 (version 0: legacy custom instructions))
 [wavedrom,target="`mcx_selector_0`",svg]
 ....
 {reg:[
 {bits: 28, name: 'reserved', type:1, vspace:88},
-{bits: 4, name: 0, attr:'type'},
+{bits: 4, name: 0, attr:'version'},
 ],
 config: {lanes: 1, bits: 32}
 }
 ....
 
-.`mcx_selector` CSR 0xBC0 (type 1: extension multiplexing)
+.`mcx_selector` CSR 0xBC0 (version 1: extension multiplexing)
 [wavedrom,target="`mcx_selector`",svg]
 ....
 {reg:[
@@ -163,7 +163,7 @@ config: {lanes: 1, bits: 32}
 {bits: 8, name: 'reserved', type:1, vspace:88},
 {bits: 8, name: 'state_id'},
 {bits: 4, name: 'reserved', type:1},
-{bits: 4, name: 1, attr:'type'},
+{bits: 4, name: 1, attr:'version'},
 ],
 config: {lanes: 1, bits: 32}
 }
@@ -171,18 +171,18 @@ config: {lanes: 1, bits: 32}
 
 The `mcx_selector` CSR has the following fields:
 
-`.type`: extension multiplexing type
+`.version`: extension multiplexing version
 
-* When `type=0`, disable composable extension multiplexing. The rest
+* When `version=0`, disable composable extension multiplexing. The rest
 of `mcx_selector` is ignored. No CXU is selected. `Custom-[0123]`
 instructions execute the CPU's built-in custom instructions.
 
-* When `type=1`, enable _type 1_ composable extension multiplexing. The
+* When `version=1`, enable _version-1_ composable extension multiplexing. The
 `cxu_id` and `state_id` fields select the current CXU and state
 context. `Custom-0`/`-1`/`-2` instructions issue CXU requests to the CXU
 identified by `cxu_id` and to the state context identified by `state_id`.
 
-* `type` values 2-15 are reserved.
+* `version` values 2-15 are reserved.
 
 `.cxu_id`: select the hart's current CXU
 
@@ -216,11 +216,11 @@ CXU iteself (bad `.state_id`).
 
 [TIP]
 ====
-The `type` field provides backwards compatibility with legacy
+The `version` field provides backwards compatibility with legacy
 custom extensions, and forwards compatibility with future CX systems.
-In future a new CX type may be added, with a new layout and interpretation
-of selector fields and new means of decoding custom instruction fields
-into CXU requests.
+In future a new CX multiplexing version may be added, with a new layout
+and interpretation of selector fields and new means of decoding custom
+instruction fields into CXU requests.
 ====
 
 [[cx_status]]
@@ -237,7 +237,7 @@ write 0 to `cx_status`, execute some CF instructions, and read
 [wavedrom,target="`cx_status`",svg]
 ....
 {reg:[
-{bits:1, name:'TP'},
+{bits:1, name:'VR'},
 {bits:1, name:'CI'},
 {bits:1, name:'SI'},
 {bits:1, name:'OF', attr:'accrued errors'},
@@ -252,9 +252,9 @@ config: {lanes: 1, bits: 32},
 
 The `cx_status` CSR has the following fields:
 
-`.TP`: invalid CX type error
+`.VR`: invalid CX version error
 
-* Set by a CSR-write to `mcx_selector`, or by a CF instruction, when `mcx_selector.type` is invalid.
+* Set by a CSR-write to `mcx_selector`, or by a CF instruction, when `mcx_selector.version` is invalid.
 (For example, when new software writes a new selector type that old hardware does not implement.)
 
 `.CI`: invalid CXU_ID error
@@ -312,9 +312,9 @@ For simplicity we do not adopt this option.
 [NOTE]
 ====
 How to best anticipate future changes to `cx_status`?
-One option: fields and behavior determined by hart's current CX type (`mcx_selector.type`).
-This becomes unwieldy when multiplexing between extensions switches different types.
-One option: add a `cx_status.type` field, selecting an interpretation of `cx_status` CSR fields.
+One option: fields and behavior determined by hart's current CX version (`mcx_selector.version`).
+This becomes unwieldy when multiplexing between extensions switches different versions.
+One option: add a `cx_status.version` field, selecting an interpretation of `cx_status` CSR fields.
 Both options may lead to _unnecessarily complicated_ error handling in software.
 Best option: only _add_ new fields to it.
 Here simplest seems best.

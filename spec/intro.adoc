@@ -425,8 +425,8 @@ indicates to the CXU the version of the CXU-LI signals and semantics
 in effect.
 
 Versioning of the extension multiplexing mechanism:
-The `mcx_selector.type` field determines the current extension
-multiplexing type. It provides backwards compatibility with legacy custom
+The `mcx_selector.version` field determines the current extension
+multiplexing version. It provides backwards compatibility with legacy custom
 instructions (i.e., multiplexing _off_) and forwards compatibility with
 future extension multiplexing schemes, anticipating future layouts and
 interpretations of other selector fields and future means of decoding
