@@ -4,23 +4,23 @@
 
 This Charter governs the TG for a Composable Extensions (CX) framework
 enabling robust composition of multiple independently authored composable
-custom extensions, alongside legacy custom extensions, assembled in a
-conflict-free way in one RISC-V system. By multiplexing the custom opcode
-space, and adopting common software and hardware interop interfaces,
-CX enables *uniform* extension naming, discovery, and versioning, error
-handling, state context management, extension hardware module reuse,
-and stable software binaries that do not require recompilation for each
+custom extensions, alongside legacy custom extensions, conflict-free in
+one RISC-V system.
+
+By multiplexing the custom opcode space, and adopting common software
+and hardware interop interfaces, CX enables *uniform* extension naming,
+discovery, and versioning, error handling, state context management,
+extension hardware module reuse, and stable software binaries for each
 target system -- all without a central management authority.
 
 ## Introduction - the custom extensions reuse problem
 
-RISC-V reserves the custom-\* opcode space, enabling anyone to create new
-custom extensions and extension-aware software libraries. But RISC-V
-custom extensions are unmanaged, lacking uniformity, conventions,
-or standards. This impairs extension reuse. Use of one extension in
-a system may preclude use of another, because the two extensions may
-have conflicting custom instructions, or may have incompatible means of
-extension discovery, versioning, computation, state, error handling,
+RISC-V reserves the custom-\* opcode space, enabling anyone to create
+new custom extensions and their software libraries. But RISC-V custom
+extensions are unmanaged, lacking standards or uniformity. This impairs
+extension reuse. Use of one extension in a system may preclude use
+of another, because they may have conflicting custom instructions, or
+incompatible means of extension discovery, versioning, state management,
 etc. This leads to disjoint solution silos and fragmentation of the
 RISC-V ecosystem.
 
@@ -30,54 +30,50 @@ The Composable Extensions (CX) Task Group(s) will specify ISA extensions
 and software (API, ABI) and hardware (logic interface, metadata)
 interfaces enabling independent creation of extensible processors,
 composable extensions, extension libraries, and extension hardware,
-that compose readily and coexist harmoniously.
+that compose readily and harmoniously.
 
-Operationally, the *CX Mux* extension, API, and ABI enable software to
-*discover* that a CX is available, to *select* it as the hart's current
-CX, to *select* the hart's current CX *state context*, to *issue* its
-custom instructions, and to *signal* errors; and then discover that a
-second CX is available, select it, and issue its custom instructions. And
-so forth.
+*CX Multiplexing:* Operationally, a *CX Mux* extension, and CX API and
+ABI, enable software to *discover* that a CX is available, to *select*
+it and to *select* its current CX *state context*, to *issue* its custom
+*CX instructions*, and to *signal* errors; and then discover that another
+CX is available, select it, and issue its instructions. And so forth.
 
-*Stateful extensions:* CX instructions may access a hart's current CX's
-current state context. CX instructions are the only means to access CX
-state, providing CX isolation, providing composition invariance. A CX
-state context may include *CX-scoped* CSRs. There may be any number of
-state contexts, per CX, per system, with an arbitary, dynamic, software
-managed hart-to-CX-context mapping. All stateful CX extensions implement
-(extend) the *CX State* extension, providing uniform means of CX-scoped
-CSR access, and state context management, enabling a CX-aware operating
-system to initialize, save, and reload *any* CX state context.
+*CX State Contexts:* CX instructions may access the current CX's
+current state context. CX instructions are the only means to access
+CX state. A CX state context also has *CX-scoped* CSRs *(CXRs)*,
+accessed by uniform CXR instructions. There may be any number of
+state contexts, per CX, per system, with an arbitrary, dynamic, software
+managed hart-to-CX-context mapping. All stateful CXs implement the *CX
+Context CXRs* enabling uniform OS CX context management. There is a
+privileged access control mechanism to efficiently grant/deny access to
+CX contexts by less privileged software.
 
-The optional hardware interfaces provide reuse of composable extension
-unit (CXU) *implementations* (which may be RTL modules). They support
-automated composition of a DAG of CPUs and CXUs into one system. Each
-CXU implements one or more CXs. In response to a CX instruction, a CPU
-delegates the instruction to the hart's currently selected CXU.
+*Modular Hardware:* The *CX Unit (CXU) logic interface (CXU-LI)* allows
+reuse of modular hardware implementations. It provides automated
+composition of a DAG of CPUs and CXUs into one system. Each CXU implements
+one or more CXs. In response to a CX instruction, a CPU delegates the
+instruction to the hart's currently selected CXU.
 
-The extension and interfaces must fulfil these requirements:
+*Tenets:* The extension and interfaces must fulfil these requirements:
 composability, conflict-freedom, decentralization, stable binaries,
 composable hardware, uniformity (of scope, naming, discovery, versioning,
 error signaling, state management, access control), frugality, security,
-performance, and longevity. In particular:
+and longevity. In particular:
 
 1. *Composability:* The behavior of a CX or CX library does not change
-when combined together with other CXs or ordinary *non-composable* custom
-extensions (NCXs), or their libraries, in one system.
+when used with other CXs.
 
-2. *Conflict-freedom:* Any CX may use any of (possibly a *CX subset*
-of) the custom-\* opcode instructions, without conflict with other CXs
-or NCXs.
+2. *Conflict-freedom:* Any CX may use the *CX subset* of the custom-\*
+opcode instructions, without conflict with other CXs or ordinary non-CX
+custom extensions.
 
-3. *Decentralization:* Anyone may define, implement, and/or use a CX
-without coordination with others, and without resort to a central naming
-or numbering authority.
+3. *Decentralization:* Anyone may define or use a CX without coordination
+with others, and without resort to a central authority.
 
 4. *Stable binaries:* CX library *binaries* compose without rewriting,
 recompilation or relinking.
 
-5. *Composable hardware:* An extension may be implemented by a reusable
-CX hardware unit (CXU). Adding a CXU to a system does not require
+5. *Composable hardware:* Adding a CXU to a system does not require
 modification of other CPUs or CXUs. A CXU *may be* implemented in a
 nonproprietary HDL such as Verilog.
 
@@ -86,114 +82,56 @@ registers and may be stateful; of *naming, discovery, versioning:*
 CX software has a uniform means to discover if specific CX or CX version
 is available.
 
-7. *Frugality:* To reduce processor hardware complexity, the ISA extension
-supports CX multiplexing and error signaling, while other CX services may
-be provided by a software API, or by a small standard set of CX state
-context instructions.
+7. *Frugality:* Prefer simpler induced hardware and shorter code paths.
 
-8. *Security:* The specifications include a vulnerability assessment,
-and they do not facilitate new side channel attacks. Privileged software
-may grant or deny unprivileged software access to a CX or its state.
+8. *Security:* The specifications include a vulnerability assessment
+and do not facilitate new side channel attacks.
 
-9. *Performance:* Selection of a hart's current CX and CX state context
-is very fast, ideally one instruction, even if subject to CX access
-control.
+9. *Longevity:* The specifications define how each interface may be
+versioned over decades, and incorporate mechanisms to improve forwards
+compatibility.
 
-10. *Longevity:* The specifications define how the specified interfaces
-are versioned over decades, providing best possible forwards and backwards
-compatibility to mixes of old and new composable extensions, libraries,
-and CXUs.
+### Deliverables
 
-### Deliverables, separation of TG responsibilities
+1. *CX-Mux-ISA* defines new ISA specs for: a. CX multiplexing and error
+signaling (unpriv); b. CX access control (priv).
 
-1. *CX-Mux-ISA sub-TG* defines the Composable Extensions standard extension
-*-Zicx* implementing access controlled CX multiplexing and error
-signaling. This comprises:
+2. *CX-State-ISA* defines new (per each CX) ISA specs for: a. CXR
+instructions (unpriv); b. CX State Context CXRs (priv).
 
-    a. New CSRs, instructions, or other mechanisms to enable, select,
-    and access-control CX and CX state multiplexing; and
+3. *CX-SW* defines: a. CX-API: CX Runtime API for uniform software access
+to CXs. b. CX-ABI: application binary interface governing disciplined
+use of CX-\*-ISA.
 
-    b. New CSRs, instructions, or other mechanisms to uniformly
-    signal errors during CX instruction execution.
-
-2. *CX-State-ISA sub-TG* defines the CX State standard extension,
-standard CX instructions which must be incorporated into and implemented
-by every stateful CX, providing uniform CX scoped CSRs and uniform CX
-state context management.
-
-3. *CX-SW sub-TG* defines:
-
-    a. CX-RT: The CX Runtime API for uniform CX naming, discovery,
-    version management, uniform extension state context management,
-    and uniform access control;
-
-    b. CX-ABI: The application binary interface governing disciplined
-    use of -Zicx CX multiplexing.
-
-4. *CX-HW sub-TG* defines:
-
-    a. CXU-LI: the composable extension unit logic interface, a
-    HW-HW interface specification to exchange uniform CXU requests
-    and responses, and
-
-    b. CXU-MD: the system manifest and CPU/CXU core metadata format,
-    specifying system and cores' CXU-LI constraints and parameters.
-
-    Together CXU-LI and CXU-MD enable automated composition of
-    configurable CPU and CXU cores into processor complexes.
-
-The interrelationship of these three subgroups' abstraction
-layers is illustrated in this hardware-software stack diagram.
-
-<img src="https://github.com/grayresearch/CX/blob/main/spec/images/composition-layers.png" width="500">
-
-The three sub-specifications may be applied separately, or together. For
-example, an implementation might implement the -Zicx extension and
-the CX Runtime API, hosting CX libraries obeying the CX-ABI, but *not*
-adopt CXU-LI or CXU-MD, employing other means to implement the various
-composable extensions in hardware.
+4. *CX-HW* defines *optional* specs for: a. CXU-LI: reusable CX unit
+logic interface; b. CXU-MD: metadata format describing systems, CPUs,
+and CXUs, enabling automatic composition of CPU + CXU complexes.
 
 ### Acceptance criteria
 
 Each deliverable must be implemented and proven in nontrivial interop
-scenarios. Therefore, a prerequisite for ratification of any CX TG spec
-is a plug-fest demonstration of 3+ different soft processors, each with
-3+ CXs, 2+ stateful, running a multithreaded Linux workload, each such
-thread using all of the composable extensions' libraries.
+plugfest scenarios involving multiple processors x extensions x extension
+libraries x OSs.
 
 ## Exclusions
 
-The -Zicx extension will specify what *kinds* of custom instructions
-are valid within a *composable* extension. In particular, not every
-arbitrary custom extension can be a composable extension.
+Not every arbitrary custom extension can be a composable extension.
 
-The present TG(s) focus on *enabling* composition of extensions and
-software. Later, additional TG standards work may be helpful, e.g.,
-tools support including debugging and profiling, formal specification
-of CXs' interface contracts, CX library metadata, and automatic system
-composition and composition tools.
+The CX TG is focused on the minimum viable standards *enabling*
+practical composition of extensions and software. Further standards
+for infrastructure and tooling e.g. for CX packages, debug, profile,
+formal specification of CX interface contracts, CX library metadata,
+and tools, are _out of scope_.
 
 ## Collaborations
 
-A ratified CX framework should enable most unpriv computational extension
-TGs to prototype, perfect, prove value, and ratify their extension as a
-composable extension, and to provide a reference Composable Extension Unit
-(CXU) implementation. For example, the entirely of the bitmanip extension
-might have been a composable extension and its reference CXU, immediately
-available (opt-in plug-in) across all CX compliant RISC-V systems.
-
-Since each composable extension may use the entirety of the CX custom
-opcode space, conflict free, each such TG may work without interference
-from or to others. Uniform CX discovery and versioning enables a TG
-to undertake to produce a series of extension versions with a known,
-uniform forward compatibility strategy.
-
-Since composable extensions consume no opcode space and introduce no
-new (conventional) CSRs, each such extension comes at negligible cost
-to the enduring complexity of the core RISC-V ISA specs, or to the many
-dozens of extant RISC-V processor core instruction decoders and CSR
-datapaths, while also extending the useful life and reach of the 32b
-RISC-V ISA without resort to 48b or 64b encodings.
+The CX framework will enable many unpriv computational extension TGs to
+provide their extension as a composable extension, with a modular
+CXU implementation that enables that extension in any CXU-LI-compliant
+CPU cores. CX multiplexing reduces the opcode and CSR impact of such
+extensions to zero, extending the life of the 32b encodings. CX discovery
+and versioning provides such extensions a uniform forwards compatible
+versioning story.
 
 ### Overlaps (probably many, more TBD)
 
@@ -204,28 +142,12 @@ RISC-V ISA without resort to 48b or 64b encodings.
 ## History
 
 In 2019, the RISC-V Foundation FPGA soft processor SIG members, determined
-to advance RISC-V as the preeminent ecosystem for FPGA processor and SoC
-designs, started to work on their Charter goal to "Propose extensions
-... to enable interoperable RISC-V FPGA platforms and applications".
-
-The RISC-V provision for introducing custom instruction extensions
-dovetails with existing practice of *configurable* FPGA soft
-processors. But dissatisfied with past incompatible soft CPU tech stack
-silos, the members opted to pursue standards by which various reusable
-cores that implement various custom extensions might be reused across
-various RISC-V soft CPUs.
-
-Members also felt that a vibrant ecosystem of mix-and-match reusable
-custom extensions, libraries, and cores, requires new interop interface
-standards to achieve routine, robust composition of *multiple* such
-extensions within one system.
-
-Through 2019-2022, the effort to define the *minimum viable set* of
-standards to enable practical composition of extensions grew to include
-CX multiplexing, uniform state context management, access control, etc.,
+to advance RISC-V as the preeminent ecosystem for FPGA SoCs, committed to
+"Propose extensions ... to enable interoperable RISC-V FPGA platforms
+and applications". SIG members set out to define standards by which
+FPGAs' extensible RISC-V cores might enable a marketplace of reusable
+and composable custom extensions and libraries. Through 2019-2022,
+members met to define the *minimum viable set* of interop interfaces
 culminating in the
 [Draft Proposed RISC-V Composable Custom Extensions Specification](https://raw.githubusercontent.com/grayresearch/CX/main/spec/spec.pdf),
-proposed as a basis / starting point for the TGs work. In 2023,
-[the SIG moved to RISC-V International's Technology Horizontal Committee](https://lists.riscv.org/g/tech-announce/message/277),
-and now proposes to undertake to standardize the work as one or more
-RVI TGs.
+now proposed as a starting point for RVI CX TG work.
