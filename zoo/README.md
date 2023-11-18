@@ -5,7 +5,7 @@ This work-in-progress directory will provide various example CXUs, standard mux 
 CXU-LI compatible CPUs, and composed systems.
 
 The various testbenches require `cocotb` `cocotb-test` `pytest-xdist` `iverilog`
-and `verilator-4.106` or `verilator-5.006+`.
+and `iverilog v12_0 (stable)` and `verilator-4.106` or `verilator-5.006+`.
 Planning to automate setup and execution using `tox`.
 
 Until then, any testbench may be run with
