@@ -23,7 +23,7 @@ in the spec, and importantly, it
 
 As of fall 2023, we are working to submit this work as a basis of a
 proposed RISC-V Composable Extensions Task Group. Please review the draft
-[Composable Extensions (CX) Task Group Charter](CHARTER.md).
+[Composable Extensions (CX) Task Group Charter](https://github.com/riscv-admin/sig-soft-cpu/blob/main/TG/CX/CHARTER.md).
 
 This work summarizes years of ongoing discussions and prototyping by
 (alphabetical order): Tim Ansell, Tim Callahan, Jan Gray, Karol Gugala,
