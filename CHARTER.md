@@ -38,7 +38,7 @@ cores, remaining backwards compatible with legacy custom extensions.
   or more CXs, and, in response to a CX instruction, muxing delegates
   it to the selected CX/CXU.
 
-The TG specifications must achieve these design tenets:
+The TG specifications should aim to balance these design tenets:
 
 1. *Composability:* The behavior of a CX or CX library does not change
 when used alongside other CXs.
@@ -88,7 +88,7 @@ extensions a uniform forwards compatible versioning story.
 
 ### Overlaps (incomplete!)
 
-* CX discovery API may overlap uniform discovery TG;
+* CX discovery API may overlap uniform discovery TG
 
 ## History
 
