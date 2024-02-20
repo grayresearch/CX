@@ -26,8 +26,8 @@ cores, remaining backwards compatible with legacy custom extensions.
     any CX / state context.
 
 * *CX API* provides CX libraries with a uniform CX programming model,
-  including uniform CX naming, discovery, versioning, state management,
-  resource management, and error handling.
+  including CX naming, discovery, versioning, state management, and
+  error handling.
 
 * *CX ABI* ensures correct nested library composition via disciplined
   save/restore of the CX mux selection.
