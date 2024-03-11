@@ -1,10 +1,21 @@
 == Specification Change History
 
-=== Version 0.92.231111, 2023-11-11: Add extension multiplexing _type_.
+=== Version 0.92.240310, 2024-03-10: Revise CX ABI.
 
-Introduce _CX type_, improving CX forward compatibility. Replace
+Add a CX ABI chapter. Update CX ABI section of Introduction.
+
+The old CX ABI was _callee-save_ management of the CX mux CSRs,
+optimizing for minimum CX mux CSR writes.
+
+The new CX ABI is _ambient legacy mode_, maximally paranoid and backwards
+compatible, keeping CX muxing _off_ (e.g., selecting for legacy built-in
+custom extensions) except when actively issuing CX custom instructions.
+
+=== Version 0.92.231111, 2023-11-11: Add extension multiplexing _version_.
+
+Introduce _CX version, improving CX forward compatibility. Replace
 `mcx_selector.en` with `mcx_selector.version`. Add `cx_status.iv` error
-field. Replace `cs_status` field names CI/SI/FI with IC/IS/IF.
+field. Replace `cx_status` field names CI/SI/FI with IC/IS/IF.
 
 === Version 0.91.230803, 2023-08-03: Simplify and improve terminology.
 

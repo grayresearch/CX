@@ -2,8 +2,8 @@
 = _Draft Proposed_ RISC-V Composable Custom Extensions Specification
 :description: Draft proposed specifications for composable extensions: composable extensions and composable extension units
 :company:
-:revdate: 2023-11-11
-:revnumber: 0.92.231111
+:revdate: 2024-03-10
+:revnumber: 0.93.240310
 :revremark: Draft
 :url-riscv: http://riscv.org
 :doctype: book
@@ -48,9 +48,10 @@ endif::[]
 = Preface
 include::preface.adoc[]
 include::intro.adoc[]
-include::cx-abi.adoc[]
+include::cx-isa.adoc[]
 include::cxu-li.adoc[]
 include::metadata.adoc[]
+include::cx-abi.adoc[]
 include::todo.adoc[]
 include::history.adoc[]
 include::bib.adoc[]
