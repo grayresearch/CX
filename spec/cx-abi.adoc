@@ -1,0 +1,222 @@
+== CX-ABI: CX Application Binary Interface
+
+=== Basic ABI
+Each thread has a current CX selection that determines how custom
+instructions and custom CSR accesses ("custom operations") are
+performed. The current selection may be:
+
+1. Legacy mode: CX multiplexing is _disabled_: custom operations issue
+pre-existing built-in custom operations.
+
+2. CX mode: CX multiplexing is _enabled_: custom operations issue to
+the selected CX and CX state context.
+
+The CX-ABI defines these rules, which must be implemented explicitly
+in code or automatically by CX-ABI aware compilers:
+
+1. *[ABI-INIT]*: Initially, the selection is legacy mode.
+
+2. *[ABI-ENTRY]*: On entry to a function, or following a function call,
+the selection is legacy mode.
+
+3. *[ABI-SELECT-CX]*: Code *must* select a CX prior to issuing that CX's
+custom operations.
+
+4. *[ABI-DESELECT-CX]*: Code that selects a CX *must* select legacy
+mode prior to calling a function, returning, or stack unwinding.
+
+5. *[ABI-SELECT-LEGACY]*: Code *should* select legacy mode prior to issuing
+built-in custom operations.
+
+=== ABI with CX functions -- provisional
+
+[TIP]
+====
+This provisional ABI section is non-normative.
+====
+
+At present there is a proposal to designate certain functions as _CX functions_
+which *must* be called in CX mode, with selected CX and state context.
+
+Therefore for this "CX-ABI with CX functions" there are two types of functions:
+
+1. Ordinary functions. Ordinary functions expect legacy mode.
+
+2. CX functions. CX functions are so-designated by a language-specific
+attribute, declaration, or type specifier. CX functions require CX mode.
+
+This provisional ABI defines these rules, which must be implemented
+explicitly in code or automatically by CX-ABI aware compilers:
+
+1. *[ABI-INIT]*: Initially, the selection is legacy mode.
+
+2. *[ABI-ENTRY]*: On entry to an _ordinary_ function, or following _any_
+function call, the selection is legacy mode.
+
+3. *[ABI-CX-ENTRY]*: On entry to a _CX_ function, the selection is CX mode.
+
+4. *[ABI-SELECT-CX]*: Code *must* select a CX prior to issuing that CX's
+custom operations _or calling a CX function_.
+
+5. *[ABI-DESELECT-CX]*: Code that selects a CX *must* select legacy
+mode prior to calling an _ordinary_ function, returning, or stack unwinding.
+
+6. *[ABI-SELECT-LEGACY]*: Code *should* select legacy mode prior to issuing
+built-in custom operations.
+
+=== Rationale
+[TIP]
+====
+This Rationale section is non-normative.
+====
+
+The CX ABI ensures correct composition of independently authored CX
+libraries and legacy custom extension libraries under CX multiplexing.
+
+CX multiplexing operates by setting the hart's CX selector (`mcx_selector`
+write), or setting it indirectly (`cx_index` write), to select a specific
+CX and CX state context to issue custom instructions or accessing
+custom CSRs (together, "custom operations"). 
+
+Per §<<mcx_selector>>, `mcx_selector.version` determines whether CX
+multiplexing is enabled or disabled:
+
+* "When `version=0`, disable composable extension multiplexing. ...
+`Custom-[0123]` instructions execute the CPU's built-in custom instructions."
+
+* "When `version=1`, enable ... composable extension multiplexing. ...
+`Custom-[012]` instructions issue CXU requests to the CXU
+identified by `cxu_id` and to the state context identified by `state_id`."
+
+So software must write the CX selector prior to issuing CX custom
+operations, and software must also ensure the CX selector is disabled
+prior to issuing legacy custom operations.
+
+Since application software is composed of dozens or hundreds of
+separately authored, sometimes separately versioned libraries, we require
+an application binary interface (ABI) that ensures dependable disciplined
+use of the thread's shared CX selector, so that whenever software performs
+custom operations, these are performed against exactly the expected CX
+or legacy custom.
+
+==== Callee-save won't do
+An older version of the spec defined a provisional CX ABI that managed
+the CX selector with a _callee-save_ discipline:
+
+1. Initial selection is legacy mode.
+
+2. Any code that writes CX selector must save the prior value and restore it upon return / stack unwind.
+
+3. Code which does not change selectors need not save or restore selectors.
+
+This callee-save discipline has the advantages that:
+
+* It provides correct nested composition of CX libraries.
+
+** If CX A lib selects CX A, performs A custom operations then calls
+lib B, which selects CX B and performs B custom operations, B must
+re-select the previous selection (CX A) prior to returning to lib A,
+which can then happily perform more A custom operations.
+
+* Compared to _caller-save_, wherein a CX library defensively re-selects
+its CX after every function call out, the CX library trusts the transitive
+callees to restore its CX selection, minimizing the number
+of CX selector writes in a given code path.
+
+What's wrong with callee-save?
+
+_It breaks legacy custom code._ Under callee-save you must always select
+your CX (or legacy mode) prior to issuing custom operations. However
+preexisting legacy custom code, and legacy compilers, both predating CX,
+do not include the required CX selector writes to select legacy mode,
+nor a matching CX selector write to restore the caller's selection. So
+any explicit or implicit use of a legacy custom operation may instead
+forward to some other selected CX -- a disaster! In summary, callee-save
+discipline is incompatible in general with legacy libraries and compilers
+that use legacy custom operations at will. Since legacy custom code may
+appear almost anywhere, it follows the default, ambient CX selection
+should be legacy mode.
+
+_Wrong trust model._ Callee-save CX selection means you must trust code
+you do not control to preserve your current CX selection. In general any
+C function capable ABI assumes that a callee will not corrupt the stack or
+do other undefined behavior that corrupts the caller, but CX multiplexing
+is a sharp knife, and if the callee violates the callee-save ABI and
+returns with a different CX selector in place, the caller may issue
+custom operations to the wrong CX or CX state context. In applications
+comprising separately authored, separately versioned libraries, it is
+not possible to inspect the transitive call graph from a CX library to
+ensure callers preserve the CX selection as required. A more secure,
+more defensive, more amenable to program analysis ABI merits a greater
+degree of paranoia in each CX library, by assuming that callees do not
+preserve the current CX selection.
+
+==== Ambient legacy mode ABI
+
+These two problems with callee-save discipline led to a redesign of the
+ABI. The revised design tenets are:
+
+1. Support composition of CX libraries, including nested composition of
+CX libraries, alongside legacy custom extension libraries.
+
+2. Support preexisting legacy custom extension libraries, even when they
+don't explicitly manage (disable) CX muxing.
+
+3. Minimize the CX selection "trust surface" to that of the current
+function (or perhaps, current library).
+
+4. Minimize the number of CX selector writes.
+
+The present ABI endeavors to maintain an ambient legacy mode selection when
+not actively issuing CX custom operations. This ensures, to the greatest
+extent possible, that legacy custom code, unaware of CX multiplexing,
+and lacking the code to select legacy custom mode, nevertheless always
+operates in legacy custom mode.
+
+For CX libraries, this code supports composition and nested
+composition. Composition works because each library
+selects its CX prior to issuing its custom operations. Nested composition
+also works, because, after following a function call (*[ABI-ENTRY]*)
+the caller must re-select its CX (*[ABI-SELECT-CX]*)
+prior to issuing additional custom operations:
+
+    CX A lib sets CX selection to CX A, issues A operations
+    CX A lib sets CX selection to legacy mode, calls CX B lib
+    CX B lib sets CX selection to CX B, issues B operations
+    CX B lib sets CX selection to legacy mode, returns
+    CX A lib sets CX select to CX A, issues more A operations
+    CX A lib sets CX selection to legacy mode, returns.
+
+Also, all is well when a CX A lib calls legacy custom code:
+
+    CX A lib sets CX selection to CX A, issues A operations
+    CX A lib sets CX selection to legacy mode, calls legacy lib
+    legacy lib issues its legacy custom operations
+    legacy lib returns
+    CX A lib sets CX select to CX A, issues more A operations
+    CX A lib sets CX selection to legacy mode, returns.
+
+Rule *[ABI-DESELECT-CX]* helps ensure that following a brief excursion into
+a CX lib which changes the CX selection, we immediately return to legacy
+mode in case we encounter selection-less legacy custom code.
+
+There is still an attack surface caused by malicious code violating the
+ABI by selecting some CX, then calling (or returning to) selection-less
+legacy custom code, which issues custom operations which are not the
+legacy custom operations it intends causing unboundedly undefined
+behavior.
+
+Rule *[ABI-SELECT-LEGACY]* helps defend against this. To the extent
+practical or necessary, legacy custom code should be compiled defensively
+to set legacy mode on entry and after function calls prior to issuing
+its custom operations.
+
+Unlike the deprecated callee-save ABI, these rules will incur
+additional unnecessary CX selection writes and will give up a little
+bit of performance (which after all may be the reason for using that
+CX in the first place.) For example, in the CX A lib + CX B lib nested
+example above, several CX selector writes are unnecessary. It is possible
+for a CX enlightened compiler+linker to analyze control flow within a
+monolithic CX library and optimize the generated code by eliding provably
+unnecessary defensive CX selector writes.
+
