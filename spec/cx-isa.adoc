@@ -124,6 +124,7 @@ invalid <<CXU_ID,CXU_ID>> or <<STATE_ID,STATE_ID>> value is still _legal_).
 
 All CXU CSRs are initialized to zero on reset.
 
+[[mcx_selector]]
 ==== `mcx_selector` CSR 0xBC0: select active CXU and state context
 
 The `mcx_selector` CSR implements composable extension multiplexing. It

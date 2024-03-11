@@ -195,8 +195,9 @@ libraries, and tools, the specification defines common interop extensions
 and formats:
 
 * the _CXU Logic Interface (CXU-LI),_
-* the _Composable Extension Hardware-Software Interface (CX-ABI), including CXU-extensions to RV-I (-Zicx)_,
-* the _Composable Extension Runtime API (CX-RT)_, and
+* the _Composable Extensions Hardware-Software Interface, including CX-extensions to RV-I (-Zicx)_,
+* the _Composable Extensions Application Binary Interface (CX-ABI),
+* the _Composable Extensions Runtime API (CX-RT)_, and
 * build-time _CXU Metadata (CXU-MD)._
 
 [[layers]]
@@ -311,18 +312,19 @@ These standard custom functions enable an extension-aware CX library to
 access stateful extension specific error status, and an extension-agnostic
 runtime or operating system to reset, save, and reload state context(s).
 
-==== CX Application Programming Interface and CX-ABI
+==== CX-API (Application Programming Interface) and CX-ABI (Application Binary Interface)
 
-The CX-API consists of the _CX Runtime_ API, and a calling convention
-rule. Both are necessary for correct discovery, operation, and composition
+Together the CX-API (the _CX Runtime_ API) and CX-ABI provide the programming
+model used by composable extension libraries.
+
+Both are necessary for correct discovery, operation, and composition
 of CX libraries. As described above (<<intro-CSRs>>) the current `mcx_selector`
 CSR selects the current composable extension/CXU and state context for the
 hart. However, a CX library should not directly create a CX selector
 value, nor directly access the CSR. Rather a CX library uses the CX
 Runtime to look up the CX selector value for its composable extension's
 CX_ID and to write it to `mcx_selector`, prior to issuing CF
-instructions. For example, using a C++ _RAII_ object cx to represent a
-(scoped) composable extension selection:
+instructions. For example,
 
 [source,C++]
 ....
@@ -332,30 +334,39 @@ use_cx cx(CX_ID_IBitmanip);             // csrrw mcx_selector
 uint32_t count = cf(pcnt_cf, data, 0);  // cx_reg cf_id, rd, rs1, rs2
 ....
 
-The provisional CX-ABI defines a _callee-save_ calling convention for
-`mcx_selector`. For example, consider CX library functions `a()` and
-`b()`, for extensions `IA` and `IB`, that issue CF instructions `af0`,
-`af1`, `bf0`, `bf1`, in this program:
+The CX-ABI defines the calling convention for managing the `mcx_selector` CSR.
 
-[source,C++]
-....
-main() { a(); }
-a() { use_cx a_cx(CX_ID_IA); af0; b(); @1 af1; }
-b() { use_cx b_cx(CX_ID_IB); bf0; bf1; }
-....
+Its design follows these tenets and (competing) goals:
 
-with execution trace:
+1. Support composition of CX libraries, including nested composition of CX libraries, alongside legacy custom extension libraries.
+2. Support preexisting legacy custom extension libraries, even when they don't explicitly manage (disable) CX muxing.
+3. Minimize the CX selection "trust surface" to that of the current function (or perhaps, current library).
+4. Minimize the number of CX selector writes.
 
-[source,C++]
-....
-main() { a() { a_cx(); af0; b() { b_cx(); bf0; bf1; ~b_cx(); } @1 af1; ~a_cx(); }
-....
+Therefore for maximum preexisting legacy custom extension library
+compatibility and maximum paranoia (least trust of other code), the
+CX-ABI keeps CX muxing off across function calls, only enabling CX muxing
+and selecting a CX and CX state context immediately prior to issuing
+that CX's custom instructions.
 
-With a callee-save discipline, at point `@1`, upon return from `b()`, the
-current composable extension must be `IA` again. Thus the `b_cx()` constructor
-saves `a()'s` `mcx_selector` value while overwriting it; later its
-`~b_cx()` destructor restores it. This _RAII_ approach also correctly restores
-`mcx_selector` in the event of an exception handling stack unwind.
+The CX-ABI defines these five rules, which must be implemented explicitly
+in code or automatically by CX-ABI aware compilers:
+
+1. *[ABI-INIT]*: Initially, the selection is legacy mode.
+
+2. *[ABI-ENTRY]*: On entry to a function, or following a function call,
+the selection is legacy mode.
+
+3. *[ABI-SELECT-CX]*: Code *must* select a CX prior to issuing that CX's
+custom operations.
+
+4. *[ABI-DESELECT-CX]*: Code that selects a CX *must* select legacy
+mode prior to calling a function, returning, or stack unwinding.
+
+5. *[ABI-SELECT-LEGACY]*: Code *should* select legacy mode prior to issuing
+built-in custom operations.
+
+This is discussed in more detail in the CX-ABI chapter.
 
 === System composition
 
