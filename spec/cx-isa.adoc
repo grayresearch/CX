@@ -256,16 +256,17 @@ table entries set (`cte=1`) to trap on first custom operation. Once
 such a selector index is used to select the thread's current CX, a
 custom operation incurs an illegal instruction exception. The illegal
 instruction trap handler determines which virtual CX state context
-currently has the physical CX state context, saves that CX state context,
-sets `cte=1` on its selector table entry, restores the thread's current
-CX's state context, clears `cte=0` its selector table entry; rewrites
-cx_index with cx_index (updating `mcx_selector` with a selector with
-`cte=0`), and returns from exception, reissuing the custom operation,
-which now does not trap.
+currently has the physical CX state context, saves that CX state
+context, sets `cte=1` on its selector table entry, restores the thread's
+current CX's state context, clears `cte=0` its selector table entry;
+rewrites `cx_index` with `cx_index` for the side-effect of updating
+`mcx_selector` with this selector table entry value with `cte=0`), and
+returns from exception, reissuing the custom operation, which does
+not trap.
 
-The selector value `'{version:4'b0, cte:1'b1, reserved:27'b0}` is the
-canonical _invalid selector value_. An OS will fill unused entries in
-the each `mcx_table[]` with this value.
+The selector value `0x08000000 == '{version:4'b0, cte:1'b1, reserved:27'b0}`
+is the canonical _invalid selector value_. An OS will fill unused entries
+in the each `mcx_table[]` with this value.
 ====
 
 [[cx_status]]
