@@ -94,7 +94,8 @@ configured extension.
 
 A *composable extension selector (CX selector, selector)* is a 32-bit
 value written to `mcx_selector` CSR to select the hart's current extension
-multiplexing version, (e.g., _off_, _version-1_, ...) and specify the
+multiplexing version, (e.g., _off_, _version-1_, ...), whether
+_trap on custom operation_ is enabled, and to specify the
 hart's current configured extension / CXU and current state context.
 
 [[selector-table]]
@@ -149,7 +150,8 @@ are required and what access permissions should they have?
 [wavedrom,target="`mcx_selector_0`",svg]
 ....
 {reg:[
-{bits: 28, name: 'reserved', type:1, vspace:88},
+{bits: 27, name: 'reserved', type:1, vspace:88},
+{bits: 1, name: 'cte'},
 {bits: 4, name: 0, attr:'version'},
 ],
 config: {lanes: 1, bits: 32}
@@ -163,7 +165,8 @@ config: {lanes: 1, bits: 32}
 {bits: 8, name: 'cxu_id'},
 {bits: 8, name: 'reserved', type:1, vspace:88},
 {bits: 8, name: 'state_id'},
-{bits: 4, name: 'reserved', type:1},
+{bits: 3, name: 'reserved', type:1},
+{bits: 1, name: 'cte'},
 {bits: 4, name: 1, attr:'version'},
 ],
 config: {lanes: 1, bits: 32}
@@ -184,6 +187,12 @@ context. `Custom-0`/`-1`/`-2` instructions issue CXU requests to the CXU
 identified by `cxu_id` and to the state context identified by `state_id`.
 
 * `version` values 2-15 are reserved.
+
+`.cte`: custom operation trap enable
+
+* When (`version=0` or `version=1` and) `cte=1`, a _custom operation_
+(custom instruction or custom CSR access) causes an illegal instruction
+exception.
 
 `.cxu_id`: select the hart's current CXU
 
@@ -222,6 +231,41 @@ custom extensions, and forwards compatibility with future CX systems.
 In future a new CX multiplexing version may be added, with a new layout
 and interpretation of selector fields and new means of decoding custom
 instruction fields into CXU requests.
+With 15 non-zero values, it accomodates a new extension multiplexing scheme
+every two years for thirty years.
+====
+
+[TIP]
+====
+The `cte` field enables 1) software emulation of any built-in (legacy)
+custom instruction or custom CSR; 2) software emulation of any composable
+extension custom instruction or custom CSR; 3) transparent virtualization
+of CX state contexts; and 4) a representation of an `invalid selector`,
+i.e., sentinel value(s) to detect use of erroneous selector indices.
+
+An illegal instruction trap handler can emulate any absent built-in
+custom instruction or any custom instruction of a composable extension,
+then return to the following instruction.
+
+Using <<CX access control,CX access control>> CSRs, an OS can transparently _virtualize_
+many logical CX state contexts on fewer (or just one!) physical CX
+state contexts.  When multiple CX libraries each try to open the same
+(e.g., singleton) CX state context, the OS can give each a unique CX
+selector index value, with all-but-one of their corresponding CX selector
+table entries set (`cte=1`) to trap on first custom operation. Once
+such a selector index is used to select the thread's current CX, a
+custom operation incurs an illegal instruction exception. The illegal
+instruction trap handler determines which virtual CX state context
+currently has the physical CX state context, saves that CX state context,
+sets `cte=1` on its selector table entry, restores the thread's current
+CX's state context, clears `cte=0` its selector table entry; rewrites
+cx_index with cx_index (updating `mcx_selector` with a selector with
+`cte=0`), and returns from exception, reissuing the custom operation,
+which now does not trap.
+
+The selector value `'{version:4'b0, cte:1'b1, reserved:27'b0}` is the
+canonical _invalid selector value_. An OS will fill unused entries in
+the each `mcx_table[]` with this value.
 ====
 
 [[cx_status]]
