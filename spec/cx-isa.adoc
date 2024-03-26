@@ -240,7 +240,7 @@ every two years for thirty years.
 The `cte` field enables 1) software emulation of any built-in (legacy)
 custom instruction or custom CSR; 2) software emulation of any composable
 extension custom instruction or custom CSR; 3) transparent virtualization
-of CX state contexts; and 4) a representation of an `invalid selector`,
+of CX state contexts; and 4) a representation of an _invalid selector_,
 i.e., sentinel value(s) to detect use of erroneous selector indices.
 
 An illegal instruction trap handler can emulate any absent built-in
@@ -260,7 +260,7 @@ currently has the physical CX state context, saves that CX state
 context, sets `cte=1` on its selector table entry, restores the thread's
 current CX's state context, clears `cte=0` its selector table entry;
 rewrites `cx_index` with `cx_index` for the side-effect of updating
-`mcx_selector` with this selector table entry value with `cte=0`), and
+`mcx_selector` with this selector table entry value with `cte=0`, and
 returns from exception, reissuing the custom operation, which does
 not trap.
 
