@@ -8,7 +8,6 @@ Todo:
 
 === Open design problems (post 1.0)
 
-* Developing, running accelerated libraries on systems where there is no composable extension / CXU implementation.
 * Developer tooling recommendations for disassembly, debugging, profiling, perf monitoring.
 
 === Cost model
