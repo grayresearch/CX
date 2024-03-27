@@ -76,7 +76,7 @@ libraries and legacy custom extension libraries under CX multiplexing.
 CX multiplexing operates by setting the hart's CX selector (`mcx_selector`
 write), or setting it indirectly (`cx_index` write), to select a specific
 CX and CX state context to issue custom instructions or accessing
-custom CSRs (together, "custom operations"). 
+custom CSRs (together, _custom operations_).
 
 Per §<<mcx_selector>>, `mcx_selector.version` determines whether CX
 multiplexing is enabled or disabled:
