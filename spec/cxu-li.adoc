@@ -1210,15 +1210,15 @@ latencies. Each CPU runs the same code (<<cim3>>):
 .Issue stateful CF instructions `f0` and `f1` to CXU~0~, `f2` and `f3` to CXU~1~, and `f4` to CXU~0~ again.
 [source,asm]
 ....
-csrw mcx_selector,x20   ; select CXU_ID=0 and STATE_ID=HART_ID
+csrw mcx_selector,x20   ; version=1, cte=0, CXU_ID=0, STATE_ID=HART_ID
 cx_reg 0,x3,x1,x2       ; u0.f0
 cx_reg 1,x6,x5,x4       ; u0.f1
 
-csrw mcx_selector,x21   ; select CXU_ID=1 and STATE_ID=HART_ID
+csrw mcx_selector,x21   ; version=1, cte=0, CXU_ID=1, STATE_ID=HART_ID
 cx_reg 2,x9,x7,x8       ; u1.f2
 cx_reg 3,x12,x11,x10    ; u1.f3
 
-csrw mcx_selector,x20   ; select CXU_ID=0 and STATE_ID=HART_ID again
+csrw mcx_selector,x20   ; version=1, cte=0, CXU_ID=0, STATE_ID=HART_ID again
 cx_reg 4,x15,x13,x14    ; u0.f4
 ....
 

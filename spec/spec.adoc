@@ -3,7 +3,7 @@
 :description: Draft proposed specifications for composable extensions: composable extensions and composable extension units
 :company:
 :revdate: 2024-03-10
-:revnumber: 0.93.240310
+:revnumber: 0.94.240327
 :revremark: Draft
 :url-riscv: http://riscv.org
 :doctype: book

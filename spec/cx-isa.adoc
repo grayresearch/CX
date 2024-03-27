@@ -95,7 +95,7 @@ configured extension.
 A *composable extension selector (CX selector, selector)* is a 32-bit
 value written to `mcx_selector` CSR to select the hart's current extension
 multiplexing version, (e.g., _off_, _version-1_, ...), whether
-_trap on custom operation_ is enabled, and to specify the
+_trap on custom operation_ is _enabled_, and to specify the
 hart's current configured extension / CXU and current state context.
 
 [[selector-table]]
@@ -177,31 +177,34 @@ The `mcx_selector` CSR has the following fields:
 
 `.version`: extension multiplexing version
 
-* When `version=0`, disable composable extension multiplexing. The rest
-of `mcx_selector` is ignored. No CXU is selected. `Custom-[0123]`
-instructions execute the CPU's built-in custom instructions.
+* When `version=0`, disable composable extension multiplexing.
+When `cte=0`, `custom-[0123]` instructions execute the CPU's built-in
+custom instructions. When `cte=1`, `custom-[0123]` instructions raise
+an illegal instruction exception.
 
-* When `version=1`, enable _version-1_ composable extension multiplexing. The
-`cxu_id` and `state_id` fields select the current CXU and state
-context. `Custom-0`/`-1`/`-2` instructions issue CXU requests to the CXU
-identified by `cxu_id` and to the state context identified by `state_id`.
+* When `version=1`, enable _version-1_ composable extension
+multiplexing. The `cxu_id` and `state_id` fields select the current CXU
+and state context. When `cte=0`, `custom-[012]` instructions issue CXU
+requests to the CXU identified by `cxu_id` and to the state context
+identified by `state_id`. When `cte=1`, `custom-[012]` instructions
+raise an illegal instruction exception.
 
 * `version` values 2-15 are reserved.
 
 `.cte`: custom operation trap enable
 
 * When (`version=0` or `version=1` and) `cte=1`, a _custom operation_
-(custom instruction or custom CSR access) causes an illegal instruction
+(custom instruction or custom CSR access) raises an illegal instruction
 exception.
 
 `.cxu_id`: select the hart's current CXU
 
 * A valid `cxu_id` identifies a configured CXU.
 
-* When enabled, when `cxu_id` does not identify a configured CXU, executing
-a CF instruction causes an invalid CXU_ID error. The `cx_status.CX`
-error bit is set and the CF instruction's destination register, if any,
-is zeroed.
+* When enabled, when `cxu_id` does not identify a configured CXU,
+executing a CF instruction causes an invalid CXU_ID error. The
+`cx_status.CX` error bit is set and the CF instruction's destination
+register, if any, is zeroed.
 
 `.state_id`: select the hart's current CXU's current state context
 
@@ -247,26 +250,38 @@ An illegal instruction trap handler can emulate any absent built-in
 custom instruction or any custom instruction of a composable extension,
 then return to the following instruction.
 
-Using <<CX access control,CX access control>> CSRs, an OS can transparently _virtualize_
-many logical CX state contexts on fewer (or just one!) physical CX
-state contexts.  When multiple CX libraries each try to open the same
-(e.g., singleton) CX state context, the OS can give each a unique CX
-selector index value, with all-but-one of their corresponding CX selector
-table entries set (`cte=1`) to trap on first custom operation. Once
-such a selector index is used to select the thread's current CX, a
-custom operation incurs an illegal instruction exception. The illegal
-instruction trap handler determines which virtual CX state context
-currently has the physical CX state context, saves that CX state
-context, sets `cte=1` on its selector table entry, restores the thread's
-current CX's state context, clears `cte=0` its selector table entry;
-rewrites `cx_index` with `cx_index` for the side-effect of updating
-`mcx_selector` with this selector table entry value with `cte=0`, and
-returns from exception, reissuing the custom operation, which does
-not trap.
+Using <<CX access control,CX access control>> CSRs, an OS can
+transparently _virtualize_ many logical CX state contexts on fewer
+(or just one!) physical CX state contexts. When multiple CX libraries
+each try to open the same (e.g., singleton) CX state context, the OS
+can give each a unique CX selector index value, with all-but-one of
+their corresponding CX selector table entries set `cte=1` to trap on
+first custom operation. Once such a selector index is used to select the
+thread's current CX, a custom operation incurs an illegal instruction
+exception. The illegal instruction trap handler determines which virtual
+CX state context currently has the physical CX state context, saves that
+CX state context, sets `cte=1` on its selector table entry, restores the
+thread's current CX's state context, clears `cte=0` for its selector
+table entry, rewrites `cx_index` with `cx_index` for the side-effect
+of updating `mcx_selector` with this selector table entry value with
+`cte=0`, and returns from exception, reissuing the custom operation,
+which does not trap.
+====
 
-The selector value `0x08000000 == '{version:4'b0, cte:1'b1, reserved:27'b0}`
-is the canonical _invalid selector value_. An OS will fill unused entries
-in the each `mcx_table[]` with this value.
+[TIP]
+====
+The selector's `cte` field is _subordinate_ to the `version` field so
+that future revisions of this specification may incorporate new trap
+behaviors and trap control bits.
+====
+
+The selector `0x08000000` = `'{version:4'b0, cte:1'b1, reserved:27'b0}`
+is the canonical _invalid selector_.
+
+[TIP]
+====
+Typically an OS will fill unused `mcx_table[]` entries with this invalid
+selector to trap first custom operation use of an invalid selector index.
 ====
 
 [[cx_status]]
@@ -357,14 +372,14 @@ For simplicity we do not adopt this option.
 
 [NOTE]
 ====
-How to best anticipate future changes to `cx_status`?
-One option: fields and behavior determined by hart's current CX version (`mcx_selector.version`).
-This becomes unwieldy when multiplexing between extensions switches different versions.
-One option: add a `cx_status.version` field, selecting an interpretation of `cx_status` CSR fields.
-Both options may lead to _unnecessarily complicated_ error handling in software.
-Best option: only _add_ new fields to it.
-Here simplest seems best.
-====
+How to best anticipate future changes to `cx_status`?  One option:
+fields and behavior determined by hart's current CX version
+(`mcx_selector.version`).  This becomes unwieldy when multiplexing
+between extensions switches different versions.  One option: add a
+`cx_status.version` field, selecting an interpretation of `cx_status`
+CSR fields.  Both options may lead to _unnecessarily complicated_
+error handling in software.  Best option: only _add_ new fields to it.
+Here simplest seems best.  ====
 
 ==== `mcx_table` CSR 0xBC1: CX selector table base
 
@@ -417,10 +432,16 @@ and the CSR-write at the next higher privilege level, as if it were
 a `lw` instruction (and with a `lw` instruction's memory ordering
 rules) (§<<_cx_access_control>>).
 
+[NOTE]
+====
+Perhaps _"at the next higher privilege level"_ should be
+_"at machine mode privilege level"_.
+====
+
 ==== Implicit CXU CSR fences
 
 Per hart, there is an implicit fence between any CXU CSR access and any
-series of `custom-0`/`-1`/`-2` instructions. All CXU CSR accesses happen
+series of `custom-[0-2]` instructions. All CXU CSR accesses happen
 before any CF instructions which follow, and all CF instructions happen
 before any CXU CSR accesses that follow.
 
@@ -432,7 +453,7 @@ For example, after issuing a long latency CF instruction, a CSR read of
 
 === Custom function instruction encodings
 
-When `mcx_selector.en=1`, software issues CF instructions to the current
+When `mcx_selector.version=1`, software issues CF instructions to the current
 state context of the current extension (i.e., of the current configured
 CXU) using R-type, I-type, and flex-type custom function instruction
 encodings.
@@ -814,12 +835,12 @@ _any-other-CF-instruction_ *, `cx_read_status` ], the first and second
 
 [TIP]
 ====
-For most stateful CXUs, the size of a state context is
-fixed. For some stateful CXUs, the size of a state context may depend
-upon the sequence of CF instructions performed. For example, a stateful
-vector math CXU may provide CF instructions to allocate per-state context
-vector storage from a common, private shared pool, and may allow different
-state contexts to represent different sized vectors.
+For most stateful CXUs, the size of a state context is fixed. For some
+stateful CXUs, the size of a state context may depend upon the sequence
+of CF instructions performed. For example, a stateful vector math CXU may
+provide CF instructions to allocate per-state context vector storage from
+a common, private shared pool, and may allow different state contexts
+to represent different sized vectors.
 ====
 
 `cx_read_status` may be used as a _probe_ after a `mcx_selector` write,
@@ -1047,14 +1068,14 @@ either RISC-V PMP or RISC-V virtual memory access control.
 For each hart, the system code provisions a <<selector-table,_CX selector
 table_>>, 4 KB aligned, comprising 1024 32-bit CX selectors, which is
 read/write to system code and inaccessible from user code. Initially
-the table is zero filled, as zero is a valid CX selector ( `.en=0` which
-disables composable extension multiplexing). The system code CSR-writes its
-address to the hart's `mcx_table` CSR. Then in response to
-a system call requesting access to an extension, and one of its state
-contexts, system code determines whether the access is granted. If so,
-it determines the CX selector value for it, allocates an entry for that
-CX selector value in the CX selector table, and returns the index (the
-_selector index)_ of that entry to user code.
+the table is zero filled, as zero is a valid CX selector (`.version=0`
+and `.cte=0`, which disables composable extension multiplexing). The
+system code CSR-writes its address to the hart's `mcx_table` CSR. Then
+in response to a system call requesting access to an extension, and
+one of its state contexts, system code determines whether the access is
+granted. If so, it determines the CX selector value for it, allocates an
+entry for that CX selector value in the CX selector table, and returns
+the index (the _selector index)_ of that entry to user code.
 
 [TIP]
 ====

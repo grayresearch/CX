@@ -288,6 +288,13 @@ Reuse of custom instruction encodings across extensions will make
 debugging, esp. disassembly, more challenging.
 ====
 
+The `mcx_selector` also incorporates a _custom operation trap enable_
+(`cte`). When set, custom instructions and accesses to custom CSRs
+raise an illegal instruction exception. This enables software emulation
+of absent custom instructions, software emulation of absent composable
+extensions, and transparent virtualization of stateful composable
+extensions.
+
 ==== `IStateContext` and serializable stateful composable extensions
 
 The specification defines a composable extension `IStateContext` with four
