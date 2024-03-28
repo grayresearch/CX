@@ -379,7 +379,8 @@ between extensions switches different versions.  One option: add a
 `cx_status.version` field, selecting an interpretation of `cx_status`
 CSR fields.  Both options may lead to _unnecessarily complicated_
 error handling in software.  Best option: only _add_ new fields to it.
-Here simplest seems best.  ====
+Here simplest seems best.
+====
 
 ==== `mcx_table` CSR 0xBC1: CX selector table base
 

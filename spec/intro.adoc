@@ -539,7 +539,7 @@ software components, at scale, over decades
 cite:[ms-com-interfaces].
 
 [TIP]
-=====
+====
 (End of non-normative Introduction section.)
-=====
+====
 
