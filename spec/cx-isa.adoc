@@ -513,9 +513,9 @@ config: {lanes: 1, bits: 32},
 
 Assembly instruction: `cx_imm cf_id,rd,rs1,imm`
 
-An I-type CF instruction issues a CXU request for a zero-extended 4-bit
+An I-type CF instruction issues a CXU request for a zero-extended 3-bit
 CF_ID `cf_id` with one source register operand identified by `rs1` and a
-signed-extended 8-bit immediate value `imm`. The CXU response is written
+sign-extended 12-bit immediate value `imm`. The CXU response is written
 to destination register `rd`.
 
 .CX I-type instruction encoding
@@ -524,10 +524,9 @@ to destination register `rd`.
 {reg:[
 {bits: 7, name: 43, attr:'custom-1'},
 {bits: 5, name: 'rd'},
-{bits: 3, name: 0},
+{bits: 3, name: 'cf_id[2:0]'},
 {bits: 5, name: 'rs1'},
-{bits: 4, name: 'cf_id[3:0]'},
-{bits: 8, name: 'imm[7:0]'},
+{bits: 12, name: 'imm[11:0]'},
 ],
 config: {lanes: 1, bits: 32},
 }
@@ -535,26 +534,10 @@ config: {lanes: 1, bits: 32},
 
 [NOTE]
 ====
-This new, irregular immediate field encoding may have a disproportionate
-impact on area and critical path delay in the decode or execute pipeline
-stages of a RISC-V processor core.
+This encoding unformly follows existing I-type instructions such as
+`addi` and `csrrw`, providing an immediate operand custom function
+instruction encoding at zero additional datapath cost.
 ====
-
-Seven-eighths of the custom-1 encoding space is reserved for future
-custom function instruction encodings.
-
-.CX reserved I-type instruction encodings
-[wavedrom,target="custom-1r",svg]
-....
-{reg:[
-{bits: 7, name: 43, attr:'custom-1'},
-{bits: 5, name: 'reserved', type:1},
-{bits: 3, name: '1-7'},
-{bits: 17, name: 'reserved', type:1},
-],
-config: {lanes: 1, bits: 32},
-}
-....
 
 [[custom-2]]
 ==== Custom-2 flex-type encoding
