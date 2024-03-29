@@ -32,10 +32,10 @@ or a composable extension specific error.
 A *CXU requester* (requester) is a core that sends CXU requests to CXU(s)
 and receives CXU response(s) from CXUs.
 
-A *CPU* is a CXU requester that implements RISC-V RV-I-Zicsr-Zicx
-instruction set, issues CXU requests upon issuing CF instructions,
-and writes a destination register and the CXU status CSR in response to
-CXU responses.
+A *CPU* is a CXU requester that implements RISC-V RV-I-Zicsr + _(CX-ISA
+extension)_ instruction set, issues CXU requests upon issuing CF
+instructions, and writes a destination register and the CXU status CSR
+in response to CXU responses.
 
 A *composable extension unit (CXU, responder)* is a core that implements
 one or more composable extensions. It receives CXU requests and sends CXU
@@ -1109,9 +1109,10 @@ and therefore the adapter's response latency is at least one cycle.
 [[cpus]]
 === CXU-LI-compliant CPUs
 
-A CXU-LI-compliant CPU implements RISC-V RV-I -Zicsr *-Zicx* instruction
-set, sends CXU requests upon issuing CF instructions, and writes a
-destination register and CXU status CSR in response to CXU responses.
+A CXU-LI-compliant CPU implements RISC-V RV-I -Zicsr + _(CX-ISA
+extension)_ instruction set, sends CXU requests upon issuing CF
+instructions, and writes a destination register and CXU status CSR in
+response to CXU responses.
 
 ==== CPUs and CXU-LI feature levels
 

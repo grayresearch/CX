@@ -14,5 +14,6 @@ Todo:
 
 [NOTE]
 ====
-Here write up a brief estimate of the FPGA area overhead of various -Zicx and CXU-LI mechanisms and behaviors.
+Here write up a brief estimate of the FPGA area overhead of various
+CX-ISA and CXU-LI mechanisms and behaviors.
 ====

@@ -13,8 +13,8 @@ integer result and response status. May be stateless or stateful.
 
 [[CF_ID]]
 A *custom function identifier (CF_ID)* is an integer, in the scope of
-a composable extension, identifying a custom function. A *valid CF_ID* is
-a value that identifies a CF instruction implemented by a configured
+a composable extension, identifying a custom function. A *valid CF_ID*
+is a value that identifies a CF instruction implemented by a configured
 extension.
 
 A *stateless custom function* is a CF that is a pure function of
@@ -28,27 +28,39 @@ context but never reads or writes other architected state. Equivalently:
 a CF that is a function of its operands and of any prior CF invocations
 upon its composable extension (only).
 
-A *composable extension (CX, extension)* is a fixed named set of custom
-functions. May be stateless or stateful. _Fixed:_ immutable, i.e., any
-versioning of the CFs or the behavior of an extension necessarily defines
-a new extension. _Named:_ has a composable extension identifier.
+A *composable extension (CX, extension)* is a fixed named set of
+custom functions and custom CSRs. May be stateless or stateful. _Fixed:_
+immutable, i.e., any versioning of the CFs or custom CSRs or the behavior
+of an extension necessarily defines a new extension. _Named:_ has a
+composable extension identifier.
 
 A *composable extension identifier (CX_ID)* is a 128-bit globally unique ID
 (_GUID_) [see RFC-4122], unique in history, identifying a composable
 extension__.__
 
 A *stateless composable extension* is a fixed named set of set of stateless
-custom functions.
+custom functions. A stateless CX has no custom CSRs.
+
+[NOTE]
+====
+Perhaps "A stateless CX has no read-write custom CSRs."
+At best, such read-only CX CSRs could return constants, a la `mhartid`.
+====
 
 A *stateful composable extension* is a fixed named set of custom functions,
-at least one of which is a stateful custom function, plus a composable
-extension state context.
+at least one of which is a stateful custom function, plus a set of
+custom CSRs, plus a composable extension state context.
 
 A *composable extension state context (state context, state, context)*
 is an isolated collection of state associated with a stateful composable
 extension. Isolated: stateful custom functions of the extension may read
 and write the state context, but no other element or operation of the
 system may read or write the state context.
+
+A *CX CSR* is a custom CSR of a stateful composable extension.
+
+A *custom operation* is a custom opcode instruction or a custom address
+CSR access.
 
 [[serializable]]
 *`IStateContext`* is a stateful composable extension, identified as
@@ -107,23 +119,23 @@ selector table.
 A *selector index* is an integer that identifies an entry in a CX selector
 table (§<<_cx_access_control>>).
 
-[[cx_csrs]]
+[[cx_isa_csrs]]
 === New CX control / status registers
 
-A -Zicx compatible CPU shall implement the `mcx_selector` and
+A CX-ISA compatible CPU shall implement the `mcx_selector` and
 `cx_status` CSRs for extension multiplexing and custom function
 instruction execution.
 
 When CX access control
 (§<<_cx_access_control>>)
-is supported, a -Zicx compatible CPU
+is supported, a CX-ISA compatible CPU
 shall implement the `mcx_table` and `cx_index` CSRs.
 
-All CXU CSR fields marked _reserved_ are WPRI, write preserve, read
+All CX-ISA CSR fields marked _reserved_ are WPRI, write preserve, read
 ignored, and all other fields are WARL, write any/read legal values. (An
 invalid <<CXU_ID,CXU_ID>> or <<STATE_ID,STATE_ID>> value is still _legal_).
 
-All CXU CSRs are initialized to zero on reset.
+All CX-ISA CSRs are initialized to zero on reset.
 
 [[mcx_selector]]
 ==== `mcx_selector` CSR 0xBC0: select active CXU and state context
@@ -150,9 +162,9 @@ are required and what access permissions should they have?
 [wavedrom,target="`mcx_selector_0`",svg]
 ....
 {reg:[
-{bits: 27, name: 'reserved', type:1, vspace:88},
+{bits: 28, name: 'reserved', type:1, vspace:88},
 {bits: 1, name: 'cte'},
-{bits: 4, name: 0, attr:'version'},
+{bits: 3, name: 0, attr:'version'},
 ],
 config: {lanes: 1, bits: 32}
 }
@@ -165,9 +177,9 @@ config: {lanes: 1, bits: 32}
 {bits: 8, name: 'cxu_id'},
 {bits: 8, name: 'reserved', type:1, vspace:88},
 {bits: 8, name: 'state_id'},
-{bits: 3, name: 'reserved', type:1},
+{bits: 4, name: 'reserved', type:1},
 {bits: 1, name: 'cte'},
-{bits: 4, name: 1, attr:'version'},
+{bits: 3, name: 1, attr:'version'},
 ],
 config: {lanes: 1, bits: 32}
 }
@@ -179,52 +191,54 @@ The `mcx_selector` CSR has the following fields:
 
 * When `version=0`, disable composable extension multiplexing.
 When `cte=0`, `custom-[0123]` instructions execute the CPU's built-in
-custom instructions. When `cte=1`, `custom-[0123]` instructions raise
-an illegal instruction exception.
+custom instructions and custom CSR addresses select the CPU's built-in
+custom CSRs. When `cte=1`, `custom-[0123]` instructions and custom CSR
+accesses raise an illegal instruction exception.
 
 * When `version=1`, enable _version-1_ composable extension
-multiplexing. The `cxu_id` and `state_id` fields select the current CXU
-and state context. When `cte=0`, `custom-[012]` instructions issue CXU
-requests to the CXU identified by `cxu_id` and to the state context
-identified by `state_id`. When `cte=1`, `custom-[012]` instructions
-raise an illegal instruction exception.
+multiplexing. The `cxu_id` and `state_id` fields select the current
+CXU and state context. When `cte=0`, `custom-[012]` instructions issue
+CXU requests, and custom CSR accesses access CX CSRs, of the CXU and
+state context identified by `cxu_id` and `state_id`. When `cte=1`,
+`custom-[012]` instructions and custom CSR accesses raise an illegal
+instruction exception.
 
-* `version` values 2-15 are reserved.
+* `version` values 2-7 are reserved.
 
 `.cte`: custom operation trap enable
 
-* When (`version=0` or `version=1` and) `cte=1`, a _custom operation_
-(custom instruction or custom CSR access) raises an illegal instruction
-exception.
+* When (`version=0` or `version=1` and) `cte=1`, a custom operation
+raises an illegal instruction exception.
 
 `.cxu_id`: select the hart's current CXU
 
 * A valid `cxu_id` identifies a configured CXU.
 
 * When enabled, when `cxu_id` does not identify a configured CXU,
-executing a CF instruction causes an invalid CXU_ID error. The
-`cx_status.CX` error bit is set and the CF instruction's destination
-register, if any, is zeroed.
+executing a custom operation instruction causes an invalid CXU_ID
+error. The `cx_status.CX` error bit is set and the instruction's
+destination register, if any, is zeroed.
 
 `.state_id`: select the hart's current CXU's current state context
 
 * A valid `state_id` identifies a state context of a CXU.
 
-* When enabled, when `cxu_id` is valid, but `state_id` does not identify
-a state context of the current CXU, executing a CF instruction causes
-an invalid STATE_ID error. The `cx_status.IS` error bit is set and the
-CF instruction's destination register, if any, is zeroed.
+* When enabled, when `cxu_id` is valid, but `state_id` does not identify a
+state context of the current CXU, executing a custom operation instruction
+causes an invalid STATE_ID error. The `cx_status.IS` error bit is set
+and the custom operation instruction's destination register, if any,
+is zeroed.
 
 No error occurs when `mcx_selector` is CSR-written with an invalid
 CX selector, i.e., when `.cxu_id` or `.state_id` are invalid. Rather,
-subsequently executing a CF instruction may cause a CXU_ID or STATE_ID
-error.
+subsequently executing a custom operation instruction may cause a CXU_ID
+or STATE_ID error.
 
 [TIP]
 ====
-The hardware that detects these two errors lies not in the extensible
-processor but in the CXU interconnect (bad `.cxu_id`) or in the selected
-CXU iteself (bad `.state_id`).
+The hardware that detects these two errors _might not be_ implemented
+by an extensible processor but rather in the CXU interconnect (bad
+`.cxu_id`) or in a selected CXU (bad `.state_id`).
 ====
 
 [TIP]
@@ -233,9 +247,9 @@ The `version` field provides backwards compatibility with legacy
 custom extensions, and forwards compatibility with future CX systems.
 In future a new CX multiplexing version may be added, with a new layout
 and interpretation of selector fields and new means of decoding custom
-instruction fields into CXU requests.
-With 15 non-zero values, it accomodates a new extension multiplexing scheme
-every two years for thirty years.
+instruction fields into CXU requests. With seven non-zero values, it
+accomodates an additional extension multiplexing scheme every three
+years for twenty years.
 ====
 
 [TIP]
@@ -250,7 +264,7 @@ An illegal instruction trap handler can emulate any absent built-in
 custom instruction or any custom instruction of a composable extension,
 then return to the following instruction.
 
-Using <<CX access control,CX access control>> CSRs, an OS can
+Using CX access control (§<<_cx_access_control>>) CSRs, an OS can
 transparently _virtualize_ many logical CX state contexts on fewer
 (or just one!) physical CX state contexts. When multiple CX libraries
 each try to open the same (e.g., singleton) CX state context, the OS
@@ -275,7 +289,7 @@ that future revisions of this specification may incorporate new trap
 behaviors and trap control bits.
 ====
 
-The selector `0x08000000` = `'{version:4'b0, cte:1'b1, reserved:27'b0}`
+The selector `0x10000000` = `'{version:3'b0, cte:1'b1, reserved:28'b0}`
 is the canonical _invalid selector_.
 
 [TIP]
@@ -291,8 +305,8 @@ The `cx_status` CSR accumulates CXU error flags. It may be written and
 read in all privilege levels.
 
 Typical application software will write a CX selector to `mcx_selector`,
-write 0 to `cx_status`, execute some CF instructions, and read
-`cx_status` to determine if there were any errors.
+write 0 to `cx_status`, execute some custom operation instructions,
+and read `cx_status` to determine if there were any errors.
 
 .`cx_status` CSR 0x801
 [wavedrom,target="`cx_status`",svg]
@@ -315,41 +329,49 @@ The `cx_status` CSR has the following fields:
 
 `.IV`: invalid CX version error
 
-* Set by a CSR-write to `mcx_selector`, or by a CF instruction, when `mcx_selector.version` is invalid.
-(For example, when new software writes a new selector type that old hardware does not implement.)
+* Set by a CSR-write to `mcx_selector`, or by a custom operation
+instruction, when `mcx_selector.version` is invalid. (For example,
+when new software writes a new selector type that old hardware does
+not implement.)
 
 `.IC`: invalid CXU_ID error
 
-* Set by a CF instruction when `mcx_selector.cxu_id` is invalid.
+* Set by a custom operation instruction when `mcx_selector.cxu_id`
+is invalid.
 
 `.IS`: invalid STATE_ID error
 
-* Set by a CF instruction when `mcx_selector.cxu_id` is valid but
-`mcx_selector`.state_id is invalid.
+* Set by a custom operation instruction when `mcx_selector.cxu_id`
+is valid but `mcx_selector`.state_id is invalid.
 
 `.OF`: state context is off error
 
-* Set by a CF instruction when `mcx_selector.cxu_id` and
+* Set by a custom operation instruction when `mcx_selector.cxu_id` and
 `mcx_selector.state_id` are valid but the selected state context is in
 the <<off-state,_off_>> state.
 
 `.IF`: invalid CF_ID error
 
-* Set by a CF instruction when `mcx_selector.cxu_id` and
+* Set by a custom function instruction when `mcx_selector.cxu_id` and
 `mcx_selector.state_id` are valid but the instruction's CF_ID is invalid.
+
+* Also set by a custom address CSR access instruction when
+`mcx_selector.cxu_id` and `mcx_selector.state_id` are valid but the
+custom CSR address is invalid.
 
 `.OP`: CXU operation error
 
-* Set by a CF instruction when `mcx_selector.cxu_id`,
-`mcx_selector.state_id`, and its CF_ID are valid but there is an error
-in the requested operation or its operands, in lieu of custom error state.
+* Set by a custom operation instruction when `mcx_selector.cxu_id`,
+`mcx_selector.state_id`, and its CF_ID/CSR address are valid but there
+is an error in the requested operation or its operands, in lieu of custom
+error state.
 
 `.CU`: custom CXU operation error
 
-* Set by a CF instruction of a stateful extension when
-`mcx_selector.cxu_id`, `mcx_selector.state_id`, and its CF_ID are
-valid but there is an error in the requested operation or its operands,
-with custom (extension-defined) error state available.
+* Set by a custom operation instruction of a stateful extension when
+`mcx_selector.cxu_id`, `mcx_selector.state_id`, and its CF_ID/CSR
+address are valid but there is an error in the requested operation or
+its operands, with custom (extension-defined) error state available.
 
 [TIP]
 ====
@@ -372,13 +394,13 @@ For simplicity we do not adopt this option.
 
 [NOTE]
 ====
-How to best anticipate future changes to `cx_status`?  One option:
+How to best anticipate future changes to `cx_status`? One option:
 fields and behavior determined by hart's current CX version
-(`mcx_selector.version`).  This becomes unwieldy when multiplexing
-between extensions switches different versions.  One option: add a
+(`mcx_selector.version`). This becomes unwieldy when multiplexing
+between extensions switches different versions. One option: add a
 `cx_status.version` field, selecting an interpretation of `cx_status`
-CSR fields.  Both options may lead to _unnecessarily complicated_
-error handling in software.  Best option: only _add_ new fields to it.
+CSR fields. Both options may lead to _unnecessarily complicated_
+error handling in software. Best option: only _add_ new fields to it.
 Here simplest seems best.
 ====
 
@@ -439,12 +461,12 @@ Perhaps _"at the next higher privilege level"_ should be
 _"at machine mode privilege level"_.
 ====
 
-==== Implicit CXU CSR fences
+==== Implicit CX-ISA CSR fences
 
-Per hart, there is an implicit fence between any CXU CSR access and any
-series of `custom-[0-2]` instructions. All CXU CSR accesses happen
-before any CF instructions which follow, and all CF instructions happen
-before any CXU CSR accesses that follow.
+There is an implicit fence between any CX-ISA CSR access and any series
+of custom operation instructions. All CX-ISA CSR accesses happen before
+any custom operation instructions which follow, and all custom operation
+instructions happen before any CX-ISA CSR accesses that follow.
 
 [TIP]
 ====
@@ -454,10 +476,10 @@ For example, after issuing a long latency CF instruction, a CSR read of
 
 === Custom function instruction encodings
 
-When `mcx_selector.version=1`, software issues CF instructions to the current
-state context of the current extension (i.e., of the current configured
-CXU) using R-type, I-type, and flex-type custom function instruction
-encodings.
+When `mcx_selector.version=1`, software issues CF instructions to the
+current state context of the current extension (i.e., of the current
+configured CXU) using R-type, I-type, and flex-type custom function
+instruction encodings.
 
 For each instruction encoding, the CF instruction specifies the CF_ID, and
 source operand values, which may be two source registers, or one source
@@ -579,9 +601,9 @@ config: {lanes: 1, bits: 32},
 [TIP]
 ====
 A flex-type CF instruction may be used with a CXU-L2 request's raw
-instruction field `req_insn` (<<raw-insn>>) to provide an
-arbitrary 32-7=25-bit custom request to a CXU. The absence of an
-(integer) destination register field is a feature that provides added,
+instruction field `req_insn` (<<raw-insn>>) to provide an arbitrary
+32-7=25-bit custom request to a CXU. The absence of an (integer)
+destination register field is a feature that provides added,
 CPU-uninterpreted, custom instruction bits to a CXU.
 ====
 
@@ -626,10 +648,9 @@ may send a request ID and later receive the (same) ID back to correlate
 requests sent and responses received.
 
 <<mapping>> defines the mapping from HW-SW interface entities, such as
-the `cf_id`, `rd`, `rs1`, `rs2`, `imm` fields of the custom function instruction
-and the `mcx_selector` and `cx_status` CSRs, to the CXU Logic Interface's
-request and response signals
-(§<<_cxu_li_signaling>>).
+the `cf_id`, `rd`, `rs1`, `rs2`, `imm` fields of the custom function
+instruction and the `mcx_selector` and `cx_status` CSRs, to the CXU
+Logic Interface's request and response signals (§<<_cxu_li_signaling>>).
 
 [[mapping]]
 .Mapping of HW-SW interface entities to CXU-LI signals
@@ -652,30 +673,31 @@ request and response signals
 
 Custom function instruction execution preserves precise exception
 semantics. If an instruction preceding (in execution order) a custom
-function instruction is an exception, the custom function instruction
+operation instruction is an exception, the custom operation instruction
 does not execute, and has no effect upon architected state, including
 the `cx_status` CSR, and no effect on the current state context of the
 composable extension / CXU.
 
-If an instruction following (in execution order) a custom function
-instruction is an exception, the custom function instruction executes,
+If an instruction following (in execution order) a custom operation
+instruction is an exception, the custom operation instruction executes,
 updating destination register, `cx_status`, and current state context,
 as appropriate.
 
 [TIP]
 ====
-A CPU may speculatively issue a CF instruction to a stateless
-CXU. Misspeculation recovery entails completing and discarding the CXU
-response. The CF instruction does not commit and there is no change to
-architectural state.
+A CPU may speculatively issue a custom operation instruction to a
+stateless CXU. Misspeculation recovery entails completing and discarding
+the CXU response. The custom operation instruction does not commit and
+there is no change to architectural state.
 ====
 
 [TIP]
 ====
-A CPU may not speculatively issue a CF instruction to a stateful CXU
-because the instruction may update the current state context and the
-CXU Logic Interface has no means to cancel a CXU request. In other
-words, a CF instruction of a stateful CXU, once issued, always commits.
+A CPU may not speculatively issue a custom operation instruction to a
+stateful CXU because the instruction may update the current state context
+and the CXU Logic Interface has no means to cancel a CXU request. In
+other words, a custom operation instruction of a stateful CXU, once
+issued, always commits.
 ====
 
 [TIP]
@@ -683,26 +705,29 @@ words, a CF instruction of a stateful CXU, once issued, always commits.
 Speculation is more than branch prediction. For example, in a pipelined
 CPU, instructions that follow a load or store instruction typically
 issue speculatively until the load or store is determined to not raise
-an access fault. CF instructions of stateful CXUs must not issue in the
-wake of an instruction that may yet trap.
+an access fault. Custom operation instructions of stateful CXUs must
+not issue in the wake of an instruction that may yet trap.
 ====
 
 [TIP]
 ====
-When a long latency CF instruction issues and a pipelined CPU continues
-issuing the following instructions in its wake, and one traps, the CPU
-nevertheless commits the CF instruction when the CXU eventually sends
-the response.
+When a long latency custom operation instruction issues and a pipelined
+CPU continues issuing the following instructions in its wake, and one
+traps, the CPU nevertheless commits the custom operation instruction
+when the CXU eventually sends the response.
 ====
 
 [NOTE]
 ====
-How can a CPU core determine dynamically whether a CF instruction, or its composable extension, is stateless?
+How can a CPU core determine dynamically whether a custom function
+instruction, or its composable extension, is stateless?  (By definition
+custom CSR access instructions are always stateful.)
 
-A software-defined approach could decorate the specification of a custom function to indicate
-whether it is stateful or stateless, and to encode this as an opcode bit
-in the `custom-0`/`-1`/`-2` instructions. Then a CPU may safely speculatively issue
-stateless CF instructions but non-speculatively issue stateful CF instructions.
+A software-defined approach could decorate the specification of a custom
+function to indicate whether it is stateful or stateless, and to encode
+this as an opcode bit in the `custom-[012]` instructions. Then a CPU may
+safely speculatively issue stateless CF instructions but non-speculatively
+issue stateful CF instructions.
 
 A hardware-defined approach could add to the request and response streams
 defined in <<cxu-li,CXU-LI>>, a third stream, called the _commit stream_.
@@ -772,20 +797,21 @@ CXU is in the `initial` state.
 [[off-state]]
 * A write `.cs=0` has the side effect of explicitly turning off the
 _current_ state context. In this state, all CF instructions except
-`cf_write_status` and `cf_read_status` signal `CXU_ERROR_OFF`, until the state
-context status is set to another state by a subsequent `cf_write_status`.
+`cf_write_status` and `cf_read_status` signal `CXU_ERROR_OFF`, until
+the state context status is set to another state by a subsequent
+`cf_write_status`.
 
 * A write `.cs=1` has the side effect of resetting the entire _current_
 state context to its `initial` (power up) state.
 
-* When a CF instruction modifies any aspect of the current state context of
-a serializable CXU, its state context status automatically changes to
+* When a CF instruction modifies any aspect of the current state context
+of a serializable CXU, its state context status automatically changes to
 `dirty`.
 
 `.state_size`: state context size
 
-* This WARL field specifies the _current_ size (number of XLEN-sized words) of
-the current state context.
+* This WARL field specifies the _current_ size (number of XLEN-sized
+words) of the current state context.
 
 * Reads return the current size of the current state context.
 
@@ -806,10 +832,10 @@ different state context sizes.
 
 [NOTE]
 ====
-Define rules for what the extension can or must to with writes to this field.
-Need a way to zero a custom error.
-But this is not a free byte of storage per state context.
-An implementation is permitted to implement this as constant 0, for example.
+Define rules for what the extension can or must to with writes to
+this field. Need a way to zero a custom error. But this is not a free
+byte of storage per state context. An implementation is permitted to
+implement this as constant 0, for example.
 ====
 
 ==== `cx_read_status` standard custom function instruction
@@ -904,9 +930,10 @@ hardware threads (_harts_).
 
 The RISC-V per-hart state includes the program counter and integer
 register file, and optionally, floating point and vector register files,
-and various CSRs. Composable extensions extension *-Zicx* extends
-per-hart state with the CXU CSRs (§<<cx_csrs>>) and the various
-configured state contexts of the stateful configured composable extensions.
+and various CSRs. CX-ISA extends per-hart state with the CX-ISA CSRs
+(§<<cx_isa_csrs>>) and the subset of the various configured state
+contexts of the stateful configured composable extensions allocated to
+that hart.
 
 A CXU implementing a stateful composable extension is typically configured
 with one state context per hart in the entire system, but other
@@ -1068,15 +1095,19 @@ either RISC-V PMP or RISC-V virtual memory access control.
 
 For each hart, the system code provisions a <<selector-table,_CX selector
 table_>>, 4 KB aligned, comprising 1024 32-bit CX selectors, which is
-read/write to system code and inaccessible from user code. Initially
-the table is zero filled, as zero is a valid CX selector (`.version=0`
-and `.cte=0`, which disables composable extension multiplexing). The
-system code CSR-writes its address to the hart's `mcx_table` CSR. Then
-in response to a system call requesting access to an extension, and
-one of its state contexts, system code determines whether the access is
-granted. If so, it determines the CX selector value for it, allocates an
-entry for that CX selector value in the CX selector table, and returns
-the index (the _selector index)_ of that entry to user code.
+read/write to system code and inaccessible from user code.
+
+Initially the table is initialized with 0 in the 0th entry, and the
+invalid selector (`0x10000000`) in every other entry. Selector index 0 
+selects table entry 0, with value `0x0000000` = `'{version:0, cte:0}`,
+which disables CX multiplexing, thereby selecting the CPU's built-in
+custom instructions and custom CSRs. The system code CSR-writes the
+table address to the hart's `mcx_table` CSR. Then in response to a system
+call requesting access to a composable extension and one of its state
+contexts, system code determines whether the access is granted. If so,
+it determines the CX selector value for it, allocates an entry for that
+CX selector value in the CX selector table, and returns the index (the
+_selector index)_ of that entry to user code.
 
 [TIP]
 ====
@@ -1087,12 +1118,10 @@ a resource granted by system code.
 To select this CX/CXU and its state, user code CSR-writes its index
 to `cx_index`. In response, the CPU loads from memory (at more
 privileged level) the CX selector word at that index in the selector table
-and CSR-writes it to `mcx_selector` -- no exception handling detour
-required.
+and copies it (CSR-writes it) to `mcx_selector` -- no OS detour required.
 
 [TIP]
 ====
 This mechanism also conceals the specific CXU_ID and STATE_ID information
 from user code, precluding some possible side channel attacks.
 ====
-
