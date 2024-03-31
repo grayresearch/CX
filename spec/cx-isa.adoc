@@ -603,7 +603,7 @@ in an out-of-order CPU core.
 
 When `mcx_selector.version=1`, CSR read/write instructions issue custom
 CSR accesses (i.e., _CX CSR_ accesses) to the current state context of
-the current extension (i.e., of the current configured CXU).
+the current composable extension.
 
 Per the Priv spec, an attempt to access a custom CSR without appropriate
 privilege level raises an illegal-instruction exception and an attempt
@@ -665,11 +665,11 @@ particularly in a system with pipelined CPUs or pipelined CXUs. A CPU
 may send a request ID and later receive the (same) ID back to correlate
 requests sent and responses received.
 
-<<mapping>> defines the mapping from HW-SW interface entities, such as the
-`cf_id`, `rd`, `rs1`, `rs2`, `imm`, `csr` fields of the custom function
-instruction (or custom CSR access instruction) and the `mcx_selector`
-and `cx_status` CSRs, to the CXU Logic Interface's request and response
-signals (§<<_cxu_li_signaling>>).
+<<mapping>> defines the mapping from HW-SW interface entities, such
+as the `cf_id`, `rd`, `rs1`, `rs2`, `imm`, `csr`, `uimm` fields of a
+custom function instruction or a custom CSR access instruction and the
+`mcx_selector` and `cx_status` CSRs, to the CXU Logic Interface's request
+and response signals (§<<_cxu_li_signaling>>).
 
 [[mapping]]
 .Mapping of HW-SW interface entities to CXU-LI signals
@@ -681,7 +681,7 @@ signals (§<<_cxu_li_signaling>>).
 |`req_state` | <- `mcx_selector.state_id`
 |`req_insn` | <- `insn`
 |`req_func` | <- `insn.cf_id` {`custom-[012]`} or `csr_cf_id(insn)` {`csrr*`}
-|`req_data0` | <- R[`insn.rs1`]
+|`req_data0` | <- R[`insn.rs1`] {`custom-[012]` or `csrr[wsc]`} or `insn.uimm` {`csrr[wsc]i`}
 |`req_data1` | <- R[`insn.rs2`] {`custom-[02]`} or `insn.imm` {`custom-1`} or `insn.csr` {`csrr*`}
 |`resp_id` | -> CPU
 |`resp_status` | -> `cx_status` bits
