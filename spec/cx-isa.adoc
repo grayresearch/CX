@@ -599,6 +599,41 @@ and `rs2` registers, which may uselessly delay issue of the CF instruction
 in an out-of-order CPU core.
 ====
 
+=== CX CSR accesses
+
+When `mcx_selector.version=1`, CSR read/write instructions issue custom
+CSR accesses (i.e., _CX CSR_ accesses) to the current state context of
+the current extension (i.e., of the current configured CXU).
+
+Per the Priv spec, an attempt to access a custom CSR without appropriate
+privilege level raises an illegal-instruction exception and an attempt
+to write a read-only custom CSR register raises an illegal-instruction
+exceptions.
+
+Per the Zicsr spec, the only CSR access instructions that do not write
+to a CSR are `CSRRS` and `CSRRC` with `rs1=x0` and `CSRRSI` and `CSRRCI`
+with `uimm=0`.  These are mapped to a CXU request pseudoinstruction
+`CSRR`, enabling a CXU to distinguish between a read-write access and a
+read-only access. There is no means to distinguish between a CX CSR
+read-write access and a write-only access: all CX CSR accesses are read
+accesses. There is no need and no means to distinguish between a CX CSR
+access using a source value from a source register and the equivalent
+access using a source value from the 5-bit `uimm` field.
+
+[wavedrom, ,svg]
+....
+{reg: [
+  {bits: 7,  name: 115, attr: ['SYSTEM']},
+  {bits: 5,  name: 'rd',     attr: ['dest', 'dest', 'dest', 'dest', 'dest', 'dest']},
+  {bits: 3,  name: 'funct3', attr: ['CSRRW', 'CSRRS', 'CSRRC', 'CSRRWI', 'CSRRSI', 'CSRRCI']},
+  {bits: 5,  name: 'rs1',    attr: ['source', 'source', 'source', 'uimm[4:0]', 'uimm[4:0]', 'uimm[4:0]']},
+  {bits: 12, name: 'csr',    attr: ['source/dest', 'source/dest', 'source/dest', 'source/dest', 'source/dest', 'source/dest']},
+]}
+....
+
+In summary CX CSR access instructions are mapped into one of four 
+CXU CSR access pseudoinstructions: `CSRR`, `CSRRW`, `CSRRS`, `CSRRR`.
+
 [[multiplexing]]
 === Custom function instruction execution via composable extension multiplexing
 
@@ -630,27 +665,34 @@ particularly in a system with pipelined CPUs or pipelined CXUs. A CPU
 may send a request ID and later receive the (same) ID back to correlate
 requests sent and responses received.
 
-<<mapping>> defines the mapping from HW-SW interface entities, such as
-the `cf_id`, `rd`, `rs1`, `rs2`, `imm` fields of the custom function
-instruction and the `mcx_selector` and `cx_status` CSRs, to the CXU
-Logic Interface's request and response signals (§<<_cxu_li_signaling>>).
+<<mapping>> defines the mapping from HW-SW interface entities, such as the
+`cf_id`, `rd`, `rs1`, `rs2`, `imm`, `csr` fields of the custom function
+instruction (or custom CSR access instruction) and the `mcx_selector`
+and `cx_status` CSRs, to the CXU Logic Interface's request and response
+signals (§<<_cxu_li_signaling>>).
 
 [[mapping]]
 .Mapping of HW-SW interface entities to CXU-LI signals
-[width="80%",cols="20%,80%",options="header",]
+[width="90%",cols="15%,85%",options="header",]
 |===
 |*CXU-LI signal* |*<- Source or -> Destination*
 |`req_id` | <- CPU
 |`req_cxu` | <- `mcx_selector.cxu_id`
 |`req_state` | <- `mcx_selector.state_id`
 |`req_insn` | <- `insn`
-|`req_func` | <- `insn.cf_id`
+|`req_func` | <- `insn.cf_id` {`custom-[012]`} or `csr_cf_id(insn)` {`csrr*`}
 |`req_data0` | <- R[`insn.rs1`]
-|`req_data1` | <- R[`insn.rs2`] {`custom-0`/`-2`} or `insn.imm` {`custom-1`}
+|`req_data1` | <- R[`insn.rs2`] {`custom-[02]`} or `insn.imm` {`custom-1`} or `insn.csr` {`csrr*`}
 |`resp_id` | -> CPU
 |`resp_status` | -> `cx_status` bits
-|`resp_data` | -> R[`insn.rd`] {`custom-0`/`-1`}
+|`resp_data` | -> R[`insn.rd`] {`custom-[01]` or `csrr*`}
 |===
+
+```
+enum { CSRR = 1<<(CF_ID_W-1), CSRRW, CSRRS, CSRRC }; // msb set => CSR access
+read_only(insn) = (insn.funct3 == CSRR[SR][I]) && (insn.rs1 == 0);
+csr_cf_id(insn) = CSRR + (read_only(insn) ? 0 : insn.funct3[1:0]);
+```
 
 ==== Precise exceptions
 
