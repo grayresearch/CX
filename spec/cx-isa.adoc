@@ -39,13 +39,8 @@ A *composable extension identifier (CX_ID)* is a 128-bit globally unique ID
 extension__.__
 
 A *stateless composable extension* is a fixed named set of set of stateless
-custom functions. A stateless CX has no custom CSRs.
-
-[NOTE]
-====
-Perhaps "A stateless CX has no read-write custom CSRs."
-At best, such read-only CX CSRs could return constants, a la `mhartid`.
-====
+custom functions. A stateless CX has no read-write custom CSRs but
+may have read-only custom CSRs.
 
 A *stateful composable extension* is a fixed named set of custom functions,
 at least one of which is a stateful custom function, plus a set of
@@ -301,12 +296,35 @@ selector to trap first custom operation use of an invalid selector index.
 [[cx_status]]
 ==== `cx_status` CSR 0x801: CX status
 
-The `cx_status` CSR accumulates CXU error flags. It may be written and
-read in all privilege levels.
+The `cx_status` CSR accumulates CX error flags, which include CX
+multiplexing errors as well as stateless and stateful CX custom operation
+errors. It may be written and read in all privilege levels.
 
-Typical application software will write a CX selector to `mcx_selector`,
-write 0 to `cx_status`, execute some custom operation instructions,
-and read `cx_status` to determine if there were any errors.
+Typical application software will write a CX selector to `mcx_selector`
+(perhaps indirectly via `cx_index`), write 0 to `cx_status`, execute
+some custom operation instructions, and read `cx_status` to determine
+if there were any errors.
+
+Updates to `cx_status` are precise, _as if_ each custom operation
+instruction issues and completes prior to the next, even if under the hood
+custom operations instructions are pipelined or complete out-of-order.
+
+[TIP]
+====
+Since `cx_status` behaves like `fcsr`, it should have similar high
+performance implementation considerations.
+
+For example, `cx_status` bits only accumulate (i.e., are only set, never
+cleared, as a side-effect of custom operation instructions that go wrong).
+This may simplify a `cx_status` implementation if/when such instructions
+may complete out-of-order (e.g., when a first custom operation instruction
+is much longer latency than a second such instruction).
+
+Also, it is not until software reads `cx_status` that previously issued
+custom instructions must complete, and even then, an out-of-order
+processor may value-speculate on `cx_status` to execute ahead of
+completion of previously issued custom operation instructions.
+====
 
 .`cx_status` CSR 0x801
 [wavedrom,target="`cx_status`",svg]
@@ -608,11 +626,11 @@ the current composable extension.
 Per the Priv spec, an attempt to access a custom CSR without appropriate
 privilege level raises an illegal-instruction exception and an attempt
 to write a read-only custom CSR register raises an illegal-instruction
-exceptions.
+exception.
 
 Per the Zicsr spec, the only CSR access instructions that do not write
 to a CSR are `CSRRS` and `CSRRC` with `rs1=x0` and `CSRRSI` and `CSRRCI`
-with `uimm=0`.  These are mapped to a CXU request pseudoinstruction
+with `uimm=0`. These are mapped to a CXU request pseudoinstruction
 `CSRR`, enabling a CXU to distinguish between a read-write access and a
 read-only access. There is no means to distinguish between a CX CSR
 read-write access and a write-only access: all CX CSR accesses are read
@@ -635,32 +653,33 @@ In summary CX CSR access instructions are mapped into one of four
 CXU CSR access pseudoinstructions: `CSRR`, `CSRRW`, `CSRRS`, `CSRRR`.
 
 [[multiplexing]]
-=== Custom function instruction execution via composable extension multiplexing
+=== Multiplexing custom instructions and custom CSR accesses across composable extensions
 
-<<execution>> illustrates how a custom function instruction and the CXU
-CSRs implement composable extension / CXU composition via composable extension
-multiplexing. When the CPU issues a custom function instruction,
-it produces a <<cxu_request,CXU request>> from the fields of the
-instruction, two source operands from the register file and/or an
-immediate field of the instruction, and the `cxu_id` and `state_id` fields
-of `mcx_selector`. The CXU request may include the request ID cookie
-(defined by the CPU), the <<CXU_ID,CXU_ID>>, <<STATE_ID,STATE_ID>>,
-raw instruction, <<CF_ID,CF_ID>>, and operands. The CXU_ID identifies
-which CXU must process the request. The CXU includes state context(s)
-and a datapath. The STATE_ID selects the state context to use for this
-request. The CXU checks for errors in CXU_ID, STATE_ID, and CF_ID
-per <<cx_status>>, processes the request, possibly updating this
+<<execution>> illustrates how custom function instruction and custom CSR acceses
+enjoy conflict-free composable extension composition via composable extension
+multiplexing. With multiplexing enabled (`mcx_selector.version=1`),
+when the CPU issues a custom operation instruction, it produces a
+<<cxu_request,CXU request>> from the fields of the instruction, two
+source operands from the register file and/or an immediate field of the
+instruction, and the `cxu_id` and `state_id` fields of `mcx_selector`. The
+CXU request may include the request ID cookie (defined by the CPU),
+the <<CXU_ID,CXU_ID>>, <<STATE_ID,STATE_ID>>, raw instruction, function
+(<<CF_ID,CF_ID>> or CSR access fucntion), and operands. The CXU_ID
+identifies which CXU must process the request. The CXU includes state
+context(s) and a datapath. The STATE_ID selects the state context to
+use for this request. The CXU checks for errors in CXU_ID, STATE_ID, and
+function per <<cx_status>>, processes the request, possibly updating this
 state context, and produces a CXU response, which may include the same
 request ID cookie, a success/error status, and the response data. The
-CPU commits the custom function instruction by updating `cx_status`
+CPU commits the custom operation instruction by updating `cx_status`
 (when response status is an error condition) and writing the response
 data to the destination register.
 
 [[execution]]
-.HW-SW interface: flow of information for execution of a custom function instruction
+.HW-SW interface: flow of information for execution of a custom operation instruction
 image::cf-instruction-execution.png[image,width=360]
 
-Multiple custom function instructions may be in flight at the same time,
+Multiple custom operation instructions may be in flight at the same time,
 particularly in a system with pipelined CPUs or pipelined CXUs. A CPU
 may send a request ID and later receive the (same) ID back to correlate
 requests sent and responses received.
@@ -680,7 +699,7 @@ and response signals (§<<_cxu_li_signaling>>).
 |`req_cxu` | <- `mcx_selector.cxu_id`
 |`req_state` | <- `mcx_selector.state_id`
 |`req_insn` | <- `insn`
-|`req_func` | <- `insn.cf_id` {`custom-[012]`} or `csr_cf_id(insn)` {`csrr*`}
+|`req_func` | <- `insn.cf_id` {`custom-[012]`} or `csr_func(insn)` {`csrr*`}
 |`req_data0` | <- R[`insn.rs1`] {`custom-[012]` or `csrr[wsc]`} or `insn.uimm` {`csrr[wsc]i`}
 |`req_data1` | <- R[`insn.rs2`] {`custom-[02]`} or `insn.imm` {`custom-1`} or `insn.csr` {`csrr*`}
 |`resp_id` | -> CPU
@@ -688,11 +707,24 @@ and response signals (§<<_cxu_li_signaling>>).
 |`resp_data` | -> R[`insn.rd`] {`custom-[01]` or `csrr*`}
 |===
 
+A custom CSR access instruction (`CSRR`, `CSRRW`, `CSRRS`,
+`CSRRC`) maps to one of four special `req_func` function IDs with the msb
+set to one to distinguish them from custom function instructions'
+`CF_ID` function IDs. In general, `CXU_FUNC_ID_W = 1 + CF_ID_W` bits.
+
 ```
-enum { CSRR = 1<<(CF_ID_W-1), CSRRW, CSRRS, CSRRC }; // msb set => CSR access
+enum { CSRR = 1<<CF_ID_W, CSRRW, CSRRS, CSRRC }; // msb set => CSR access
 read_only(insn) = (insn.funct3 == CSRR[SR][I]) && (insn.rs1 == 0);
-csr_cf_id(insn) = CSRR + (read_only(insn) ? 0 : insn.funct3[1:0]);
+csr_func(insn) = CSRR + (read_only(insn) ? 0 : insn.funct3[1:0]);
 ```
+
+[TIP]
+====
+The signal that distinguishes _custom function instruction_ from _custom CSR
+access instruction_ CXU requests is conveyed as the MSB of CXU-LI's `req_func`
+function ID, rather than a separate one bit `req_csr_access` signal, to
+minimize the number of CXU-LI signal ports.
+====
 
 ==== Precise exceptions
 
