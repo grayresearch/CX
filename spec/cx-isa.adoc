@@ -368,7 +368,7 @@ is valid but `mcx_selector`.state_id is invalid.
 `mcx_selector.state_id` are valid but the selected state context is in
 the <<off-state,_off_>> state.
 
-`.IF`: invalid CF_ID error
+`.IF`: invalid function ID error
 
 * Set by a custom function instruction when `mcx_selector.cxu_id` and
 `mcx_selector.state_id` are valid but the instruction's CF_ID is invalid.
@@ -552,7 +552,7 @@ config: {lanes: 1, bits: 32},
 
 [NOTE]
 ====
-This encoding unformly follows existing I-type instructions such as
+This encoding uniformly follows existing I-type instructions such as
 `addi` and `csrrw`, providing an immediate operand custom function
 instruction encoding at zero additional datapath cost.
 ====
@@ -630,7 +630,7 @@ exception.
 
 Per the Zicsr spec, the only CSR access instructions that do not write
 to a CSR are `CSRRS` and `CSRRC` with `rs1=x0` and `CSRRSI` and `CSRRCI`
-with `uimm=0`. These are mapped to a CXU request pseudoinstruction
+with `uimm=0`. These are mapped to a CXU request pseudo-instruction
 `CSRR`, enabling a CXU to distinguish between a read-write access and a
 read-only access. There is no means to distinguish between a CX CSR
 read-write access and a write-only access: all CX CSR accesses are read
@@ -650,30 +650,30 @@ access using a source value from the 5-bit `uimm` field.
 ....
 
 In summary CX CSR access instructions are mapped into one of four 
-CXU CSR access pseudoinstructions: `CSRR`, `CSRRW`, `CSRRS`, `CSRRR`.
+CXU CSR access pseudo-instructions: `CSRR`, `CSRRW`, `CSRRS`, `CSRRR`.
 
 [[multiplexing]]
 === Multiplexing custom instructions and custom CSR accesses across composable extensions
 
-<<execution>> illustrates how custom function instruction and custom CSR acceses
-enjoy conflict-free composable extension composition via composable extension
-multiplexing. With multiplexing enabled (`mcx_selector.version=1`),
-when the CPU issues a custom operation instruction, it produces a
-<<cxu_request,CXU request>> from the fields of the instruction, two
-source operands from the register file and/or an immediate field of the
-instruction, and the `cxu_id` and `state_id` fields of `mcx_selector`. The
-CXU request may include the request ID cookie (defined by the CPU),
-the <<CXU_ID,CXU_ID>>, <<STATE_ID,STATE_ID>>, raw instruction, function
-(<<CF_ID,CF_ID>> or CSR access fucntion), and operands. The CXU_ID
-identifies which CXU must process the request. The CXU includes state
-context(s) and a datapath. The STATE_ID selects the state context to
-use for this request. The CXU checks for errors in CXU_ID, STATE_ID, and
-function per <<cx_status>>, processes the request, possibly updating this
-state context, and produces a CXU response, which may include the same
-request ID cookie, a success/error status, and the response data. The
-CPU commits the custom operation instruction by updating `cx_status`
-(when response status is an error condition) and writing the response
-data to the destination register.
+<<execution>> illustrates how custom function instruction and custom
+CSR accesses enjoy conflict-free composable extension composition
+via composable extension multiplexing. With multiplexing enabled
+(`mcx_selector.version=1`), when the CPU issues a custom operation
+instruction, it produces a <<cxu_request,CXU request>> from the fields
+of the instruction, two source operands from the register file and/or
+an immediate field of the instruction, and the `cxu_id` and `state_id`
+fields of `mcx_selector`. The CXU request may include the request ID
+cookie (defined by the CPU), the <<CXU_ID,CXU_ID>>, <<STATE_ID,STATE_ID>>,
+raw instruction, function (<<CF_ID,CF_ID>> or CSR access function), and
+operands. The CXU_ID identifies which CXU must process the request. The
+CXU includes state context(s) and a datapath. The STATE_ID selects the
+state context to use for this request. The CXU checks for errors in
+CXU_ID, STATE_ID, and function per <<cx_status>>, processes the request,
+possibly updating this state context, and produces a CXU response,
+which may include the same request ID cookie, a success/error status,
+and the response data. The CPU commits the custom operation instruction
+by updating `cx_status` (when response status is an error condition)
+and writing the response data to the destination register.
 
 [[execution]]
 .HW-SW interface: flow of information for execution of a custom operation instruction

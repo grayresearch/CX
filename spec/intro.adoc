@@ -437,13 +437,12 @@ a _fixed latency adapter CXU_, coupled to CXU~3~.
 
 ==== Diversity of systems and operating systems
 
-Composable composable extensions and CXUs are designed for use across
-a broad spectrum of RISC-V systems, from a simple RVI20U (+CX-ISA)
-microcontroller running bare metal fully trusted firmware, to a multicore
-RVA20S Linux profile, running secure multi-programmed, multithreaded user
-processes running various CX libraries, and with privileged hypervisors
-and operating systems securely managing access control to CXUs and
-CXU state.
+Composable extensions and CXUs are designed for use across a broad
+spectrum of RISC-V systems, from a simple RVI20U (+CX-ISA) microcontroller
+running bare metal fully trusted firmware, to a multicore RVA20S Linux
+profile, running secure multi-programmed, multithreaded user processes
+running various CX libraries, and with privileged hypervisors and
+operating systems securely managing access control to CXUs and CXU state.
 
 [[versioning]]
 === Versioning

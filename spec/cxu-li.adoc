@@ -1128,10 +1128,10 @@ configured for (e.g.) 2 cycles latency. It might also use CXU-L2 with
 a variable latency CXU, stalling the pipeline during cycles where CF
 instructions cannot issue because the selected CXU negates `req_ready`,
 and itself negating `resp_ready` during write-back cycles when the
-register file's write port or other necessary resource is unavaiable.
+register file's write port or other necessary resource is unavailable.
 
 An out-of-order completion CPU, i.e. one that may commit low latency
-instructions before prior high latency insturctions, might issue CF
+instructions before prior high latency instructions, might issue CF
 instructions to a CXU-L2 variable latency CXU and in some future cycle
 retire the variable latency CXU response, here again negating `resp_ready`
 when it is unable to accept a response to writeback.
