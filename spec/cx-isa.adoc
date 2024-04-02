@@ -202,7 +202,7 @@ instruction exception.
 
 `.cxe`: custom operation exception enable
 
-* When (`version=0` or `version=1` and) `cxe=1`, a custom operation
+* When (`version=0` or `version=1`) and `cxe=1`, a custom operation
 raises an illegal-instruction exception.
 
 `.cxu_id`: select the hart's current CXU
@@ -351,6 +351,16 @@ The `cx_status` CSR has the following fields:
 instruction, when `mcx_selector.version` is invalid. (For example,
 when new software writes a new selector type that old hardware does
 not implement.)
+
+[NOTE]
+====
+Arguably issuing a custom operation instruction with an invalid selector
+`version` should raise an illegal-instruction exception. This can only
+arise when a fatally broken CX runtime or operation system
+issues new version selectors for old version hardware. Raising an
+illegal-instruction exception here would be consistent with V extension's
+`vtype.vill` behavior.
+====
 
 `.IC`: invalid CXU_ID error
 

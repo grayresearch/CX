@@ -245,9 +245,9 @@ The CXU-LI defines the hardware-to-hardware logic extension between a
 _CXU requester_ (e.g., a CPU) and a _CXU responder_ (e.g., a CXU). When
 a custom function instruction issues, the CPU sends a _CXU request_,
 providing the request's _CXU identifier (<<CXU_ID,CXU_ID>>)_,
-the _custom function identifier (<<CF_ID,CF_ID>>), _state index
+the _function identifier (<<FUNC_ID,FUNC_ID>>), _state index
 (<<STATE_ID,STATE_ID>>)_, if any, and request data (operands). The
-CXU performs the custom function then sends a _CXU response_ providing
+CXU performs the function then sends a _CXU response_ providing
 response data and error status.
 
 In a system with multiple CPUs and/or CXUs, switch and adapter CXUs
