@@ -158,7 +158,7 @@ are required and what access permissions should they have?
 ....
 {reg:[
 {bits: 28, name: 'reserved', type:1, vspace:88},
-{bits: 1, name: 'cte'},
+{bits: 1, name: 'cxe'},
 {bits: 3, name: 0, attr:'version'},
 ],
 config: {lanes: 1, bits: 32}
@@ -173,7 +173,7 @@ config: {lanes: 1, bits: 32}
 {bits: 8, name: 'reserved', type:1, vspace:88},
 {bits: 8, name: 'state_id'},
 {bits: 4, name: 'reserved', type:1},
-{bits: 1, name: 'cte'},
+{bits: 1, name: 'cxe'},
 {bits: 3, name: 1, attr:'version'},
 ],
 config: {lanes: 1, bits: 32}
@@ -185,25 +185,25 @@ The `mcx_selector` CSR has the following fields:
 `.version`: extension multiplexing version
 
 * When `version=0`, disable composable extension multiplexing.
-When `cte=0`, `custom-[0123]` instructions execute the CPU's built-in
+When `cxe=0`, `custom-[0123]` instructions execute the CPU's built-in
 custom instructions and custom CSR addresses select the CPU's built-in
-custom CSRs. When `cte=1`, `custom-[0123]` instructions and custom CSR
-accesses raise an illegal instruction exception.
+custom CSRs. When `cxe=1`, `custom-[0123]` instructions and custom CSR
+accesses raise an illegal-instruction exception.
 
 * When `version=1`, enable _version-1_ composable extension
 multiplexing. The `cxu_id` and `state_id` fields select the current
-CXU and state context. When `cte=0`, `custom-[012]` instructions issue
+CXU and state context. When `cxe=0`, `custom-[012]` instructions issue
 CXU requests, and custom CSR accesses access CX CSRs, of the CXU and
-state context identified by `cxu_id` and `state_id`. When `cte=1`,
+state context identified by `cxu_id` and `state_id`. When `cxe=1`,
 `custom-[012]` instructions and custom CSR accesses raise an illegal
 instruction exception.
 
 * `version` values 2-7 are reserved.
 
-`.cte`: custom operation trap enable
+`.cxe`: custom operation exception enable
 
-* When (`version=0` or `version=1` and) `cte=1`, a custom operation
-raises an illegal instruction exception.
+* When (`version=0` or `version=1` and) `cxe=1`, a custom operation
+raises an illegal-instruction exception.
 
 `.cxu_id`: select the hart's current CXU
 
@@ -249,13 +249,13 @@ years for twenty years.
 
 [TIP]
 ====
-The `cte` field enables 1) software emulation of any built-in (legacy)
+The `cxe` field enables 1) software emulation of any built-in (legacy)
 custom instruction or custom CSR; 2) software emulation of any composable
 extension custom instruction or custom CSR; 3) transparent virtualization
-of CX state contexts; and 4) a representation of an _invalid selector_,
-i.e., sentinel value(s) to detect use of erroneous selector indices.
+of CX state contexts; and 4) a representation of _invalid selector_
+sentinel value(s) to detect use of erroneous selector indices.
 
-An illegal instruction trap handler can emulate any absent built-in
+An illegal-instruction trap handler can emulate any absent built-in
 custom instruction or any custom instruction of a composable extension,
 then return to the following instruction.
 
@@ -264,27 +264,27 @@ transparently _virtualize_ many logical CX state contexts on fewer
 (or just one!) physical CX state contexts. When multiple CX libraries
 each try to open the same (e.g., singleton) CX state context, the OS
 can give each a unique CX selector index value, with all-but-one of
-their corresponding CX selector table entries set `cte=1` to trap on
+their corresponding CX selector table entries set `cxe=1` to trap on
 first custom operation. Once such a selector index is used to select the
-thread's current CX, a custom operation incurs an illegal instruction
-exception. The illegal instruction trap handler determines which virtual
+thread's current CX, a custom operation incurs an illegal-instruction
+exception. The illegal-instruction trap handler determines which virtual
 CX state context currently has the physical CX state context, saves that
-CX state context, sets `cte=1` on its selector table entry, restores the
-thread's current CX's state context, clears `cte=0` for its selector
+CX state context, sets `cxe=1` on its selector table entry, restores the
+thread's current CX's state context, clears `cxe=0` for its selector
 table entry, rewrites `cx_index` with `cx_index` for the side-effect
 of updating `mcx_selector` with this selector table entry value with
-`cte=0`, and returns from exception, reissuing the custom operation,
+`cxe=0`, and returns from exception, reissuing the custom operation,
 which does not trap.
 ====
 
 [TIP]
 ====
-The selector's `cte` field is _subordinate_ to the `version` field so
+The selector's `cxe` field is _subordinate_ to the `version` field so
 that future revisions of this specification may incorporate new trap
 behaviors and trap control bits.
 ====
 
-The selector `0x10000000` = `'{version:3'b0, cte:1'b1, reserved:28'b0}`
+The selector `0x10000000` = `'{version:3'b0, cxe:1'b1, reserved:28'b0}`
 is the canonical _invalid selector_.
 
 [TIP]
@@ -1127,12 +1127,12 @@ state from another hart, nor to limit a hart's access to a given CXU.
 
 When a CPU implements user level and machine level privileged
 architecture, an attempt to CSR-write `mcx_selector` from user level
-generates an illegal instruction exception.
+generates an illegal-instruction exception.
 
 Machine level software may provide to user level software an `ECALL`
 function to change `mcx_selector`.
 
-Alternatively, the machine level illegal instruction exception handler
+Alternatively, the machine level illegal-instruction exception handler
 can determine whether the new CX selector value is valid for the user
 level code executing on the hart, optionally perform the CSR-write on its
 behalf, and return from exception.
@@ -1156,7 +1156,7 @@ read/write to system code and inaccessible from user code.
 
 Initially the table is initialized with 0 in the 0th entry, and the
 invalid selector (`0x10000000`) in every other entry. Selector index 0 
-selects table entry 0, with value `0x0000000` = `'{version:0, cte:0}`,
+selects table entry 0, with value `0x0000000` = `'{version:0, cxe:0}`,
 which disables CX multiplexing, thereby selecting the CPU's built-in
 custom instructions and custom CSRs. The system code CSR-writes the
 table address to the hart's `mcx_table` CSR. Then in response to a system
