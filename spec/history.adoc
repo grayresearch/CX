@@ -1,6 +1,6 @@
 == Specification Change History
 
-=== Version 0.95.240328, 2024-03-28: Add CX CSRs
+=== Version 0.95.240403, 2024-04-03: Add CX CSRs
 
 Add CX-scoped custom CSRs:
 

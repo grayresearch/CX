@@ -36,7 +36,7 @@ composable extension identifier.
 
 A *composable extension identifier (CX_ID)* is a 128-bit globally unique ID
 (_GUID_) [see RFC-4122], unique in history, identifying a composable
-extension__.__
+extension.
 
 A *stateless composable extension* is a fixed named set of set of stateless
 custom functions. A stateless CX has no read-write custom CSRs but
@@ -56,6 +56,12 @@ A *CX CSR* is a custom CSR of a stateful composable extension.
 
 A *custom operation* is a custom opcode instruction or a custom address
 CSR access.
+
+[[FUNC_ID]]
+A *function ID (FUNC_ID)* is an integer, in the scope of a composable
+extension, that identifies a custom operation. At present it conveys
+either a <<CF_ID,CF_ID>> of a custom function instruction or a CSR access
+of a custom CSR access instruction.
 
 [[serializable]]
 *`IStateContext`* is a stateful composable extension, identified as
@@ -709,7 +715,7 @@ and response signals (§<<_cxu_li_signaling>>).
 |`req_cxu` | <- `mcx_selector.cxu_id`
 |`req_state` | <- `mcx_selector.state_id`
 |`req_insn` | <- `insn`
-|`req_func` | <- `insn.cf_id` {`custom-[012]`} or `csr_func(insn)` {`csrr*`}
+|`req_func` | <- `insn.cf_id` {`custom-[012]`} or `csr_func_id(insn)` {`csrr*`}
 |`req_data0` | <- R[`insn.rs1`] {`custom-[012]` or `csrr[wsc]`} or `insn.uimm` {`csrr[wsc]i`}
 |`req_data1` | <- R[`insn.rs2`] {`custom-[02]`} or `insn.imm` {`custom-1`} or `insn.csr` {`csrr*`}
 |`resp_id` | -> CPU
@@ -717,22 +723,22 @@ and response signals (§<<_cxu_li_signaling>>).
 |`resp_data` | -> R[`insn.rd`] {`custom-[01]` or `csrr*`}
 |===
 
-A custom CSR access instruction (`CSRR`, `CSRRW`, `CSRRS`,
-`CSRRC`) maps to one of four special `req_func` function IDs with the msb
-set to one to distinguish them from custom function instructions'
-`CF_ID` function IDs. In general, `CXU_FUNC_ID_W = 1 + CF_ID_W` bits.
+A custom CSR access instruction (`CSRR`, `CSRRW`, `CSRRS`, `CSRRC`) maps
+to one of four `req_func` <<FUNC_ID,FUNC_ID>>s with msb set to one to distinguish
+them from custom function instructions' `CF_ID` function IDs. In general,
+`CXU_FUNC_ID_W = min(3, 1 + CF_ID_W)` bits.
 
 ```
 enum { CSRR = 1<<CF_ID_W, CSRRW, CSRRS, CSRRC }; // msb set => CSR access
-read_only(insn) = (insn.funct3 == CSRR[SR][I]) && (insn.rs1 == 0);
-csr_func(insn) = CSRR + (read_only(insn) ? 0 : insn.funct3[1:0]);
+csr_read_only(insn) = (insn.funct3 == CSRR[SR][I]) && (insn.rs1 == 0);
+csr_func_id(insn)   = CSRR + (csr_read_only(insn) ? 0 : insn.funct3[1:0]);
 ```
 
-[TIP]
+[NOTE]
 ====
 The signal that distinguishes _custom function instruction_ from _custom CSR
 access instruction_ CXU requests is conveyed as the MSB of CXU-LI's `req_func`
-function ID, rather than a separate one bit `req_csr_access` signal, to
+<<FUNC_ID,FUNC_ID>>, rather than a separate one bit `req_csr_access` signal, to
 minimize the number of CXU-LI signal ports.
 ====
 
