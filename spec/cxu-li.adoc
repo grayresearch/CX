@@ -12,7 +12,7 @@ there is exactly one response.
 [[cxu_request]]
 A *CXU request (request)* is a group of CXU-LI signals that may
 include request flow control, <<REQ_ID,REQ_ID>>, <<CXU_ID,CXU_ID>>,
-<<CF_ID,CF_ID>>, <<STATE_ID,STATE_ID>>, the raw instruction, and integer
+<<FUNC_ID,FUNC_ID>>, <<STATE_ID,STATE_ID>>, the raw instruction, and integer
 operands, produced by a CXU requester, conveying request data to a CXU.
 
 A *CXU response (response)* is a group of CXU-LI signals that may include
@@ -26,16 +26,17 @@ a CXU request and its corresponding CXU response.
 A *CXU response status (response status, status)* is a CXU-LI
 success/error code produced by a CXU in response to receiving a
 CXU request, indicating success or else an error in the request's
-<<CXU_ID,CXU_ID>>, <<CF_ID,CF_ID>>, <<STATE_ID,STATE_ID>>, operation,
+<<CXU_ID,CXU_ID>>, <<FUNC_ID,FUNC_ID>>, <<STATE_ID,STATE_ID>>, operation,
 or a composable extension specific error.
 
 A *CXU requester* (requester) is a core that sends CXU requests to CXU(s)
 and receives CXU response(s) from CXUs.
 
-A *CPU* is a CXU requester that implements RISC-V RV-I-Zicsr-Zicx
-instruction set, issues CXU requests upon issuing CF instructions,
-and writes a destination register and the CXU status CSR in response to
-CXU responses.
+A *CPU* is a CXU requester that implements RISC-V RV-I-Zicsr + _(CX-ISA
+extension)_ instruction set, issues CXU requests upon issuing custom
+function instructions and custom CSR access instructions (collectively,
+_custom operation_ instructions), and writes a destination register and
+the CX status CSR in response to CXU responses.
 
 A *composable extension unit (CXU, responder)* is a core that implements
 one or more composable extensions. It receives CXU requests and sends CXU
@@ -186,7 +187,7 @@ of request and response signals. <<cxu-signals>> lists all CXU-LI
 signals of all feature levels in a canonical order: transaction
 signals (request/response valid, ready, <<REQ_ID,REQ_ID>>), context
 (<<CXU_ID,CXU_ID>>, <<STATE_ID,STATE_ID>>), function (raw instruction,
-<<CF_ID,CF_ID>>), and data. The Level column indicates which levels introduce
+<<FUNC_ID,FUNC_ID>>), and data. The Level column indicates which levels introduce
 which signals. The Dir column indicates the signal direction from the
 perspective of a responder. The bit width of each bit vector is determined
 by a width parameter, configurable per CXU
@@ -205,10 +206,10 @@ by a width parameter, configurable per CXU
 ^|3 ^|in |`req_id` |`CXU_REQ_ID_W` |request <<REQ_ID,REQ_ID>>
 ^| ^|in |`req_cxu` |`CXU_CXU_ID_W` |request <<CXU_ID,CXU_ID>>
 ^|1+ ^|in |`req_state` |`CXU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^| ^|in |`req_func` |`CXU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^| ^|in |`req_func` |`CXU_FUNC_ID_W` |request <<FUNC_ID,FUNC_ID>>
 ^|2+ ^|in |`req_insn` |`CXU_INSN_W` |request raw instruction
 ^| ^|in |`req_data0` |`CXU_DATA_W` |request operand data 0
-^| ^|in |`req_data1` |`CXU_DATA_W` |request operand data 1
+^| ^|in |`req_data1` |`CXU_DATA_W` |request operand data 1 / CSR address
 ^|1+ ^|out |`resp_valid` | |response valid
 ^|2+ ^|in |`resp_ready` | |response ready
 ^|3 ^|out |`resp_id` |`CXU_REQ_ID_W` |response ID
@@ -217,11 +218,6 @@ by a width parameter, configurable per CXU
 |===
 
 All signals are positive-true logic.
-[NOTE]
-====
-It is unfortunate the custom function ID is *CF_ID* in the HW-SW interface
-and *FUNC_ID* in CXU-LI.
-====
 
 [[parameters]]
 ==== CXU-LI configuration parameters
@@ -237,7 +233,7 @@ ranges of possible values.
 ^|3 |<<REQ_ID,REQ_ID>> |`CXU_REQ_ID_W` |0-64 |0 |request/response ID width
 ^| |<<CXU_ID,CXU_ID>> |`CXU_CXU_ID_W` |0-16 |0 |CXU_ID width
 ^|1+ |<<STATE_ID,STATE_ID>> |`CXU_STATE_ID_W` |0-16 |0 |STATE_ID width
-^| |<<CF_ID,CF_ID>> |`CXU_FUNC_ID_W` |0-10 |10 |CF_ID width
+^| |<<FUNC_ID,FUNC_ID>> |`CXU_FUNC_ID_W` |3-11 |11 |FUNC_ID width
 ^|2+ |`insn` |`CXU_INSN_W` |0, 32 |0 |raw instruction width
 ^| |`data` |`CXU_DATA_W` |32, 64 |32 |request/response data width
 ^| |`status` |`CXU_STATUS_W` |3 |3 |response status width
@@ -248,11 +244,6 @@ ranges of possible values.
 Zero width bit vectors are problematic in some HDLs. Parameter signals
 declared 0-bits wide should nevertheless be declared [0:0], driven 1'b0
 by sender, and ignored by receiver.
-====
-
-[NOTE]
-====
-When `CXU_FUNC_ID_W<10`, how do standard custom functions (CF_ID in [0x3F0..0x3FF]) work?
 ====
 
 <<other-parameters>> presents other CXU configuration parameters.
@@ -292,7 +283,7 @@ implements multiple stateful composable extensions, i.e. `CXU_N_CXUS>1`,
 each must be configured with the same number of state contexts.
 
 `CXU_LATENCY` and `CXU_RESET_LATENCY` are specific to CXU-L1 fixed
-latency CXUs.  See §<<cxu-l1>>.
+latency CXUs. See §<<cxu-l1>>.
 
 [[clocking]]
 ==== Clock, reset, clock enable
@@ -384,8 +375,8 @@ error-checks the request data, performs the request, and outputs the first
 |`CXU_ERROR_CXU` |1 |`req_cxu` is not a CXU_ID implemented by CXU
 |`CXU_ERROR_STATE` |2 |`req_state` is not a valid STATE_ID for `req_cxu`
 |`CXU_ERROR_OFF` |3 |`req_state` is valid but this <<serializable,_serializable_>> state context is in the _off_ state
-|`CXU_ERROR_FUNC` |4 |`req_func` is not a valid CF_ID for `req_cxu`
-|`CXU_ERROR_OP` |5 |request operand(s) or state are a domain error for the custom function
+|`CXU_ERROR_FUNC` |4 |`req_func` is not a valid CF_ID / `req_data1` is not a valid CSR address / write access to a read-only CSR
+|`CXU_ERROR_OP` |5 |request operand(s) or state are a domain error for the custom function or custom CSR access
 |`CXU_ERROR_CUSTOM` |6 |request causes a custom error (of a serializable composable extension)
 |===
 
@@ -416,7 +407,7 @@ In response to receiving `resp_status` of `CXU_ERROR_CXU`,
 `resp_data` and uses zero as the result of the CF instruction.
 
 When a CF instruction writes a destination register, (i.e.,
-`custom-0`/`-1` but not `custom-2`), the result of the CF instruction
+`custom-[01]` but not `custom-2`), the result of the CF instruction
 is written to the register, irrespective of the CXU response status.
 
 [TIP]
@@ -437,22 +428,47 @@ with reset-able flip-flops, a registered `resp_data` input may be zeroed
 for negligible cost.
 ====
 
+==== Function ID
+The CXU request <<FUNC_ID,FUNC_ID>> `req_func` indicates the custom operation to perform:
+when the most-significant bit of `req_func` is 0, the remaining
+bits are the <<CF_ID,CF_ID>> of a custom opcode instruction;
+when the most-significant bit of `req_func` is 1, bits `req_func[1:0]`
+encode one of four CSR access requests:
+
+.FUNC_ID CSR access requests
+[width="100%",cols="8%,8%,18%,66%",options="header",]
+|===
+|*Value* |*Req.* |*Description* |*Behavior*
+|`1:0` |`CSRR` |read-only access  |`resp_data = CSRs[req_data1];`
+|`1:1` |`CSRRW` |read-write access |`resp_data = CSRs[req_data1]; CSRs[req_data1] = req_data0;`
+|`1:2` |`CSRRS` |read-set access |`resp_data = CSRs[req_data1]; CSRs[req_data1] \|= req_data0;`
+|`1:3` |`CSRRC` |read-clear access |`resp_data = CSRs[req_data1]; CSRs[req_data1] &= ~req_data0;`
+|===
+
+The minimum `CXU_FUNC_ID_W` is 3: 1-bit MSB + 2-bit CSR access request type;
+the maximum is 11: 1-bit MSB + maximum 10-bit `CF_ID_W`.
+
+[NOTE]
+====
+Perhaps the spec should require "When the most-significant bit of
+`req_func` is 1, bits `req_func[CXU_FUNC_ID_W-2:2]` must be 0."
+====
+
 [[raw-insn]]
 ==== Raw instruction
 
 At CXU-LI feature level 2, or higher, CXU requests may be configured
-(`CXU_INSN_W=32`) to include the raw instruction word (`req_insn`) of
-the CF instruction issued the CXU request, if the request originates
-from a CF instruction, or all zeroes otherwise. A CXU may use the raw
-instruction data to help perform a custom function, or it may ignore
-the raw instruction entirely.
+(`CXU_INSN_W=32`) to include the raw instruction word (`req_insn`) of the
+custom operation instruction that issued the CXU request, or all zeroes
+otherwise. A CXU may use the raw instruction data to help perform the
+custom operation, or it may ignore the raw instruction entirely.
 
 [TIP]
 ====
-The raw instruction complements the <<CF_ID,CF_ID>> (`req_func`)
-identifier. CF_ID is the preferred, future proof way to select a custom
-function. It is ISA neutral and abstracts the CPU away from CXU, and
-potentially reduces verification complexity.
+The raw instruction complements the <<CF_ID,CF_ID>>-derived
+<<FUNC_ID,FUNC_ID>> `req_func` identifier. CF_ID is the preferred, future
+proof way to select a custom function. It is ISA neutral and abstracts
+the CPU away from CXU, and potentially reduces verification complexity.
 ====
 
 [TIP]
@@ -463,7 +479,7 @@ or complex number register file. When this CXU receives a CXU request
 including its raw instruction word, it may opt to ignore either or
 both of the two integer request operands `req_data0` and `req_data1`,
 and instead partially decode the raw instruction word to recover `rs1`
-and `rs2` fields, even `rs3` if there are spare CF instruction bits,
+and `rs2` fields, even `rs3` if there are spare custom instruction bits,
 to determine which of its CXU register file entries to read. Similarly,
 the CXU can decode the raw instruction word to recover an `rd` field
 to determine which CXU-private register file entry to write back and
@@ -479,23 +495,28 @@ freeing those bits for arbitrary uses.
 
 [NOTE]
 ====
-Does raw instruction access merits security threat modeling?  Imagine
+Does raw instruction access merits security threat modeling? Imagine
 adversarial CXUs, snoopily watching the dynamic instruction stream go by,
 even when `req_valid` is negated.
 ====
 
 [NOTE]
 ====
-Half-baked idea (not recommended):
-Imagine a dynamic facility by which any arbitrary instruction word, not
-just `custom-0`/`-1`/`-2` format instructions, may be a CF instruction,
-issued to a CXU.
-This might be a table of (mask,pattern) tuples, or a 32-bit
-`mcx_opcodes_mask` CSR bit vector of 5-bit major opcodes, identifying
-instructions to divert to the current CXU. Or perhaps, in the hardware
-domain, a CPU might first issue each instruction to the current CXU, and
-only execute the instruction in the CPU if the CXU delegates it back to
-the CPU.
+At present the custom instructions and CSR access instructions are 32b
+instructions. If this changes, CXU_INSN_W may have values other than
+0 and 32.
+====
+
+[NOTE]
+====
+Half-baked idea (not recommended): Imagine a dynamic facility by which any
+arbitrary instruction word, not just `custom-[012]` format instructions,
+may be a CF instruction, issued to a CXU. This might be a table of
+(mask,pattern) tuples, or a 32-bit `mcx_opcodes_mask` CSR bit vector of
+5-bit major opcodes, identifying instructions to divert to the current
+CXU. Or perhaps, in the hardware domain, a CPU might first issue each
+instruction to the current CXU, and only execute the instruction in the
+CPU if the CXU delegates it back to the CPU.
 ====
 
 [[req-resp-id]]
@@ -546,14 +567,15 @@ For `CXU_LI_VERSION` and `CXU_N_CXUS`, see §<<parameters>>.
 ^|*Dir* |*Port* |*Width Parameter* |*Description*
 ^|in |`req_valid` | |request valid
 ^|in |`req_cxu` |`CXU_CXU_ID_W` |request <<CXU_ID,CXU_ID>>: selects the requested CXU
-^|in |`req_func` |`CXU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^|in |`req_func` |`CXU_FUNC_ID_W` |request <<FUNC_ID,FUNC_ID>>
 ^|in |`req_data0` |`CXU_DATA_W` |request operand data 0
 ^|in |`req_data1` |`CXU_DATA_W` |request operand data 1
 ^|out |`resp_status` |`CXU_STATUS_W` |response status
 ^|out |`resp_data` |`CXU_DATA_W` |response data
 |===
 
-CXU-L0 signaling is asynchronous. CXU outputs are pure combinational functions of CXU inputs.
+CXU-L0 signaling is asynchronous. CXU outputs are pure combinational
+functions of CXU inputs.
 
 [TIP]
 ====
@@ -601,9 +623,9 @@ analysis of its requester.
 ....
 
 <<cxu-l0-wave>> is an example waveform for three CXU-L0 requests
-and responses, arising from executing CF instructions `f0(a0,b0)`,
-`f1(a1,b1)`, and `f2(a2,b2)`. All three instructions issue to the same
-CXU `u0`.  Function `f1` incurs an error.
+and responses, arising from executing custom function instructions
+`f0(a0,b0)`, `f1(a1,b1)`, and `f2(a2,b2)`. All three instructions issue
+to the same CXU `u0`. Function `f1` incurs an error.
 
 === CXU-L1 fixed latency CXU signaling
 
@@ -665,7 +687,7 @@ is first negated.
 ^|in |`req_valid` | |request valid
 ^|in |`req_cxu` |`CXU_CXU_ID_W` |request <<CXU_ID,CXU_ID>>
 ^|in |`req_state` |`CXU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^|in |`req_func` |`CXU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^|in |`req_func` |`CXU_FUNC_ID_W` |request <<FUNC_ID,FUNC_ID>>
 ^|in |`req_data0` |`CXU_DATA_W` |request operand data 0
 ^|in |`req_data1` |`CXU_DATA_W` |request operand data 1
 ^|out |`resp_valid` | |response valid
@@ -689,7 +711,7 @@ Protocol:
 . Custom function execution.
 [loweralpha]
 .. CXU performs response status / error checking per §<<error-checking>>.
-.. CXU performs a custom function of the operands and the selected state context.
+.. CXU performs a function of the operands and the selected state context.
 .. CXU may update the selected state context, logically prior to any updates from subsequent requests.
 . Response transfer.
 [loweralpha]
@@ -734,7 +756,7 @@ tock:'0 1 2 3 4 5 6 7 20 21 22 23 24 25'
 ....
 
 <<cxu-l1-wave>> is an example waveform for four CXU-L1 CXU requests and
-responses, arising from executing four CF instructions `f0`-`f3`. Since
+responses, arising from executing four custom function instructions `f0`-`f3`. Since
 `CXU_RESET_LATENCY=0`, the CXU is ready for request `f0` in cycle 1, the
 same cycle `rst` is negated. With `CXU_LATENCY=2`, each response occurs 2
 (enabled) clock cycles after each request is received. Each instruction
@@ -789,7 +811,7 @@ For `CXU_LI_VERSION`, `CXU_N_CXUS`, and `CXU_N_STATES`, see §<<parameters>>.
 ^|out |`req_ready` | |request ready
 ^|in |`req_cxu` |`CXU_CXU_ID_W` |request <<CXU_ID,CXU_ID>>
 ^|in |`req_state` |`CXU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^|in |`req_func` |`CXU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^|in |`req_func` |`CXU_FUNC_ID_W` |request <<FUNC_ID,FUNC_ID>>
 ^|in |`req_insn` |`CXU_INSN_W` |request raw instruction
 ^|in |`req_data0` |`CXU_DATA_W` |request operand data 0
 ^|in |`req_data1` |`CXU_DATA_W` |request operand data 1
@@ -815,7 +837,7 @@ Protocol:
 . Custom function execution.
 [loweralpha]
 .. CXU performs response status / error checking per §<<error-checking>>.
-.. CXU performs a custom function of the operands and the selected state context.
+.. CXU performs a function of the operands and the selected state context.
 .. CXU may update the selected state context, logically prior to any updates from subsequent requests.
 . Response transfer.
 [loweralpha]
@@ -941,7 +963,7 @@ For `CXU_LI_VERSION`, `CXU_N_CXUS`, and `CXU_N_STATES`, see
 ^|in |`req_id` |`CXU_REQ_ID_W` |request <<REQ_ID,REQ_ID>>
 ^|in |`req_cxu` |`CXU_CXU_ID_W` |request <<CXU_ID,CXU_ID>>
 ^|in |`req_state` |`CXU_STATE_ID_W` |request <<STATE_ID,STATE_ID>>
-^|in |`req_func` |`CXU_FUNC_ID_W` |request <<CF_ID,CF_ID>>
+^|in |`req_func` |`CXU_FUNC_ID_W` |request <<FUNC_ID,FUNC_ID>>
 ^|in |`req_insn` |`CXU_INSN_W` |request raw instruction
 ^|in |`req_data0` |`CXU_DATA_W` |request operand data 0
 ^|in |`req_data1` |`CXU_DATA_W` |request operand data 1
@@ -969,7 +991,7 @@ Protocol:
 . Custom function execution.
 [loweralpha]
 .. CXU performs response status / error checking per §<<error-checking>>.
-.. CXU performs a custom function of the operands and the selected state context.
+.. CXU performs a function of the operands and the selected state context.
 .. CXU may update the selected state context, logically prior to any updates _to the same state context_ from subsequent requests.
 . Response transfer.
 [loweralpha]
@@ -1109,9 +1131,10 @@ and therefore the adapter's response latency is at least one cycle.
 [[cpus]]
 === CXU-LI-compliant CPUs
 
-A CXU-LI-compliant CPU implements RISC-V RV-I -Zicsr *-Zicx* instruction
-set, sends CXU requests upon issuing CF instructions, and writes a
-destination register and CXU status CSR in response to CXU responses.
+A CXU-LI-compliant CPU implements RISC-V RV-I -Zicsr + _(CX-ISA
+extension)_ instruction set, sends CXU requests upon issuing custom
+operation instructions, and writes a destination register and CX status
+CSR in response to CXU responses.
 
 ==== CPUs and CXU-LI feature levels
 
@@ -1127,10 +1150,10 @@ configured for (e.g.) 2 cycles latency. It might also use CXU-L2 with
 a variable latency CXU, stalling the pipeline during cycles where CF
 instructions cannot issue because the selected CXU negates `req_ready`,
 and itself negating `resp_ready` during write-back cycles when the
-register file's write port or other necessary resource is unavaiable.
+register file's write port or other necessary resource is unavailable.
 
 An out-of-order completion CPU, i.e. one that may commit low latency
-instructions before prior high latency insturctions, might issue CF
+instructions before prior high latency instructions, might issue CF
 instructions to a CXU-L2 variable latency CXU and in some future cycle
 retire the variable latency CXU response, here again negating `resp_ready`
 when it is unable to accept a response to writeback.
@@ -1193,7 +1216,7 @@ CXU_IDs with a `CXU_ERROR_CXU` response.
 
 For upstream response routing, the Switch incorporates, for each subordinate
 CXU, a FIFO queue that records the requester port ID that issued each
-request to that CXU.  As each (in order) response from that CXU is
+request to that CXU. As each (in order) response from that CXU is
 received, the requester port ID is dequeued from that FIFO and used to
 route the response to its corresponding requester.
 
@@ -1225,7 +1248,7 @@ cx_reg 4,x15,x13,x14    ; u0.f4
 <<switch22-wave>> is an example waveform executing <<cim3>>
 near-simultaneously on the two CPUs of <<switch22>>.
 
-(_1:u2<3>.f4_ denotes CXU request #1 with CXU_ID=2 STATE_ID=3 CF_ID=4)
+(_1:u2<3>.f4_ denotes CXU request #1 with CXU_ID=2 STATE_ID=3 FUNC_ID=4)
 
 In the narrative that follows, that _A sends B_ means _A asserts B
 ahead of next posedge `clk`,_ whereas _B transfers to C_ means _during
@@ -1281,8 +1304,8 @@ Cycle-by-cycle:
 Both CPUs issue the first CF instruction (`f0`).
 
 [arabic,start=0]
-. CPU~0~ sends first CXU request (request #0): CXU_ID=0 STATE_ID=0 CF_ID=0, a.k.a. `0:u0<0>.f0`. +
-CPU~1~ sends first CXU request (request #5): CXU_ID=0 STATE_ID=1 CF_ID=0, a.k.a. `5:u0<1>.f0`.
+. CPU~0~ sends first CXU request (request #0): CXU_ID=0 STATE_ID=0 FUNC_ID=0, a.k.a. `0:u0<0>.f0`. +
+CPU~1~ sends first CXU request (request #5): CXU_ID=0 STATE_ID=1 FUNC_ID=0, a.k.a. `5:u0<1>.f0`.
 . CPU~0~'s first request, destined for CXU~0~, wins arbitration for Switch output port 0. +
 Switch asserts CPU~0~'s `req_ready` and negates CPU~1~'s `req_ready`. +
 CPU~0~'s first request `0:u0<0>.f0` transfers to Switch. +
@@ -1408,7 +1431,7 @@ reqs_tdata = { req_data1,req_data0 };
 ....
 
 Use `reqs_tdest` when `req_id` and/or `req_cxu` indicate/encode a
-specific AXI-S destination (of a bridge to a CXU).  Use `resps_tdest`
+specific AXI-S destination (of a bridge to a CXU). Use `resps_tdest`
 when of `resp_id` indicates a specific AXI-S destination (of a bridge
 to a requester, e.g., CPU).
 
