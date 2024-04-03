@@ -9,6 +9,13 @@ and now also custom CSR access instructions.
 
 2. Extend CXU-LI to convey CX CSR access requests and responses.
 
+3. Change `cx_imm` CX custom function instruction format to follow the
+format of `addi` and `csrrw`, with a 12-bit imm field.
+
+4. Rename `mcx_selector.cte` to `mcx_selector.cxe` (_custom operation
+exception enable_) -- enables illegal-instruction exceptions on use of
+custom operations; resize `mcx_selector.version` from 4-bits to 3-bits.
+
 === Version 0.94.240327, 2024-03-27: Add mcx_selector.cte.
 
 Add `mcx_selector.cte`, _custom operation trap enable_.
