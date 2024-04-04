@@ -290,7 +290,7 @@ that future revisions of this specification may incorporate new trap
 behaviors and trap control bits.
 ====
 
-The selector `0x10000000` = `'{version:3'b0, cxe:1'b1, reserved:28'b0}`
+The selector `0x3FFFFFFF` = `'{version:1, cxe:1, ..., state_id:0xFF, ..., cxu_id:0xFF}`
 is the canonical _invalid selector_.
 
 [TIP]
