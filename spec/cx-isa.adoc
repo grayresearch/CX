@@ -289,7 +289,6 @@ The selector's `cxe` field is _subordinate_ to the `version` field so
 that future revisions of this specification may incorporate new trap
 behaviors and trap control bits.
 ====
-
 The selector `0x10000000` = `'{version:3'b0, cxe:1'b1, reserved:28'b0}`
 is the canonical _invalid selector_.
 
@@ -515,33 +514,143 @@ current state context of the current extension (i.e., of the current
 configured CXU) using R-type, I-type, and flex-type custom function
 instruction encodings.
 
+A CX custom instruction may access some subset of the CPU architected
+state, as well as the selected CX state context. Presently a CX custom
+instruction may access the CPU's integer registers.
+
+[TIP]
+====
+What other aspects of the CPU's state are accessible to a CX custom
+instruction are the subject of ongoing design and debate. A non-normative
+proposal, below, also accomodates CX access to floating-point registers.
+====
+
 For each instruction encoding, the CF instruction specifies the CF_ID, and
 source operand values, which may be two source registers, or one source
-register and one immediate value. R-type and I-type instructions always
+register and one immediate value. R-type and I-type instructions may
 write a destination register whereas flex-type instructions never do so.
+
+In addition, the selected CXU may be configured to also receive the raw
+32-bit instruction word and further decode it to address the selected
+CX state context's private registers, register files, RAMs, channels, etc.
 
 ==== Custom-0 R-type encoding
 
 Assembly instruction: `cx_reg cf_id,rd,rs1,rs2`
 
+===== Custom-0 R-type encoding
+
 An R-type CF instruction issues a CXU request for a zero-extended 10-bit
 CF_ID `cf_id` with two source register operands identified by `rs1` and
 `rs2`. The CXU response data is written to destination register `rd`.
 
-.CX R-type instruction encoding
+.CX Old R-type instruction encoding
 [wavedrom,target="custom-0",svg]
 ....
 {reg:[
 {bits: 7, name:11, attr: 'custom-0'},
 {bits: 5, name: 'rd'},
 {bits: 3, name: 'cf_id[2:0]'},
-{bits: 5, name: 'rs1',},
+{bits: 5, name: 'rs1'},
 {bits: 5, name: 'rs2'},
 {bits: 7, name: 'cf_id[9:3]'},
 ],
 config: {lanes: 1, bits: 32},
 }
 ....
+
+[TIP]
+====
+When the custom instruction discards either of the X[`rs1`] or X[`rs2`]
+source operands, this encoding causes false read dependencies on the
+`rs1` and `rs2` registers. These can be disclaimed by reading from source
+register `x0` but each such `x0` wastes 5 instruction bits.
+
+When the custom instruction does not write a destination register X[`rd`]
+this can be disclaimed by writing to destination register `x0` but this also
+wastes 5 instruction bits.
+
+In contrast, the following proposed alternative R-type encodings encode
+specifies register operand and destination register usage / non-usage
+using `cf_id` values, at the cost of fewer (64-256) custom function
+instructions per register usage type. We judge this worthwhile to avoid
+encoding false register operand and destination register dependencies in
+the uniform CX custom instruction predecoding, and to include access to
+floating-point registers in the CX custom function instructions repetoire.
+====
+
+===== Proposed New Custom-0 R-type encoding
+
+[TIP]
+====
+Proposal. Non-normative.
+====
+
+An R-type CF instruction issues a CXU request for a zero-extended 10-bit
+CF_ID `cf_id` with zero, one, or two source register operands identified
+by `rs1` and `rs2`. The CXU response data may optionally be written to
+destination register `rd`.
+
+For CPUs that implement the CX floating-point extension _(TBD)_, source
+and destination registers are integer registers or floating-point
+registers. Otherwise, source and destination registers are integer
+registers.
+
+.CX R-type custom instruction encoding
+[wavedrom,target="custom-C0",svg]
+....
+{reg:[
+{bits: 7, name:11, attr: 'custom-0'},
+{bits: 5, name: 'rd'},
+{bits: 3, name: 'cf_id[2:0]'},
+{bits: 5, name: 'rs1'},
+{bits: 5, name: 'rs2'},
+{bits: 7, name: 'cf_id[9:3]'},
+],
+config: {lanes: 1, bits: 32},
+}
+....
+
+Specific `cf_id` value ranges encode which custom instruction source and
+destination register fields denote register file accesses, and which
+are ignored by the CPU (but may be significant to the CXU).
+
+.R-type register specifiers encoding
+[width="80%", cols="20%,15%,20%,20%,20%", options="header",]
+|===
+^|`cf_id` |*Type* ^|*Dest* ^|*Source* ^|*Source 2*
+^|0-127 |RXDSS ^|`X[rd]` ^|`X[rs1]` ^|`X[rs2]`
+^|128-255 |RXDS ^|`X[rd]` ^|`X[rs1]` ^|`0`
+^|256-383 |RXD ^|`X[rd]` ^|`0` ^|`0`
+^|384-511 |RXSS ^|- ^|`X[rs1]` ^|`X[rs2]`
+^|512-639 |RXS ^|- ^|`X[rs1]` ^|`0`
+^|640-767 |RX ^|- ^|`0` ^|`0`
+^|768-831 |RFDSS ^|`F[rd]` ^|`F[rs1]` ^|`F[rs2]`
+^|832-895 |RFDS ^|`F[rd]` ^|`F[rs1]` ^|`0`
+^|896-959 |RFD ^|`F[rd]` ^|`0` ^|`0`
+^|960-1023 |RFSS ^|- ^|`F[rs1]` ^|`F[rs2]`
+|===
+
+CPUs that implement the CX floating-point extension must also implement
+the D or F extension. For such CPUs, CF_IDs 768-1023 encode floating-point
+custom instructions that access `f` registers.
+
+If the CPU does not implement the CX floating-point extension, or if
+floating-point unit status field `mstatus.FS` is `Off` then any attempt
+to execute a floating-point custom instruction will raise an illegal
+instruction exception. Any floating-point CX custom instruction that
+modifies floating-point extension state (i.e., `f` registers) must set
+`mstatus.FS` to `Dirty`.
+
+As with all CPU CSRs, there is no means for a CXU to access `fcsr`. If
+necessary, that must be performed explicitly.
+
+[TIP]
+====
+This could require conveying `fcsr` state back and forth between the
+CPU and the CXU implementing the CX floating-point custom instructions,
+requring additional CXU logic interface signals.
+====
 
 ==== Custom-1 I-type encoding
 
@@ -593,7 +702,7 @@ selected CXU.
 {bits: 7, name:91, attr: 'custom-2'},
 {bits: 5, name: 'custom' },
 {bits: 3, name: 'cf_id[2:0]'},
-{bits: 5, name: 'rs1',},
+{bits: 5, name: 'rs1'},
 {bits: 5, name: 'rs2'},
 {bits: 7, name: 'cf_id[9:3]'},
 ],
@@ -622,15 +731,6 @@ instruction field `req_insn` (<<raw-insn>>) to provide an arbitrary
 32-7=25-bit custom request to a CXU. The absence of an (integer)
 destination register field is a feature that provides added,
 CPU-uninterpreted, custom instruction bits to a CXU.
-====
-
-[TIP]
-====
-One disadvantage of this approach: when the selected CXU routinely
-discards the R[`rs1`] or R[`rs2`] operands, use of the flex-type custom
-function instruction can create a useless false dependency on the `rs1`
-and `rs2` registers, which may uselessly delay issue of the CF instruction
-in an out-of-order CPU core.
 ====
 
 === CX CSR accesses
@@ -1002,7 +1102,7 @@ continuation, thread, process), _locus_ for short, upon one or more
 hardware threads (_harts_).
 
 The RISC-V per-hart state includes the program counter and integer
-register file, and optionally, floating point and vector register files,
+register file, and optionally, floating-point and vector register files,
 and various CSRs. CX-ISA extends per-hart state with the CX-ISA CSRs
 (§<<cx_isa_csrs>>) and the subset of the various configured state
 contexts of the stateful configured composable extensions allocated to
