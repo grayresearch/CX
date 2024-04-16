@@ -26,7 +26,7 @@ by different organizations, using different tools, and might not work
 together side-by-side in a new system. Different composable extensions
 may conflict in use of custom opcodes, custom CSR addresses, or their
 implementations may require different CPU cores, pipeline structures,
-logic extensions, models of computation, means of discovery, or error
+logic interfaces, models of computation, means of discovery, or error
 reporting regimes. Composition is difficult, impairing reuse of hardware
 and software, and fragmenting the RISC-V ecosystem: if you can't use
 _this_ extension, you can't also use _that_ extension.
