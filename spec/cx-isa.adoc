@@ -54,22 +54,14 @@ system may read or write the state context.
 
 A *CX CSR* is a custom CSR of a stateful composable extension.
 
-A *custom operation* is a custom opcode instruction or a custom address
-CSR access.
+[[CX_op]]
+A *CX operation* is a custom opcode instruction or a custom address CSR access.
 
 [[FUNC_ID]]
 A *function ID (FUNC_ID)* is an integer, in the scope of a composable
 extension, that identifies a custom operation. At present it conveys
 either a <<CF_ID,CF_ID>> of a custom function instruction or a CSR access
 of a custom CSR access instruction.
-
-[[serializable]]
-*`IStateContext`* is a stateful composable extension, identified as
-`CX_ID_IStateContext`, and with four stateful custom functions:
-{`cf_read_status`, `cf_write_status`, `cf_read_state`, `cf_write_state` },
-providing a standard way to manage a composable extension state context. A
-*serializable composable extension* is a stateful composable extension that
-inherits IStateContext.
 
 A *configured composable extension (configured extension)* is an extension
 that is configured (included) within a system and is implemented by a
@@ -405,16 +397,9 @@ error state.
 * Set by a custom operation instruction of a stateful extension when
 `mcx_selector.cxu_id`, `mcx_selector.state_id`, and its CF_ID/CSR
 address are valid but there is an error in the requested operation or
-its operands, with custom (extension-defined) error state available.
-
-[TIP]
-====
-The custom error state of a stateful extension may be obtained using
-custom functions of the extension. In addition, the custom error state
-of a serializable extension may also be obtained using
-<<IStateContext,`IStateContext`>>
-custom functions `cf_read_status` and/or `cf_read_state`.
-====
+its operands, with custom error state available via the `cxs_error`
+CX CSR. The CX may also define additional CX instructions and CX CSRs
+that retrieve extended error information.
 
 [NOTE]
 ====
@@ -495,6 +480,7 @@ Perhaps _"at the next higher privilege level"_ should be
 _"at machine mode privilege level"_.
 ====
 
+[[fences]]
 ==== Implicit CX-ISA CSR fences
 
 There is an implicit fence between any CX-ISA CSR access and any series
@@ -742,6 +728,7 @@ access instruction_ CXU requests is conveyed as the MSB of CXU-LI's `req_func`
 minimize the number of CXU-LI signal ports.
 ====
 
+[[precise]]
 ==== Precise exceptions
 
 Custom function instruction execution preserves precise exception
@@ -811,6 +798,140 @@ CXU request, would defer from updating any CXU state until the request's
 corresponding commit token arrives.
 ====
 
+=== CX State Context CX CSRs
+
+Every stateful CX must implement four _CX State Context CX CSRs_ that
+provide a uniform CX programming model:
+
+* `cxs_error`: CX error;
+
+* `scxs_status`: CX state context status;
+
+* `scxs_index`: CX state context blob index;
+
+* `scxs_data`: CX state context blob data at index.
+
+These mandatory CX CSRs enable user-mode CX software to access a CX state
+context's error status, and allow a CX-agnostic runtime or operating
+system to manage, initiailze, save, and reload any CX state context.
+
+[NOTE]
+====
+Consider abandoning the distinction between stateless and stateful
+CXs. Does it add significant benefit or clarity? A level 0 (combinational)
+CXU (sans `clk`), if provided, might just have `state_size=0` and/or
+`cxs_error=0`. That's fine.
+====
+
+==== CX error (`cxs_error`) register
+
+The `cxs_error` CX CSR is a *WARL* UXLEN-bit user read-write CX
+CSR that conveys the error status of a CX state context. It may be
+updated in response to any <<CX_op,CX operation>> and may also be read or
+written directly by software via a CSR read/write instruction. As usual
+§<<fences>> applies.
+
+A CX may implement a `cxs_error` register with fewer than UXLEN bits (as
+few as zero bits). Unimplemented most-significant bits always read as 0.
+
+.`cxs_error`: CX error register: user read/write CX CSR: 0x8FF (when UXLEN=32)
+[wavedrom,target="`cxs_error`",svg]
+....
+{reg:[
+{bits: 32, name: 'error'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+[TIP]
+====
+While `cxs_error` is inessential, it is mandated to provide a *uniform*
+way for CXs to convey extended error information arising from issuance
+of CX operations. This does not preclude a CX provding addtional CX CSRs
+to express additional aspects of a CX state context.
+====
+
+[TIP]
+====
+A `cxs_error` value of 0 indicates *no error* (stateful CXs) or sometimes
+*sorry, no error information* (stateless CXs??).
+====
+
+[NOTE]
+====
+Each CX has a specific behavior contract, including which CX operations
+set `cxs_error` and to which values. While there is at present no uniform
+specification for `cxs_error` values, we expect to discover and standardize
+recommended CX error categories and hence uniform `cxs_error` values.
+
+It remains to be discovered whether `cxs_error` should typically
+*accumulate* errors or capture *the last error* (or success)
+condition.
+====
+
+==== CX state context status (`scxs_status`) register
+
+The `scxs_status` CX CSR is a *WARL* SXLEN-bit supervisor read-write CX
+CSR that conveys the error status of a CX state context. It may be
+updated in response to any <<CX_op,CX operation>> and may also be read or
+written directly by software via a CSR read/write instruction. As usual
+§<<fences>> applies.
+
+.`scxs_status`: CX state context status register: supervisor read/write CX CSR:0x5FF
+[wavedrom,target="scxs_status",svg]
+....
+{reg:[
+{bits: 16, name: 'state_size'},
+{bits: 11, name: 'reserved', type:1},
+{bits: 2, name: 'cs'},
+{bits: 3, name: 0, attr:'version'},
+]}
+....
+
+==== CX state context index (`scxs_status`) register
+
+.`scxs_index`: CX state context index register: supervisor read/write CX CSR:0x5FE
+[wavedrom,target="`scxs_index`",svg]
+....
+{reg:[
+{bits: 16, name: 'index'},
+{bits: 15, name: 'reserved', type:1},
+{bits: 1, name: 'incr'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+==== CX state context data (`scxs_data`) register
+
+.`scxs_data`: CX state context data register: supervisor read/write CX CSR:0x5FD (when SXLEN=32)
+[wavedrom,target="`scxs_data`",svg]
+....
+{reg:[
+{bits: 32, name: 'data'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+[NOTE]
+====
+TODO: define reserved ranges of CX CSRs
+====
+
+=== CX/CXU info CSRs
+
+.`scx_guid0` supervisor read-only CX CSR:0x8FF (when MXLEN=32)
+[wavedrom,target="`cxs_error`",svg]
+....
+{reg:[
+{bits: 32, name: 'error'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
 [[IStateContext]]
 === `IStateContext`: the standard custom functions
 
@@ -864,7 +985,7 @@ The extension state context status word has the following fields:
 `mstatus` CSR, per the RISC-V Privileged ISA specification
 cite:[risc-v-priv(26)].
 
-* On system reset, each state context of a serializable stateful extension
+* On system reset, each state context of a stateful extension
 CXU is in the `initial` state.
 
 [[off-state]]
@@ -877,9 +998,8 @@ the state context status is set to another state by a subsequent
 * A write `.cs=1` has the side effect of resetting the entire _current_
 state context to its `initial` (power up) state.
 
-* When a CF instruction modifies any aspect of the current state context
-of a serializable CXU, its state context status automatically changes to
-`dirty`.
+* When a CF instruction modifies any aspect of the current state context,
+its state context status automatically changes to `dirty`.
 
 `.state_size`: state context size
 
@@ -1060,10 +1180,9 @@ cx_read_status a0
 sw a0,status[i]
 ....
 
-to obtain `.state_size`, the size (in XLEN-bit words) of the serialized
-state context for the selected state context. Allocate array `save[i][]`
-to store the serialized state context. For each word in `.state_size`,
-execute
+to obtain `.state_size`, the size (in XLEN-bit words) of the state context
+blob for the selected state context. Allocate array `save[i][]` to store
+the serialized state context. For each word in `.state_size`, execute
 
 [source,asm]
 ....
@@ -1122,8 +1241,8 @@ stream-out/stream-in extension instead.
 
 [NOTE]
 ====
-Discuss impact of mixed sized serialized contexts upon system code and
-upon CXU design. Can a serialized state context ever be too big to reload?
+Discuss impact of mixed sized state contexts blobs upon system code and
+upon CXU design. Can a state context blob ever be too big to reload?
 ====
 
 [NOTE]

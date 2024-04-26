@@ -176,12 +176,6 @@ The isolated state of a composable extension can include private registers
 and private memories.
 ====
 
-[TIP]
-====
-CX CSRs provide a uniform, conflict-free way to provide, and access,
-per CX custom CSRs.
-====
-
 ==== Stateless and stateful composable extensions
 
 A composable extension may be stateless or stateful. For a stateless
@@ -207,25 +201,26 @@ pool of shared contexts, or several harts sharing one context, or one
 singleton context, are also possible. Similarly, each CXU in a system
 may be configured with a different number of its state contexts.
 
-All stateful composable extensions are <<serializable,_serializable_>>
-and support uniform (extension-agnostic) CX state context
+All stateful composable extensions implement <<cxs-csrs,CX state
+context CSRs>> for uniform (extension-agnostic) CX state context
 save/restore/management.
 
 [TIP]
 ====
 CX CSRs provide access to control and status of a stateful composable
-extension. A stateful CX may also have other isolated state that is not
-architecturally visible, but which nevertheless determines the behavior
-and results of the CX's CF instructions and custom CSRs.
+extension. A stateful CX may also have other isolated state (i.e., as a
+side effect of the cumulative history of stateful CF instructions issued)
+that is not explicitly accessible, but which nevertheless determines
+the behavior the CX's CF instructions and custom CSRs.
 ====
 
-=== Standard extensions and formats
+=== Standard CX ISA extensions and interoperation interfaces
 
-To facilitate an open ecosystem of composable extensions, CXUs,
-libraries, and tools, the specification defines common interop extensions
-and formats:
+To facilitate an open ecosystem of composable extensions, CXUs, libraries,
+and tools, the specification defines new CX ISA extensions and varioius
+interoperation interfaces and formats:
 
-* _CX-ISA_, the _Composable Extensions' ISA Extension,_
+* _CX-ISA_, the _Composable Extensions' ISA Extensions,_
 * _CX-API_, the _Composable Extensions' Application Programming Interface,_
 * _CX-ABI_, the _Composable Extensions' Application Binary Interface,_
 * _CXU-LI_, the _CXU Logic Interface_,
@@ -259,12 +254,12 @@ CXUs, and variable latency CXUs with flow control.
 [[intro-CSRs]]
 ==== CX-ISA: composable extensions' ISA extension
 
-The CX-ISA "composable extensions" extension adds four new standard CSRs
-(and zero new instructions), that provide access-controlled composable
-extension multiplexing and error signaling. These CSRs modify the behavior
-of `custom-[012]` instructions cite:[risc-v-unpriv(143)] and custom
-address CSRs, to compose, conflict-free, with other composable extensions
-and with any built-in custom extensions. The four new CXU CSRs are:
+The CX-ISA "composable extensions" extension adds four new standard
+CSRs that provide access-controlled composable extension multiplexing
+and error signaling. These CSRs modify the behavior of `custom-[012]`
+instructions cite:[risc-v-unpriv(143)] and custom address CSRs, to
+compose, conflict-free, with other composable extensions and with any
+built-in custom extensions. The four new CXU CSRs are:
 
 * `mcx_selector`: selects the hart's current <<CXU_ID,CXU_ID>> and
 <<STATE_ID,STATE_ID>>, for composable extension multiplexing;
@@ -320,36 +315,30 @@ Reuse of custom instruction encodings across extensions will make
 debugging, esp. disassembly, more challenging.
 ====
 
-The `mcx_selector` also incorporates a _custom operation trap enable_
-(`cte`). When set, custom instructions and accesses to custom CSRs
+The `mcx_selector` also incorporates a _custom operation exception enable_
+(`cxe`). When set, custom instructions and accesses to custom CSRs
 raise an illegal instruction exception. This enables software emulation
 of absent custom instructions, software emulation of absent composable
 extensions, and transparent virtualization of stateful composable
 extensions.
 
-==== `IStateContext` and serializable stateful composable extensions
+[[cxs-csrs]]
+==== CX state context custom CSRs
 
-The specification defines a composable extension `IStateContext` with four
-standard custom functions for serializable stateful composable extensions:
+The specification defines mandatory _CX state context custom CSRs_ that
+stateful CXs must implement to provide a uniform CX programming model:
 
-[source,C++]
-....
-extension IStateContext {
-//  CF_ID       custom function
-    [1023] int  cf_read_status ();
-    [1022] void cf_write_status(int status);
-    [1021] int  cf_read_state  (int index);
-    [1020] void cf_write_state (int index, int state);
-};
-....
+* `cxs_error` (user R/W): CX state context extended error information;
 
-The CXU status indicates cumulative error flags, clean/dirty, and state
-context size. The read/write state functions access words of the state
-context.
+* `scxs_status` (system R/W): CX state context status word;
 
-These standard custom functions enable an extension-aware CX library to
-access stateful extension specific error status, and an extension-agnostic
-runtime or operating system to reset, save, and reload state context(s).
+* `scxs_index` (system R/W): CX state context blob index;
+
+* `scxs_data` (system R/W): CX state context blob data at index.
+
+These CX CSRs enable CX software to access stateful CX error status,
+and enable a CX-agnostic runtime or operating system to manage, save,
+and reload any CX state context.
 
 ==== CX-API (Application Programming Interface) and CX-ABI (Application Binary Interface)
 
