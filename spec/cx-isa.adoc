@@ -882,7 +882,7 @@ errors or instead capture *the last error* (or success) condition.
 ==== CX state context status (`scxs_status`) CX CSR
 
 The `scxs_status` CX CSR is a *WARL* SXLEN-bit supervisor read-write CX
-CSR that conveys the error status of a CX state context. It may be
+CSR that tracks and manages the state of a CX state context. It may be
 updated in response to any <<CX_op,CX operation>> and may also be read or
 written directly by software via a CSR read/write instruction. As usual
 §<<fences>> applies.
@@ -994,9 +994,6 @@ Its `.incr` field specifies that each time a CSR read or write of
 software may read, e.g., the first three words of the current CX state
 context using:
 
-Whenever the `.index` field is written with a value greater or equal to
-`scxs_status.state`, it is zeroed: `scxs_index.index = 0`.
-
 [source,asm]
 ....
 li a0,0x80000000
@@ -1005,6 +1002,9 @@ csrr a1,scxs_data	// .index = 1
 csrr a2,scxs_data	// .index = 2
 csrr a3,scxs_data	// .index = 3
 ....
+
+Whenever the `.index` field is written with a value greater or equal to
+`scxs_status.state`, it is zeroed: `scxs_index.index = 0`.
 
 .`scxs_index`: CX state context index register: supervisor read/write CX CSR:0x5FE
 [wavedrom,target="`scxs_index`",svg]
