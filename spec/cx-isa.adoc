@@ -34,6 +34,7 @@ immutable, i.e., any versioning of the CFs or custom CSRs or the behavior
 of an extension necessarily defines a new extension. _Named:_ has a
 composable extension identifier.
 
+[[CX_GUID]]
 A *composable extension identifier (CX_ID)* is a 128-bit globally unique ID
 (_GUID_) [see RFC-4122], unique in history, identifying a composable
 extension.
@@ -89,6 +90,11 @@ register file, and updating the CX status CSR with the response status.
 A *composable extension unit (CXU)* is a core that implements one or more
 composable extensions. A *stateful CXU* implements at least one stateful
 composable extension.
+
+[[CXU_GUID]]
+A *composable extension unit identifier (CXU_GUID)* is a 128-bit globally
+unique ID (_GUID_) [see RFC-4122], unique in history, identifying a
+specific CXU implementation.
 
 [[CXU_ID]]
 A *CXU_ID* is an integer, in the scope of a system, that identifies
@@ -807,23 +813,26 @@ provide a uniform CX programming model:
 
 * `scxs_status`: CX state context status;
 
-* `scxs_index`: CX state context blob index;
+* `scxs_index`: CX state context index;
 
-* `scxs_data`: CX state context blob data at index.
+* `scxs_data`: CX state context data at index.
 
-These mandatory CX CSRs enable user-mode CX software to access a CX state
-context's error status, and allow a CX-agnostic runtime or operating
-system to manage, initiailze, save, and reload any CX state context.
+The `cxs_` prefix indicates the CSR is a **CX s**tate context CX CSR.
+
+These mandatory CX CSRs enable user-mode CX software to access a CX
+state context's error status, and enables a CX-agnostic supervisor-mode
+runtime or operating system to manage, initiailze, save, and reload any
+CX state context.
 
 [NOTE]
 ====
 Consider abandoning the distinction between stateless and stateful
 CXs. Does it add significant benefit or clarity? A level 0 (combinational)
-CXU (sans `clk`), if provided, might just have `state_size=0` and/or
+CXU (sans `clk`), if provided, might just have `size=0` and/or
 `cxs_error=0`. That's fine.
 ====
 
-==== CX error (`cxs_error`) register
+==== CX error (`cxs_error`) CX CSR
 
 The `cxs_error` CX CSR is a *WARL* UXLEN-bit user read-write CX
 CSR that conveys the error status of a CX state context. It may be
@@ -846,31 +855,31 @@ config: {lanes: 1, bits: 32}
 
 [TIP]
 ====
-While `cxs_error` is inessential, it is mandated to provide a *uniform*
+While `cxs_error` is inessential, it is mandatory to provide a *uniform*
 way for CXs to convey extended error information arising from issuance
 of CX operations. This does not preclude a CX provding addtional CX CSRs
-to express additional aspects of a CX state context.
-====
-
-[TIP]
-====
-A `cxs_error` value of 0 indicates *no error* (stateful CXs) or sometimes
-*sorry, no error information* (stateless CXs??).
+or CX instructions to express additional aspects of a CX state context.
 ====
 
 [NOTE]
 ====
-Each CX has a specific behavior contract, including which CX operations
-set `cxs_error` and to which values. While there is at present no uniform
-specification for `cxs_error` values, we expect to discover and standardize
-recommended CX error categories and hence uniform `cxs_error` values.
-
-It remains to be discovered whether `cxs_error` should typically
-*accumulate* errors or capture *the last error* (or success)
-condition.
+Proposal: a `cxs_error` value of 0 indicates *no error* (stateful CXs)
+or sometimes *sorry, no error information* (stateless CXs??).
 ====
 
-==== CX state context status (`scxs_status`) register
+[NOTE]
+====
+Each CX defines a behavior contract, indicating which CX operations
+set `cxs_error` and to which values. While there is at present no
+uniform specification for `cxs_error` values, we expect to discover
+and standardize recommended CX error categories and hence uniform
+`cxs_error` values.
+
+It remains to be seen whether `cxs_error` should typically *accumulate*
+errors or instead capture *the last error* (or success) condition.
+====
+
+==== CX state context status (`scxs_status`) CX CSR
 
 The `scxs_status` CX CSR is a *WARL* SXLEN-bit supervisor read-write CX
 CSR that conveys the error status of a CX state context. It may be
@@ -882,126 +891,66 @@ written directly by software via a CSR read/write instruction. As usual
 [wavedrom,target="scxs_status",svg]
 ....
 {reg:[
-{bits: 16, name: 'state_size'},
-{bits: 11, name: 'reserved', type:1},
+{bits: 16, name: 'size'},
+{bits: 10, name: 'reserved', type:1},
+{bits: 1, name: 'rst'},
 {bits: 2, name: 'cs'},
 {bits: 3, name: 0, attr:'version'},
 ]}
 ....
 
-==== CX state context index (`scxs_status`) register
+The `scxs_status` register has these fields:
 
-.`scxs_index`: CX state context index register: supervisor read/write CX CSR:0x5FE
-[wavedrom,target="`scxs_index`",svg]
-....
-{reg:[
-{bits: 16, name: 'index'},
-{bits: 15, name: 'reserved', type:1},
-{bits: 1, name: 'incr'},
-],
-config: {lanes: 1, bits: 32}
-}
-....
+`.cs`: state context status
 
-==== CX state context data (`scxs_data`) register
-
-.`scxs_data`: CX state context data register: supervisor read/write CX CSR:0x5FD (when SXLEN=32)
-[wavedrom,target="`scxs_data`",svg]
-....
-{reg:[
-{bits: 32, name: 'data'},
-],
-config: {lanes: 1, bits: 32}
-}
-....
-
-[NOTE]
-====
-TODO: define reserved ranges of CX CSRs
-====
-
-=== CX/CXU info CSRs
-
-.`scx_guid0` supervisor read-only CX CSR:0x8FF (when MXLEN=32)
-[wavedrom,target="`cxs_error`",svg]
-....
-{reg:[
-{bits: 32, name: 'error'},
-],
-config: {lanes: 1, bits: 32}
-}
-....
-
-[[IStateContext]]
-=== `IStateContext`: the standard custom functions
-
-The `IStateContext` composable extension defines four standard custom
-functions to manage extension state context data. Stateful custom
-extensions should (albeit not _must_) inherit from this extension,
-i.e., incorporate these four custom functions. `IStateContext` provides
-a standard, uniform way to access the extension's custom error state
-and enables an extension-agnostic runtime or operating system to reset,
-save, and reload state contexts.
-
-.Standard stateful custom functions
-[width="100%",cols="20%,8%,30%,42%",options="header",]
-|===
-|*Custom function* |*CF_ID* |*Assembly instruction* |*Encoding*
-|`cf_read_status` |1023 |`cx_read_status rd` |`cx_reg 1023,rd,x0,x0`
-|`cf_write_status` |1022 |`cx_write_status rs1` |`cx_reg 1022,x0,rs1,x0`
-|`cf_read_state` |1021 |`cx_read_state rd,rs1` |`cx_reg 1021,rd,rs1,x0`
-|`cf_write_state` |1020 |`cx_write_state rs1,rs2` |`cx_reg 1020,x0,rs1,rs2`
-|===
-
-CF_IDs 1008-1023 (0x3F0-0x3FF) are reserved for standard custom
-functions. It is recommended, not mandatory, that these CF_IDs not be
-used for another purpose.
-
-Any CF instruction with CF_ID=1023 must be side effect free, i.e.,
-never modify any CXU state.
-
-==== Interface state context status word
-
-The `cf_read_status` and `cf_write_status` functions access the selected
-extension state context's status word.
-
-.CXU state context status word
-[wavedrom,target="state-context-status-word",svg]
-....
-{reg:[
-{bits: 2, name: 'cs'},
-{bits: 10, name: 'state_size'},
-{bits: 12, name: 'reserved', type:1},
-{bits: 8, name: 'error'},
-]}
-....
-
-The extension state context status word has the following fields:
-
-`.cs`: context status
-
-* The state context has four context status values: { 0: `off`; 1: `initial`;
-2: `clean`; 3: `dirty` } which correspond to those of the `XS` field of the
-`mstatus` CSR, per the RISC-V Privileged ISA specification
+* The state context status has four state values: { 0: `off`; 1:
+`initial`; 2: `clean`; 3: `dirty` }, corresponding to those of the `XS`
+field of the `mstatus` CSR, per the RISC-V Privileged ISA specification
 cite:[risc-v-priv(26)].
 
-* On system reset, each state context of a stateful extension
-CXU is in the `initial` state.
+* On system reset, each state context of a stateful extension is in the
+`initial` state.
 
 [[off-state]]
 * A write `.cs=0` has the side effect of explicitly turning off the
-_current_ state context. In this state, all CF instructions except
-`cf_write_status` and `cf_read_status` signal `CXU_ERROR_OFF`, until
-the state context status is set to another state by a subsequent
-`cf_write_status`.
+_current_ state context. In this state, all CX custom instructions
+signal `CXU_ERROR_OFF` and set `cx_status.OF`.
 
-* A write `.cs=1` has the side effect of resetting the entire _current_
-state context to its `initial` (power up) state.
+[NOTE]
+====
+In this state, what do CX CSR accesses do?
+====
 
-* When a CF instruction modifies any aspect of the current state context,
-its state context status automatically changes to `dirty`.
+[NOTE]
+====
+Is state preserved, disturbed, reset, or left _undefined_, by setting
+a state context to the `off` state, then to another state?
+====
 
-`.state_size`: state context size
+`.rst`: state context reset control/status
+
+* A write `.rst=1` resets the _current_ state context to its initial
+(power up) state. This may be instantaneous, or it may take many cycles.
+
+* While the state context reset is in progress, `scxs_status.rst == 1`.
+In this state, as with the `off` state, all CX custom instructions signal
+`CXU_ERROR_OFF` and set `cx_status.OF`.
+
+[NOTE]
+====
+In this state, what do CX CSR accesses do?
+====
+
+* When a CXU implements mulitple CX state contexts, and state context
+reset requires many clock cycles, it is possible for software to rapidly
+select and reset multiple CX state contexts, even before the first
+reset completes.
+
+* When a CX custom instruction or CX CSR access modifies any aspect of the
+current state context, its state context status automatically changes to
+`dirty`.
+
+`.size`: state context size
 
 * This WARL field specifies the _current_ size (number of XLEN-sized
 words) of the current state context.
@@ -1019,17 +968,223 @@ different state context sizes.
 
 * At different times, the same state context of the same CXU may have different state context sizes.
 
-`.error`: custom error status
+==== CX state context index (`scxs_index`) and CX state context data (`scxs_data`) CX CSRs
 
-* An 8-bit custom error status for the current extension / CXU and its state context.
+Together `scxs_status.size`, `scxs_index`, and `scxs_data` provide a
+CX-agnostic way for software to save a CX state context to a state context
+save record _blob_, and later to reload the context from the blob data.
+
+Software should not interpret the blob data. In different systems,
+the different CXUs that implement a CX may use different blob formats
+and sizes.
+
+The `scxs_index` CX CSR is a *WARL* SXLEN-bit supervisor read-write CX
+CSR that specifies the index and optional index auto-increment of 
+access(es) of CX state context data.
+
+A CX may implement its `scxs_index` CX CSR with fewer than 16 bits (as
+few as zero bits). Unimplemented most-significant bits always read as 0.
+
+Its `.index` field specifies the index, within the current CX state
+context's context save data, that is accessed by a CSR read or write of
+the `scxs_data` CX CSR.
+
+Its `.incr` field specifies that each time a CSR read or write of
+`scxs_data` commits, `scxs_index.index` is incremented by one. Thus
+software may read, e.g., the first three words of the current CX state
+context using:
+
+Whenever the `.index` field is written with a value greater or equal to
+`scxs_status.state`, it is zeroed: `scxs_index.index = 0`.
+
+[source,asm]
+....
+li a0,0x80000000
+csrw scxs_index,a0	// .index = 0
+csrr a1,scxs_data	// .index = 1
+csrr a2,scxs_data	// .index = 2
+csrr a3,scxs_data	// .index = 3
+....
+
+.`scxs_index`: CX state context index register: supervisor read/write CX CSR:0x5FE
+[wavedrom,target="`scxs_index`",svg]
+....
+{reg:[
+{bits: 16, name: 'index'},
+{bits: 15, name: 'reserved', type:1},
+{bits: 1, name: 'incr'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+
+.`scxs_data`: CX state context data register: supervisor read/write CX CSR:0x5FD (when SXLEN=32)
+[wavedrom,target="`scxs_data`",svg]
+....
+{reg:[
+{bits: 32, name: 'data'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
 
 [NOTE]
 ====
-Define rules for what the extension can or must to with writes to
-this field. Need a way to zero a custom error. But this is not a free
-byte of storage per state context. An implementation is permitted to
-implement this as constant 0, for example.
+TODO: define reserved ranges of CX CSRs
 ====
+
+=== CX/CXU identity CX CSRs
+
+[TIP]
+====
+This entire CX/CXU info CX CSRs section is provisional and non-normative.
+====
+
+Two sets of optional machine-mode read-only CX CSRs allow software to
+interrogate the identity of the selected CX (<<CX_GUID,CX_GUID>>) or its
+CXU (<<CXU_GUID,CXU_GUID>>).
+
+[TIP]
+====
+These are machine mode only because they are only useful to system
+software and should not be used by user mode CX software. To select a
+CX, CX software has already discovered it via its <<CX_GUID,CX_GUID>>.
+CX software must not depend on specific CXU implementations or versions --
+all implement a specific CX ISA contract, all should behave identically.
+====
+
+==== 32-bit CX_GUID (`mcx_guid[0123]`) CX CSRs
+
+.`mcx_guid0` CX_GUID-0 register: machine read-only CX CSR:0x8FF (when UXLEN=32)
+[wavedrom,target="`mcx_guid0`",svg]
+....
+{reg:[
+{bits: 32, name: 'cx_guid[31:0]'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+.`mcx_guid1` CX_GUID-1 register: machine read-only CX CSR:0x8FF (when UXLEN=32)
+[wavedrom,target="`mcx_guid1`",svg]
+....
+{reg:[
+{bits: 32, name: 'cx_guid[63:32]'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+.`mcx_guid2` CX_GUID-2 register: machine read-only CX CSR:0x8FF (when UXLEN=32)
+[wavedrom,target="`mcx_guid2`",svg]
+....
+{reg:[
+{bits: 32, name: 'cx_guid[95:64]'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+.`mcx_guid3` CX_GUID-3 register: machine read-only CX CSR:0x8FF (when UXLEN=32)
+[wavedrom,target="`mcx_guid3`",svg]
+....
+{reg:[
+{bits: 32, name: 'cx_guid[127:96]'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+==== 64-bit CX_GUID (`mcx_guid[01]`) CX CSRs
+
+.`mcx_guid0` CX_GUID-0 register: machine read-only CX CSR:0x8FF (when UXLEN=64)
+[wavedrom,target="`mcx_guid0-64`",svg]
+....
+{reg:[
+{bits: 64, name: 'cx_guid[63:0]'},
+],
+config: {lanes: 1, bits: 64}
+}
+....
+
+.`mcx_guid1` CX_GUID-1 register: machine read-only CX CSR:0x8FF (when UXLEN=64)
+[wavedrom,target="`mcx_guid1-64`",svg]
+....
+{reg:[
+{bits: 64, name: 'cx_guid[127:64]'},
+],
+config: {lanes: 1, bits: 64}
+}
+....
+
+==== 32-bit CXU_GUID (`mcxu_guid[0123]`) CX CSRs
+
+.`mcxu_guid0` CXU_GUID-0 register: machine read-only CX CSR:0x8FF (when UXLEN=32)
+[wavedrom,target="`mcxu_guid0`",svg]
+....
+{reg:[
+{bits: 32, name: 'cxu_guid[31:0]'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+.`mcxu_guid1` CXU_GUID-1 register: machine read-only CX CSR:0x8FF (when UXLEN=32)
+[wavedrom,target="`mcxu_guid1`",svg]
+....
+{reg:[
+{bits: 32, name: 'cxu_guid[63:32]'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+.`mcxu_guid2` CXU_GUID-2 register: machine read-only CX CSR:0x8FF (when UXLEN=32)
+[wavedrom,target="`mcxu_guid2`",svg]
+....
+{reg:[
+{bits: 32, name: 'cxu_guid[95:64]'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+.`mcxu_guid3` CXU_GUID-3 register: machine read-only CX CSR:0x8FF (when UXLEN=32)
+[wavedrom,target="`mcxu_guid3`",svg]
+....
+{reg:[
+{bits: 32, name: 'cxu_guid[127:96]'},
+],
+config: {lanes: 1, bits: 32}
+}
+....
+
+==== 64-bit CX_GUID (`mcxu_guid[01]`) CX CSRs
+
+.`mcxu_guid0` CXU_GUID-0 register: machine read-only CX CSR:0x8FF (when UXLEN=64)
+[wavedrom,target="`mcxu_guid0-64`",svg]
+....
+{reg:[
+{bits: 64, name: 'cxu_guid[63:0]'},
+],
+config: {lanes: 1, bits: 64}
+}
+....
+
+.`mcxu_guid1` CXU_GUID-1 register: machine read-only CX CSR:0x8FF (when UXLEN=64)
+[wavedrom,target="`mcxu_guid1-64`",svg]
+....
+{reg:[
+{bits: 64, name: 'cxu_guid[127:64]'},
+],
+config: {lanes: 1, bits: 64}
+}
+....
+
+[[IStateContext]]
+=== `IStateContext`: the standard custom functions
+
 
 ==== `cx_read_status` standard custom function instruction
 
@@ -1042,16 +1197,16 @@ of the selected CXU and writes it to the `rd` destination register.
 `cx_read_status` can never modify the selected state context, nor modify
 the behavior of the extension.
 
-The status word `.state_size` field may change as a side effect of
+The status word `.size` field may change as a side effect of
 executing a stateful CF instruction.
 
 For the CF instruction sequence [ `cx_read_status`; `cx_read_state`*;
 `cx_read_status` ], the first and second `cx_read_status` must return
-the same `.state_size`.
+the same `.size`.
 
 For the CF instruction sequence [ `cx_read_status`,
 _any-other-CF-instruction_ *, `cx_read_status` ], the first and second
-`cx_read_status` need not return the same `.state_size`.
+`cx_read_status` need not return the same `.size`.
 
 [TIP]
 ====
@@ -1089,7 +1244,7 @@ A write `.cs=1` always has the side effect of resetting the selected
 state context to its initial (power up) state.
 
 For the sequence [ `cx_write_status`; *; `cx_read_status` ] the value of
-`.state_size` read need not equal the last value written.
+`.size` read need not equal the last value written.
 
 A `cx_write_status` CF instruction never has any effect upon any other
 state context of the CXU, or of any other CXU.
@@ -1180,9 +1335,9 @@ cx_read_status a0
 sw a0,status[i]
 ....
 
-to obtain `.state_size`, the size (in XLEN-bit words) of the state context
+to obtain `.size`, the size (in XLEN-bit words) of the state context
 blob for the selected state context. Allocate array `save[i][]` to store
-the serialized state context. For each word in `.state_size`, execute
+the serialized state context. For each word in `.size`, execute
 
 [source,asm]
 ....
@@ -1204,7 +1359,7 @@ cx_write_status a0
 ....
 
 to restore the state context status word. Then for each word in
-`status[i].state_size`, execute
+`status[i].size`, execute
 
 [source,asm]
 ....

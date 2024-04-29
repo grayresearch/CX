@@ -326,7 +326,7 @@ extensions.
 ==== CX state context custom CSRs
 
 The specification defines mandatory _CX state context custom CSRs_ that
-stateful CXs must implement to provide a uniform CX programming model:
+stateful CXs implement to provide a uniform CX programming model:
 
 * `cxs_error` (user R/W): CX state context extended error information;
 
