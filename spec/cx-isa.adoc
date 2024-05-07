@@ -112,7 +112,7 @@ hart's current configured extension / CXU and current state context.
 [[selector-table]]
 A *CX selector table* is a 4 KB aligned, 4 KB sized table of 1024
 CX selectors. When CX access control (§<<_cx_access_control>>) is
-supported, each hart has a `mcx_table` CSR to address its CX
+supported, each hart has a `scx_table` CSR to address its CX
 selector table.
 
 A *selector index* is an integer that identifies an entry in a CX selector
@@ -128,7 +128,7 @@ instruction execution.
 When CX access control
 (§<<_cx_access_control>>)
 is supported, a CX-ISA compatible CPU
-shall implement the `mcx_table` and `cx_index` CSRs.
+shall implement the `scx_table` and `cx_index` CSRs.
 
 All CX-ISA CSR fields marked _reserved_ are WPRI, write preserve, read
 ignored, and all other fields are WARL, write any/read legal values. (An
@@ -293,7 +293,7 @@ is the canonical _invalid selector_.
 
 [TIP]
 ====
-Typically an OS will fill unused `mcx_table[]` entries with this invalid
+Typically an OS will fill unused `scx_table[]` entries with this invalid
 selector to trap first custom operation use of an invalid selector index.
 ====
 
@@ -429,14 +429,14 @@ error handling in software. Best option: only _add_ new fields to it.
 Here simplest seems best.
 ====
 
-==== `mcx_table` CSR 0xBC1: CX selector table base
+==== `scx_table` CSR 0xBC1: CX selector table base
 
 When CX access control (§<<_cx_access_control>>) is supported, the
-`MXLEN`-bit-wide `mcx_table` CSR specifies the base address
+`MXLEN`-bit-wide `scx_table` CSR specifies the base address
 of the hart's CX selector table. The CSR may be read and written in
 machine level.
 
-.mcx_table CSR 0xBC1 (when MXLEN=32)
+.scx_table CSR 0xBC1 (when MXLEN=32)
 [wavedrom,target="cx_table",svg]
 ....
 {reg:[
@@ -447,7 +447,7 @@ config: {lanes: 1, bits: 32},
 }
 ....
 
-CSR-writes to `mcx_table` zero the twelve least significant
+CSR-writes to `scx_table` zero the twelve least significant
 bits of the table address, so a CX selector table address must be 4
 KB aligned.
 
@@ -470,11 +470,11 @@ config: {lanes: 1, bits: 32},
 ....
 
 The 10-bit zero-extended index field specifies which entry in the hart's
-CX selector table (at the hart's `mcx_table`) to use as the
+CX selector table (at the hart's `scx_table`) to use as the
 hart's current CX selector.
 
 In response to CSR-write of `cx_index`, load the 32-bit CX
-selector at address (`mcx_table + cx_index.index*4`)
+selector at address (`scx_table + cx_index.index*4`)
 and CSR-write the CX selector to `mcx_selector`, performing the load
 and the CSR-write at the next higher privilege level, as if it were
 a `lw` instruction (and with a `lw` instruction's memory ordering
@@ -879,6 +879,21 @@ It remains to be seen whether `cxs_error` should typically *accumulate*
 errors or instead capture *the last error* (or success) condition.
 ====
 
+`cxs_error` is a reserved CX CSR: it may not be used by a CX for any
+other purpose. Therefore it may be safely used as a _probe_ after a
+selector write, to check whether the selector addresses a valid
+CXU and state context:
+
+[source,asm]
+....
+csrw cx_index,x1        ; select some CXU and state context
+csrw cx_status,x0       ; clear cx_status
+csrr x0,cxs_error		; probe, discarding error word
+csrr x1,cx_status       ; retrieve cx_status
+...                     ; cx_status.ci => invalid CXU_ID
+...                     ; cx_status.si => invalid STATE_ID
+....
+
 ==== CX state context status (`scxs_status`) CX CSR
 
 The `scxs_status` CX CSR is a *WARL* SXLEN-bit supervisor read-write CX
@@ -959,6 +974,9 @@ words) of the current state context.
 
 * The value read need not equal the last value written.
 
+* The value read must equal the last value read, unless there has been
+a CX operation since.
+
 * Writes return the previous size and `cs` status of the current state context.
 
 * Different CXU implementations of the same composable extension may have
@@ -967,6 +985,16 @@ different state context sizes.
 * Different state contexts of the same CXU may have different state context sizes.
 
 * At different times, the same state context of the same CXU may have different state context sizes.
+
+[TIP]
+====
+For most stateful CXUs, the size of a state context is fixed. For some
+stateful CXUs, the size of a state context may depend upon the sequence
+of CF instructions performed. For example, a stateful vector math CXU may
+provide CF instructions to allocate per-state context vector storage from
+a common, private shared pool, and may allow different state contexts
+to represent different sized vectors.
+====
 
 ==== CX state context index (`scxs_index`) and CX state context data (`scxs_data`) CX CSRs
 
@@ -1182,99 +1210,12 @@ config: {lanes: 1, bits: 64}
 }
 ....
 
-[[IStateContext]]
-=== `IStateContext`: the standard custom functions
-
-
-==== `cx_read_status` standard custom function instruction
-
-Assembly instruction: `cx_read_status rd`
-
-This instruction retrieves the state status word
-(§<<_extension_state_context_status_word>>) of the selected state context
-of the selected CXU and writes it to the `rd` destination register.
-
-`cx_read_status` can never modify the selected state context, nor modify
-the behavior of the extension.
-
-The status word `.size` field may change as a side effect of
-executing a stateful CF instruction.
-
-For the CF instruction sequence [ `cx_read_status`; `cx_read_state`*;
-`cx_read_status` ], the first and second `cx_read_status` must return
-the same `.size`.
-
-For the CF instruction sequence [ `cx_read_status`,
-_any-other-CF-instruction_ *, `cx_read_status` ], the first and second
-`cx_read_status` need not return the same `.size`.
-
-[TIP]
-====
-For most stateful CXUs, the size of a state context is fixed. For some
-stateful CXUs, the size of a state context may depend upon the sequence
-of CF instructions performed. For example, a stateful vector math CXU may
-provide CF instructions to allocate per-state context vector storage from
-a common, private shared pool, and may allow different state contexts
-to represent different sized vectors.
-====
-
-`cx_read_status` may be used as a _probe_ after a `mcx_selector` write,
-to check whether the selector addresses a valid CXU and state context:
-
-[source,asm]
-....
-csrw mcx_selector,x1    ; select some CXU and state context
-csrw cx_status,x0       ; clear cx_status
-cx_read_status x0       ; probe, discarding state status word
-csrr x2,cx_status       ; retrieve cx_status
-...                     ; cx_status.ci => invalid CXU_ID
-...                     ; cx_status.si => invalid STATE_ID
-....
-
-==== `cx_write_status` standard custom function instruction
-
-Assembly instruction: `cx_write_status rs1`
-
-This instruction writes the value of the `rs1` source register to the
-state status word of the selected state context of the selected CXU,
-and writes the previous value of the state context status word to the
-`rd` destination register.
-
-A write `.cs=1` always has the side effect of resetting the selected
-state context to its initial (power up) state.
-
-For the sequence [ `cx_write_status`; *; `cx_read_status` ] the value of
-`.size` read need not equal the last value written.
-
-A `cx_write_status` CF instruction never has any effect upon any other
-state context of the CXU, or of any other CXU.
-
-==== `cx_read_state` standard custom function instruction
-
-Assembly instruction: `cx_read_state rd,rs1`
-
-This instruction reads one (XLEN-bit) word of state, at the index
-specified by the `rs1` source register, from the selected state context
-of the selected CXU, and writes it to the `rd` destination register.
-
-==== `cx_write_state` standard custom function instruction
-
-Assembly instruction: `cx_write_state rs1,rs2`
-
-This instruction reads the value of the `rs2` source register and writes
-it to the selected state context of the selected CXU at the index
-specified by the value of the `rs1` source register.
-It also writes the value of the `rs2` source register to the `rd`
-destination register. It silently drops attempts to write state at an
-invalid state index.
-
 === Resource management and context switching
 
 A software resource manager (e.g., thread pool, language runtime, language
-virtual machine, RTOS, operating system, hypervisor) multiplexes software
+virtual machine, operating system, hypervisor) multiplexes software
 loci of execution (e.g., request, worker, actor, activity, task, fiber,
-continuation, thread, process), _locus_ for short, upon one or more
-hardware threads (_harts_).
+continuation, thread, process), upon one or more hardware threads (_harts_).
 
 The RISC-V per-hart state includes the program counter and integer
 register file, and optionally, floating point and vector register files,
@@ -1283,33 +1224,32 @@ and various CSRs. CX-ISA extends per-hart state with the CX-ISA CSRs
 contexts of the stateful configured composable extensions allocated to
 that hart.
 
-A CXU implementing a stateful composable extension is typically configured
-with one state context per hart in the entire system, but other
-configurations, including one context per locus, or a small pool
+A CXU implementing a stateful composable extension is usually
+configured with one state context per hart in the entire system, but
+other configurations, including one context per locus, or a small pool
 of cooperatively or preemptively managed contexts, or several harts
 sharing one context, or one singleton context, are possible. Similarly,
 each CXU in a system may be configured with a different number of its
 state contexts.
 
 The resource manager maintains the mapping of loci to harts, and the
-mapping of harts to (per-CXU) state contexts. The resource manager
-consults a _system CXU map_ specifying the mapping CXU_IDs of the
-configured extensions of the system, and for each extension/CXU, the
-no. of state contexts it is configured with. A stateless CXU has zero
-contexts.
+mapping of harts to CX state contexts. The resource manager consults
+a _System CXU Map_ specifying the mapping CXU_IDs of the configured
+composable extensions of the system, and for each CX/CXU, the no. of
+state contexts it is configured with. A stateless CXU has zero contexts.
 
 Over time, the resource manager must reset, save, and restore hart state,
 including its extension state contexts, to initialize a hart or
 to perform a context switch.
 
-To reset hart state, for each extension state context of the hart, execute
+To reset hart state, for each CX state context of the hart, execute
 
 [source,asm]
 ....
-li a1,{.error=0,.cs=1/*initialize*/}
-lw a0,selectors[i]
-csrw mcx_selector,a0
-cx_write_status a1
+cx_index = indices[i];
+scxs_status = '{ cs:1, rst:1, size:0 };
+while (scxs_status.rst)
+	;
 ....
 
 This resets that state context to its initial state. It is also necessary
@@ -1317,22 +1257,18 @@ to reset `cx_status`.
 
 [source,asm]
 ....
-csrw cx_status,x0
+cx_status = 0;
 ....
 
 To save hart state, first save `cx_status`, then
-for each extension state context of the hart,
-execute
+for each CX state context of the hart, execute
 
 [source,asm]
 ....
-csrr a0,cx_status
-sw a0,saved_cx_status
+save.cx_status = cx_status;
 ...
-lw a0,selectors[i]
-csrw mcx_selector,a0
-cx_read_status a0
-sw a0,status[i]
+cx_index = indices[i];
+status[i] = scxs_status;
 ....
 
 to obtain `.size`, the size (in XLEN-bit words) of the state context
@@ -1341,8 +1277,9 @@ the serialized state context. For each word in `.size`, execute
 
 [source,asm]
 ....
-cx_read_state a0,j
-sw/sd a0, save[i][j]
+scxs_index = '{ incr:0, 'index:0 };
+for j in scxs.size:
+  save[i][j] = scxs_data;
 ....
 
 (When XLEN=32, use `sw`; when XLEN=64, use `sd`.)
@@ -1431,7 +1368,7 @@ Whether `ECALL` or exception handler, a detour into system level
 is prohibitively slow: reconfiguring composable extension multiplexing
 should take, at most, a few clock cycles.
 
-The optional CX access control CSRs `mcx_table` and
+The optional CX access control CSRs `scx_table` and
 `cx_index` allow less privileged _user code_ to rapidly
 multiplex composable extensions, but only among those extensions and state
 contexts that it is granted access by more privileged _system code_.
@@ -1449,7 +1386,7 @@ invalid selector (`0x10000000`) in every other entry. Selector index 0
 selects table entry 0, with value `0x0000000` = `'{version:0, cxe:0}`,
 which disables CX multiplexing, thereby selecting the CPU's built-in
 custom instructions and custom CSRs. The system code CSR-writes the
-table address to the hart's `mcx_table` CSR. Then in response to a system
+table address to the hart's `scx_table` CSR. Then in response to a system
 call requesting access to a composable extension and one of its state
 contexts, system code determines whether the access is granted. If so,
 it determines the CX selector value for it, allocates an entry for that

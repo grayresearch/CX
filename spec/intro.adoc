@@ -266,11 +266,11 @@ built-in custom extensions. The four new CXU CSRs are:
 
 * `cx_status`: accumulates CXU errors;
 
-* `mcx_table`, `cx_index`: efficient access control to CXUs and CXU state.
+* `scx_table`, `cx_index`: efficient access control to CXUs and CXU state.
 
 [NOTE]
 ====
-The machine mode `mcx_table` CSR is probably insufficient for processors
+The supervisor mode `scx_table` CSR is probably insufficient for processors
 with hypervisor privilege levels. This will require additional spec
 design work and additional CX-ISA CSRs.
 ====
